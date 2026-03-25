@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import assert from 'node:assert';
+import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import { readCache, writeCache, hasCacheKey, dailyCacheKey } from '../../lib/cache.js';
 import * as cheerio from 'cheerio';
 import { clean } from '../../lib/html.js';
@@ -43,6 +44,7 @@ export async function* jobGenerator(listing: Listing, logger: Logger): AsyncGene
       content = JSON.parse(await readCache(cacheKey, logger)) as JJIApiResponse;
     } else {
       const response = await fetch(url, {
+        signal: AbortSignal.timeout(SCRAPE_REQUEST_TIMEOUT_MS),
         headers: {
           accept: 'application/json, text/plain, */*',
           'accept-language': 'en, en-gb;q=0.9, en-us;q=0.8, en;q=0.7',

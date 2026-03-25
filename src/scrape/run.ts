@@ -9,6 +9,7 @@ import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { smartSave } from './lib/smart-save.js';
+import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
 import { setCacheRoot } from './cacheContext.js';
 import type { BaseStrategy, ProcessedJob, Logger, BaseJob } from './types/index.js';
 
@@ -72,7 +73,10 @@ async function runStrategy(strategy: BaseStrategy, outDir: string): Promise<void
                   }
                 });
                 await page.setUserAgent(getRandomUserAgent());
-                const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                const res = await page.goto(url, {
+                  waitUntil: 'domcontentloaded',
+                  timeout: SCRAPE_REQUEST_TIMEOUT_MS,
+                });
 
                 if (!res) {
                   logger.warn(' ⚠️  No response received from puppeteer.');
