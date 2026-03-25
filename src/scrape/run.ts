@@ -85,8 +85,13 @@ async function runStrategy(strategy: BaseStrategy, outDir: string): Promise<void
                 }
 
                 const bodyHandle = await page.$('body');
-                content = await page.evaluate((body) => body.innerHTML, bodyHandle);
-                await bodyHandle?.dispose();
+
+                if (bodyHandle) {
+                  content = await page.evaluate((body) => body.innerHTML, bodyHandle);
+                  await bodyHandle.dispose();
+                } else {
+                  throw new HttpException(` ⚠️  No <body> for ${url};`);
+                }
 
                 await page.close();
 
