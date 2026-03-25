@@ -16,16 +16,30 @@ function createBaseStats(): StrategyStats {
 }
 
 export function jjiStrategy(): BaseStrategy {
+  const ids = new Set<string>();
   return {
-    ...jji,
+    slug: jji.slug,
     stats: createBaseStats(),
+    ids,
+    listingsGenerator: jji.listingsGenerator,
+    jobGenerator: (listing, logger) => jji.jobGenerator(listing, logger, ids),
+    jobToUrl: jji.jobToUrl,
+    jobToId: jji.jobToId,
+    extractContent: jji.extractContent,
   };
 }
 
 export function nfjStrategy(): BaseStrategy {
+  const ids = new Set<string>();
   return {
-    ...nfj,
+    slug: nfj.slug,
     stats: createBaseStats(),
+    ids,
+    listingsGenerator: nfj.listingsGenerator,
+    jobGenerator: (listing, logger) => nfj.jobGenerator(listing, logger, ids),
+    jobToUrl: nfj.jobToUrl,
+    jobToId: nfj.jobToId,
+    extractContent: nfj.extractContent,
   };
 }
 

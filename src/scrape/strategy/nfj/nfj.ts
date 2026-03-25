@@ -17,15 +17,17 @@ interface NFJApiResponse {
   totalPages?: number;
 }
 
-const ids = new Set<string>([]);
-
 export const slug = 'nfj';
 
 export const jobToUrl = (job: NFJJob): string => {
   return `https://nofluffjobs.com/job/${String(job.url)}`;
 };
 
-export async function* jobGenerator(listing: Listing, logger: Logger): AsyncGenerator<NFJJob> {
+export async function* jobGenerator(
+  listing: Listing,
+  logger: Logger,
+  ids: Set<string>,
+): AsyncGenerator<NFJJob> {
   const nfjListing = listing as NFJListing;
   let currentPage = 1;
   let totalPages: number | null = null;
@@ -162,5 +164,3 @@ export async function* listingsGenerator(): AsyncGenerator<Listing> {
 export function jobToId(job: NFJJob): string {
   return job.id;
 }
-
-export { ids };

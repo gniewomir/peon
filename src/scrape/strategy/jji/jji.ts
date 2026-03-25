@@ -18,15 +18,17 @@ interface JJIApiResponse {
   };
 }
 
-const ids = new Set<string>([]);
-
 export const slug = 'jji';
 
 export const jobToUrl = (job: JJIJob): string => {
   return `https://justjoin.it/job-offer/${job.slug}`;
 };
 
-export async function* jobGenerator(listing: Listing, logger: Logger): AsyncGenerator<JJIJob> {
+export async function* jobGenerator(
+  listing: Listing,
+  logger: Logger,
+  ids: Set<string>,
+): AsyncGenerator<JJIJob> {
   let currentCursor = 0;
   let pageNumber = 1;
 
@@ -152,5 +154,3 @@ export async function* listingsGenerator(): AsyncGenerator<Listing> {
 export function jobToId(job: JJIJob): string {
   return job.guid;
 }
-
-export { ids };
