@@ -7,7 +7,7 @@
     "peon": "./dist/cli.js"
   },
   "scripts": {
-    "prepare": "node scripts/install-git-hooks.mjs",
+    "prepare": "node scripts/install-git-hooks.mjs && npx puppeteer browsers install chrome",
     "pre-commit": "node scripts/pre-commit.mjs",
     "commit-msg": "node scripts/commit-msg.mjs",
     "pre-push": "node scripts/pre-push.mjs",
@@ -25,10 +25,17 @@
   },
   "keywords": [],
   "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.1.2",
+    "commander": "^13.1.0",
+    "dotenv": "^17.2.2",
+    "puppeteer": "^24.17.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@types/node": "^22.15.0",
-    "commander": "^13.1.0",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.6.2",
