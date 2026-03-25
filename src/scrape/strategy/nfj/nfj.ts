@@ -78,8 +78,13 @@ export async function* jobGenerator(listing: Listing, logger: Logger): AsyncGene
       break;
     }
 
-    if (totalPages === null && content.totalPages) {
+    if (totalPages === null && content.totalPages !== undefined) {
       totalPages = content.totalPages;
+    }
+
+    if (content.postings.length === 0) {
+      logger.log(' 👌 No more postings; NFJ API scraping complete.');
+      break;
     }
 
     while (content.postings.length > 0) {
@@ -91,7 +96,12 @@ export async function* jobGenerator(listing: Listing, logger: Logger): AsyncGene
       }
     }
 
-    if (totalPages && currentPage >= totalPages) {
+    if (totalPages === 0) {
+      logger.log(' 👌 totalPages=0; NFJ API scraping complete.');
+      break;
+    }
+
+    if (totalPages !== null && totalPages > 0 && currentPage >= totalPages) {
       logger.log(' 👌 Reached last page. NFJ API scraping complete.');
       break;
     }
