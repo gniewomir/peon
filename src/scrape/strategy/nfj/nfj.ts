@@ -1,9 +1,8 @@
 import assert from 'node:assert';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
-import { readCache, writeCache, hasCacheKey, dailyCacheKey } from '../../lib/cache.js';
 import * as cheerio from 'cheerio';
 import { clean } from '../../lib/html.js';
-import type { Logger, NFJJob, Listing } from '../../types/index.js';
+import type { CacheOperations, Logger, NFJJob, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 
 interface NFJListing extends Listing {
@@ -27,6 +26,7 @@ export async function* jobGenerator(
   listing: Listing,
   logger: Logger,
   ids: Set<string>,
+  cache: CacheOperations,
 ): AsyncGenerator<NFJJob> {
   const nfjListing = listing as NFJListing;
   let currentPage = 1;
@@ -47,11 +47,11 @@ export async function* jobGenerator(
     urlObj.searchParams.set('pageTo', currentPage.toString());
     const url = urlObj.toString();
 
-    const cacheKey = dailyCacheKey(url);
+    const cacheKey = cache.dailyCacheKey(url);
 
     let content: NFJApiResponse;
-    if (hasCacheKey(cacheKey, logger)) {
-      content = JSON.parse(await readCache(cacheKey, logger)) as NFJApiResponse;
+    if (cache.hasCacheKey(cacheKey, logger)) {
+      content = JSON.parse(await cache.readCache(cacheKey, logger)) as NFJApiResponse;
     } else {
       const response = await fetch(url, {
         method: 'POST',
@@ -74,7 +74,7 @@ export async function* jobGenerator(
       }
 
       content = (await response.json()) as NFJApiResponse;
-      await writeCache(cacheKey, JSON.stringify(content), logger);
+      await cache.writeCache(cacheKey, JSON.stringify(content), logger);
     }
 
     if (!content || !content.postings || !Array.isArray(content.postings)) {

@@ -7,3 +7,7 @@ export interface CacheOperations {
   dailyCacheKey(str: string): string;
   weeklyCacheKey(str: string): string;
 }
+
+export interface CacheContext {
+  withCache<T>(payload: (cache: CacheOperations) => Promise<T>): Promise<T>;
+}

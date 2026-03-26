@@ -2,13 +2,14 @@ import type { Logger } from './Logger.js';
 import type { StrategyStats } from './Stats.js';
 import type { BaseJob } from './Job.js';
 import type { Listing } from './Listing.js';
+import type { CacheOperations } from './Cache.js';
 
 export interface Strategy<TJob extends BaseJob = BaseJob> {
   slug: string;
   stats: StrategyStats;
   ids: Set<string>;
   listingsGenerator(): AsyncGenerator<Listing>;
-  jobGenerator(listing: Listing, logger: Logger): AsyncGenerator<TJob>;
+  jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<TJob>;
   jobToUrl(job: TJob): string;
   jobToId(job: TJob): string;
   extractContent(content: string): string;
@@ -19,7 +20,7 @@ export interface BaseStrategy {
   stats: StrategyStats;
   ids: Set<string>;
   listingsGenerator(): AsyncGenerator<Listing>;
-  jobGenerator(listing: Listing, logger: Logger): AsyncGenerator<BaseJob>;
+  jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<BaseJob>;
   jobToUrl(job: BaseJob): string;
   jobToId(job: BaseJob): string;
   extractContent(content: string): string;

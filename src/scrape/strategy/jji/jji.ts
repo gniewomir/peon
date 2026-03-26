@@ -3,10 +3,9 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import assert from 'node:assert';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
-import { readCache, writeCache, hasCacheKey, dailyCacheKey } from '../../lib/cache.js';
 import * as cheerio from 'cheerio';
 import { clean } from '../../lib/html.js';
-import type { Logger, JJIJob, Listing } from '../../types/index.js';
+import type { CacheOperations, Logger, JJIJob, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 
 interface JJIApiResponse {
@@ -28,6 +27,7 @@ export async function* jobGenerator(
   listing: Listing,
   logger: Logger,
   ids: Set<string>,
+  cache: CacheOperations,
 ): AsyncGenerator<JJIJob> {
   let currentCursor = 0;
   let pageNumber = 1;
@@ -39,11 +39,11 @@ export async function* jobGenerator(
     urlObj.searchParams.set('from', currentCursor.toString());
     const url = urlObj.toString();
 
-    const cacheKey = dailyCacheKey(url);
+    const cacheKey = cache.dailyCacheKey(url);
 
     let content: JJIApiResponse;
-    if (hasCacheKey(cacheKey, logger)) {
-      content = JSON.parse(await readCache(cacheKey, logger)) as JJIApiResponse;
+    if (cache.hasCacheKey(cacheKey, logger)) {
+      content = JSON.parse(await cache.readCache(cacheKey, logger)) as JJIApiResponse;
     } else {
       const response = await fetch(url, {
         signal: AbortSignal.timeout(SCRAPE_REQUEST_TIMEOUT_MS),
@@ -64,7 +64,7 @@ export async function* jobGenerator(
       }
 
       content = (await response.json()) as JJIApiResponse;
-      await writeCache(cacheKey, JSON.stringify(content), logger);
+      await cache.writeCache(cacheKey, JSON.stringify(content), logger);
     }
 
     if (!content || !content.data || !Array.isArray(content.data)) {

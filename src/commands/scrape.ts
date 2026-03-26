@@ -2,7 +2,7 @@ import path from 'node:path';
 import type { Command } from 'commander';
 import { getPeonRepoRoot } from '../scrape/repoRoot.js';
 import { runScrape } from '../scrape/run.js';
-import { allStrategies, jjiStrategy, nfjStrategy } from '../scrape/strategy/index.js';
+import { allStrategies, jjiStrategy, nfjStrategy, bdjStrategy } from '../scrape/strategy/index.js';
 import type { BaseStrategy } from '../scrape/types/index.js';
 
 function parseOnlySlugs(only: string | undefined): Set<string> | null {
@@ -26,12 +26,13 @@ function selectStrategies(only: string | undefined): BaseStrategy[] {
   const bySlug = new Map<string, () => BaseStrategy>([
     ['jji', jjiStrategy],
     ['nfj', nfjStrategy],
+    ['bdj', bdjStrategy],
   ]);
   const selected: BaseStrategy[] = [];
   for (const slug of wanted) {
     const factory = bySlug.get(slug);
     if (!factory) {
-      throw new Error(`Unknown strategy "${slug}". Use: jji, nfj`);
+      throw new Error(`Unknown strategy "${slug}". Use: jji, nfj, bdj`);
     }
     selected.push(factory());
   }
@@ -43,8 +44,11 @@ export function registerScrapeCommand(program: Command): void {
     .command('scrape')
     .description('Scrape job boards into raw JSON')
     .option('--out <dir>', 'Output directory for raw JSON (default: <repo>/data/raw)')
-    .option('--cache <dir>', 'Cache directory for HTML/API responses (default: <repo>/data/cache)')
-    .option('--only <slugs>', 'Comma-separated strategies to run (jji, nfj)')
+    .option(
+      '--cache <dir>',
+      'Cache base directory; each strategy uses <dir>/<slug>/ (default: <repo>/data/cache)',
+    )
+    .option('--only <slugs>', 'Comma-separated strategies to run (jji, nfj, bdj)')
     .action(async (opts: { out?: string; cache?: string; only?: string }) => {
       const root = getPeonRepoRoot();
       const outDir = path.resolve(opts.out ?? path.join(root, 'data', 'raw'));

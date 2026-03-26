@@ -1,5 +1,6 @@
 import * as jji from './jji/jji.js';
 import * as nfj from './nfj/nfj.js';
+import * as bdj from './bdj/bdj.js';
 import type { BaseStrategy, StrategyStats } from '../types/index.js';
 
 function createBaseStats(): StrategyStats {
@@ -22,10 +23,24 @@ export function jjiStrategy(): BaseStrategy {
     stats: createBaseStats(),
     ids,
     listingsGenerator: jji.listingsGenerator,
-    jobGenerator: (listing, logger) => jji.jobGenerator(listing, logger, ids),
+    jobGenerator: (listing, logger, cache) => jji.jobGenerator(listing, logger, ids, cache),
     jobToUrl: jji.jobToUrl,
     jobToId: jji.jobToId,
     extractContent: jji.extractContent,
+  };
+}
+
+export function bdjStrategy(): BaseStrategy {
+  const ids = new Set<string>();
+  return {
+    slug: bdj.slug,
+    stats: createBaseStats(),
+    ids,
+    listingsGenerator: bdj.listingsGenerator,
+    jobGenerator: (listing, logger, cache) => bdj.jobGenerator(listing, logger, ids, cache),
+    jobToUrl: bdj.jobToUrl,
+    jobToId: bdj.jobToId,
+    extractContent: bdj.extractContent,
   };
 }
 
@@ -36,11 +51,11 @@ export function nfjStrategy(): BaseStrategy {
     stats: createBaseStats(),
     ids,
     listingsGenerator: nfj.listingsGenerator,
-    jobGenerator: (listing, logger) => nfj.jobGenerator(listing, logger, ids),
+    jobGenerator: (listing, logger, cache) => nfj.jobGenerator(listing, logger, ids, cache),
     jobToUrl: nfj.jobToUrl,
     jobToId: nfj.jobToId,
     extractContent: nfj.extractContent,
   };
 }
 
-export const allStrategies = (): BaseStrategy[] => [jjiStrategy(), nfjStrategy()];
+export const allStrategies = (): BaseStrategy[] => [jjiStrategy(), nfjStrategy(), bdjStrategy()];

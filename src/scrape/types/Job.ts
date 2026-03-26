@@ -21,3 +21,8 @@ export interface NFJJob extends BaseJob {
   id: string;
   url: string;
 }
+
+export interface BDJJob extends BaseJob {
+  id: string;
+  url: string;
+}
