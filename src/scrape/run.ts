@@ -127,13 +127,21 @@ async function runStrategy(
                     .digest('hex'),
                 };
 
-                const filePath = path.join(
+                const htmlFilePath = path.join(
+                  outDir,
+                  strategy.slug,
+                  `${strategy.jobToId(job as BaseJob)}.html`,
+                );
+                await smartSave(htmlFilePath, extracted, false, logger);
+
+                const jsonFilePath = path.join(
                   outDir,
                   strategy.slug,
                   `${strategy.jobToId(job as BaseJob)}.json`,
                 );
-                const saveResult = await smartSave(filePath, processedJob, false, logger);
-                strategy.stats.writes += saveResult;
+                const jsonSaveResult = await smartSave(jsonFilePath, processedJob, false, logger);
+
+                strategy.stats.writes += jsonSaveResult;
               } catch (error) {
                 strategy.stats.errors += 1;
                 if (error instanceof HttpException) {

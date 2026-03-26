@@ -74,6 +74,88 @@ interface LdJobPosting {
   description?: string;
 }
 
+function escapeHtmlText(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Company profile / marketing copy lives in `div.content` blocks without `list--check` (outside accordions). */
+function extraMainColumnHtml($page: cheerio.CheerioAPI): string {
+  const chunks: string[] = [];
+  $page('main div.content').each((_, el) => {
+    const $el = $page(el);
+    if ($el.hasClass('list--check')) {
+      return;
+    }
+    const inner = $el.html();
+    if (typeof inner === 'string' && inner.trim().length > 0) {
+      chunks.push(inner);
+    }
+  });
+  return chunks.join('');
+}
+
+/** Salary, validity, and location appear in `<aside>` and are not part of accordion / JSON-LD description. */
+function sidebarMetadataHtml($page: cheerio.CheerioAPI): string {
+  const aside = $page('aside').first();
+  if (aside.length === 0) {
+    return '';
+  }
+  const parts: string[] = [];
+  const salary = aside.find('p.text-gray-300').first().text().replace(/\s+/g, ' ').trim();
+  if (salary.length > 0) {
+    parts.push(`<p>${escapeHtmlText(salary)}</p>`);
+  }
+  aside.find('p.text-gray-400').each((_, el) => {
+    const t = $page(el).text().replace(/\s+/g, ' ').trim();
+    if (t.startsWith('Valid for')) {
+      parts.push(`<p>${escapeHtmlText(t)}</p>`);
+    }
+  });
+  aside.find('div.flex').each((_, row) => {
+    const $row = $page(row);
+    const label = $row.find('p.text-gray-400').first().text().replace(/\s+/g, ' ').trim();
+    if (label === 'Location') {
+      const loc = $row.find('p.text-md').first().text().replace(/\s+/g, ' ').trim();
+      if (loc.length > 0) {
+        parts.push(`<p>${escapeHtmlText(loc)}</p>`);
+      }
+    }
+  });
+  if (parts.length === 0) {
+    return '';
+  }
+  return `<h2>${escapeHtmlText('Job listing')}</h2>${parts.join('')}`;
+}
+
+/** Bulldogjob splits the JD into multiple `#accordionGroup` blocks (h3 + section each). */
+function descriptionFromJobAccordions($page: cheerio.CheerioAPI): string | undefined {
+  const chunks: string[] = [];
+  $page('#accordionGroup').each((_, accordionEl) => {
+    const $accordion = $page(accordionEl);
+    $accordion.children('section').each((__, sec) => {
+      const $sec = $page(sec);
+      const $h3 = $sec.prev('h3');
+      if ($h3.length === 0) {
+        return;
+      }
+      const heading = $h3.find('button').first().text().replace(/\s+/g, ' ').trim();
+      const inner = $sec.find('div.content.list--check').first().html();
+      if (typeof inner !== 'string' || inner.trim().length === 0) {
+        return;
+      }
+      if (heading.length > 0) {
+        chunks.push(`<h2>${escapeHtmlText(heading)}</h2>${inner}`);
+      } else {
+        chunks.push(inner);
+      }
+    });
+  });
+  if (chunks.length === 0) {
+    return undefined;
+  }
+  return chunks.join('');
+}
+
 function stripAllAttributes($: cheerio.CheerioAPI): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cheerio each() binds loose Element
   $('*').each(function (this: any) {
@@ -149,31 +231,37 @@ export async function* jobGenerator(
 }
 
 export function extractContent(dirtyContent: string): string {
+  const $raw = cheerio.load(dirtyContent);
+
+  // Accordions must be read before `clean()`: it strips `<button>` (accordion titles live there).
+  let descriptionHtml: string | undefined = descriptionFromJobAccordions($raw);
+
   const content = clean(dirtyContent);
   assert(content.length > 0, 'extractContent: content must be a non empty string');
 
   const $page = cheerio.load(content);
-  let descriptionHtml: string | undefined;
 
-  // Prefer JSON-LD if it exists in the provided payload (some scrapers send full HTML).
-  for (const el of $page('script[type="application/ld+json"]').toArray()) {
-    const raw = $page(el).html();
-    if (!raw) continue;
+  // JSON-LD lives in `<head>` on full documents; `clean()` keeps only `<body>`, so use `$raw`.
+  if (!descriptionHtml) {
+    for (const el of $raw('script[type="application/ld+json"]').toArray()) {
+      const raw = $raw(el).html();
+      if (!raw) continue;
 
-    let data: LdJobPosting;
-    try {
-      data = JSON.parse(raw) as LdJobPosting;
-    } catch {
-      continue;
-    }
+      let data: LdJobPosting;
+      try {
+        data = JSON.parse(raw) as LdJobPosting;
+      } catch {
+        continue;
+      }
 
-    if (
-      data['@type'] === 'JobPosting' &&
-      typeof data.description === 'string' &&
-      data.description.length > 0
-    ) {
-      descriptionHtml = data.description;
-      break;
+      if (
+        data['@type'] === 'JobPosting' &&
+        typeof data.description === 'string' &&
+        data.description.length > 0
+      ) {
+        descriptionHtml = data.description;
+        break;
+      }
     }
   }
 
@@ -197,6 +285,11 @@ export function extractContent(dirtyContent: string): string {
     typeof descriptionHtml === 'string' && descriptionHtml.length > 0,
     'extractContent: JobPosting description not found (JSON-LD or SSR body container)',
   );
+
+  const appended = `${extraMainColumnHtml($raw)}${sidebarMetadataHtml($raw)}`;
+  if (appended.length > 0) {
+    descriptionHtml += appended;
+  }
 
   const $ = cheerio.load(descriptionHtml);
   stripAllAttributes($);
