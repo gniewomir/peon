@@ -5,12 +5,12 @@ import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import { loggerContext } from './lib/logger.js';
 import { browserContext } from './lib/browser.js';
-import { cacheContext } from './cacheContext.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { smartSave } from './lib/smart-save.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
 import type { BaseStrategy, ProcessedJob, Logger, BaseJob } from './types/index.js';
+import { cacheContext } from './lib/cache.js';
 
 class HttpException extends Error {}
 

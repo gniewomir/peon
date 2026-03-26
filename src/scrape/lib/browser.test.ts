@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { assertLaunchArgsSafe } from './launchArgs.js';
+
+import { assertLaunchArgsSafe } from './browser.js';
 
 describe('assertLaunchArgsSafe', () => {
   it('allows default hardening flags', () => {
