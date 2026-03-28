@@ -4,13 +4,13 @@ export function loggerContext(prefix: string): LoggerContext {
   const createLogger = (): Logger => {
     return {
       log: (message: string, ...rest: unknown[]): void => {
-        console.log(`inf-${prefix} ☕: ${message.trim()}`, ...rest);
+        console.log(`${prefix}-inf ☕: ${message.trim()}`, ...rest);
       },
       warn: (message: string, ...rest: unknown[]): void => {
-        console.warn(`wrn-${prefix} ⚠️: ${message.trim()}`, ...rest);
+        console.warn(`${prefix}-wrn ⚠️: ${message.trim()}`, ...rest);
       },
       error: (message: string, ...rest: unknown[]): void => {
-        console.error(`err-${prefix} ❌: ${message.trim()}`, ...rest);
+        console.error(`${prefix}-err ❌: ${message.trim()}`, ...rest);
       },
     };
   };
