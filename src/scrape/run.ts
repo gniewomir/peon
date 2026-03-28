@@ -6,7 +6,7 @@ import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
-import type { JobJson, Strategy, Logger } from './types/index.js';
+import type { JobJson, Logger, Strategy } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
 
 class HttpException extends Error {}
@@ -88,16 +88,17 @@ async function runStrategy(strategy: Strategy, outDir: string, cacheDir: string)
                   await new Promise((resolve) => setTimeout(resolve, wait));
                 }
 
-                const metadata = await strategy.saveRaw({
-                  outDir,
-                  cached: cache.cacheFilePath(cacheKey),
-                  job: job as JobJson,
-                  url,
-                  content,
-                  logger,
-                });
-                await strategy.saveClean(metadata);
-                await strategy.saveNormalized(metadata);
+                await strategy
+                  .saveRaw({
+                    outDir,
+                    cached: cache.cacheFilePath(cacheKey),
+                    job: job as JobJson,
+                    url,
+                    content,
+                    logger,
+                  })
+                  .then((metadata) => strategy.saveClean(metadata))
+                  .then((metadata) => strategy.saveNormalized(metadata));
 
                 strategy.stats.writes += 1;
               } catch (error) {
