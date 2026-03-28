@@ -6,18 +6,18 @@ import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import * as cheerio from 'cheerio';
 import { clean } from '../../lib/html.js';
 import type {
-  BaseJob,
+  JobJson,
   BaseStrategy,
   CacheOperations,
   Logger,
-  JJIJob,
+  JJIJobJson,
   Listing,
 } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 
 interface JJIApiResponse {
-  data: JJIJob[];
+  data: JJIJobJson[];
   meta?: {
     next?: {
       cursor: number | null;
@@ -43,7 +43,7 @@ export class JjiStrategy extends AbstractStrategy {
     listing: Listing,
     logger: Logger,
     cache: CacheOperations,
-  ): AsyncGenerator<BaseJob> {
+  ): AsyncGenerator<JobJson> {
     let currentCursor = 0;
     let pageNumber = 1;
 
@@ -105,13 +105,13 @@ export class JjiStrategy extends AbstractStrategy {
     }
   }
 
-  jobToUrl(job: BaseJob): string {
-    const j = job as JJIJob;
+  jobToUrl(job: JobJson): string {
+    const j = job as JJIJobJson;
     return `https://justjoin.it/job-offer/${j.slug}`;
   }
 
-  jobToId(job: BaseJob): string {
-    return (job as JJIJob).guid;
+  jobToId(job: JobJson): string {
+    return (job as JJIJobJson).guid;
   }
 
   extractContent(dirtyContent: string): string {

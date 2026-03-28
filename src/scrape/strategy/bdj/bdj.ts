@@ -3,9 +3,9 @@ import * as cheerio from 'cheerio';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import { clean } from '../../lib/html.js';
 import type {
-  BaseJob,
+  JobJson,
   BaseStrategy,
-  BDJJob,
+  BDJJobJson,
   CacheOperations,
   Logger,
   Listing,
@@ -60,10 +60,10 @@ export class BdjStrategy extends AbstractStrategy {
     }
   }
 
-  private static parseJobsFromListingHtml(html: string): BDJJob[] {
+  private static parseJobsFromListingHtml(html: string): BDJJobJson[] {
     const $ = cheerio.load(html);
     const seen = new Set<string>();
-    const jobs: BDJJob[] = [];
+    const jobs: BDJJobJson[] = [];
 
     $(BdjStrategy.JOB_CARD_SELECTOR).each((_, el) => {
       const href = $(el).attr('href');
@@ -196,7 +196,7 @@ export class BdjStrategy extends AbstractStrategy {
     listing: Listing,
     logger: Logger,
     cache: CacheOperations,
-  ): AsyncGenerator<BaseJob> {
+  ): AsyncGenerator<JobJson> {
     let page = 1;
 
     while (true) {
@@ -249,12 +249,12 @@ export class BdjStrategy extends AbstractStrategy {
     }
   }
 
-  jobToUrl(job: BaseJob): string {
-    return (job as BDJJob).url;
+  jobToUrl(job: JobJson): string {
+    return (job as BDJJobJson).url;
   }
 
-  jobToId(job: BaseJob): string {
-    return (job as BDJJob).id;
+  jobToId(job: JobJson): string {
+    return (job as BDJJobJson).id;
   }
 
   extractContent(dirtyContent: string): string {

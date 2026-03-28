@@ -1,24 +1,18 @@
-export interface BaseJob {
+export interface JobJson {
   [key: string]: unknown;
 }
 
-export interface ProcessedJob extends BaseJob {
-  strategy_id: string;
-  strategy_slug: string;
-  strategy_url: string;
-}
-
-export interface JJIJob extends BaseJob {
+export interface JJIJobJson extends JobJson {
   guid: string;
   slug: string;
 }
 
-export interface NFJJob extends BaseJob {
+export interface NFJJobJson extends JobJson {
   id: string;
   url: string;
 }
 
-export interface BDJJob extends BaseJob {
+export interface BDJJobJson extends JobJson {
   id: string;
   url: string;
 }

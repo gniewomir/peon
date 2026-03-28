@@ -1,10 +1,10 @@
 import type { Logger } from './Logger.js';
 import type { StrategyStats } from './Stats.js';
-import type { BaseJob } from './Job.js';
+import type { JobJson } from './Job.js';
 import type { Listing } from './Listing.js';
 import type { CacheOperations } from './Cache.js';
 
-export interface StrategySaveOptions<TJob extends BaseJob> {
+export interface StrategySaveOptions<TJob extends JobJson> {
   outDir: string;
   cached: string;
   job: TJob;
@@ -13,7 +13,7 @@ export interface StrategySaveOptions<TJob extends BaseJob> {
   logger: Logger;
 }
 
-export interface Strategy<TJob extends BaseJob = BaseJob> {
+export interface Strategy<TJob extends JobJson = JobJson> {
   slug: string;
   stats: StrategyStats;
   ids: Set<string>;
@@ -30,9 +30,9 @@ export interface BaseStrategy {
   stats: StrategyStats;
   ids: Set<string>;
   listingsGenerator(): AsyncGenerator<Listing>;
-  jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<BaseJob>;
-  jobToUrl(job: BaseJob): string;
-  jobToId(job: BaseJob): string;
+  jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<JobJson>;
+  jobToUrl(job: JobJson): string;
+  jobToId(job: JobJson): string;
   extractContent(content: string): string;
-  save(options: StrategySaveOptions<BaseJob>): Promise<number>;
+  save(options: StrategySaveOptions<JobJson>): Promise<number>;
 }

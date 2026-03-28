@@ -3,12 +3,12 @@ import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import * as cheerio from 'cheerio';
 import { clean } from '../../lib/html.js';
 import type {
-  BaseJob,
+  JobJson,
   BaseStrategy,
   CacheOperations,
   Logger,
   Listing,
-  NFJJob,
+  NFJJobJson,
 } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
@@ -20,7 +20,7 @@ interface NFJListing extends Listing {
 }
 
 interface NFJApiResponse {
-  postings: NFJJob[];
+  postings: NFJJobJson[];
   totalPages?: number;
 }
 
@@ -42,7 +42,7 @@ export class NfjStrategy extends AbstractStrategy {
     listing: Listing,
     logger: Logger,
     cache: CacheOperations,
-  ): AsyncGenerator<BaseJob> {
+  ): AsyncGenerator<JobJson> {
     const nfjListing = listing as NFJListing;
     let currentPage = 1;
     let totalPages: number | null = null;
@@ -129,13 +129,13 @@ export class NfjStrategy extends AbstractStrategy {
     }
   }
 
-  jobToUrl(job: BaseJob): string {
-    const j = job as NFJJob;
+  jobToUrl(job: JobJson): string {
+    const j = job as NFJJobJson;
     return `https://nofluffjobs.com/job/${String(j.url)}`;
   }
 
-  jobToId(job: BaseJob): string {
-    return (job as NFJJob).id;
+  jobToId(job: JobJson): string {
+    return (job as NFJJobJson).id;
   }
 
   extractContent(dirtyContent: string): string {

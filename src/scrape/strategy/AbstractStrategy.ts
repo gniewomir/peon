@@ -2,7 +2,7 @@ import * as path from 'node:path';
 import { convert } from '@kreuzberg/html-to-markdown-node';
 import { smartSave } from '../lib/smart-save.js';
 import type {
-  BaseJob,
+  JobJson,
   BaseStrategy,
   CacheOperations,
   Listing,
@@ -42,15 +42,15 @@ export abstract class AbstractStrategy implements BaseStrategy {
     listing: Listing,
     logger: Logger,
     cache: CacheOperations,
-  ): AsyncGenerator<BaseJob>;
+  ): AsyncGenerator<JobJson>;
 
-  abstract jobToUrl(job: BaseJob): string;
+  abstract jobToUrl(job: JobJson): string;
 
-  abstract jobToId(job: BaseJob): string;
+  abstract jobToId(job: JobJson): string;
 
   abstract extractContent(content: string): string;
 
-  async save(options: StrategySaveOptions<BaseJob>): Promise<number> {
+  async save(options: StrategySaveOptions<JobJson>): Promise<number> {
     const { outDir, cached, job, url, content, logger } = options;
     const jobId = this.jobToId(job);
     const jobDir = path.join(outDir, this.slug, jobId);

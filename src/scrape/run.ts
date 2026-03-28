@@ -6,7 +6,7 @@ import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
-import type { BaseJob, BaseStrategy, Logger } from './types/index.js';
+import type { JobJson, BaseStrategy, Logger } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
 
 class HttpException extends Error {}
@@ -34,7 +34,7 @@ async function runStrategy(
           for await (const job of strategy.jobGenerator(listing, logger, cache)) {
             await withBrowser(async (browser) => {
               try {
-                const url = strategy.jobToUrl(job as BaseJob);
+                const url = strategy.jobToUrl(job as JobJson);
                 const cacheKey = cache.weeklyCacheKey(url);
 
                 let content: string;
@@ -95,7 +95,7 @@ async function runStrategy(
                 const saveResult = await strategy.save({
                   outDir,
                   cached: cache.cacheFilePath(cacheKey),
-                  job: job as BaseJob,
+                  job: job as JobJson,
                   url,
                   content,
                   logger,
