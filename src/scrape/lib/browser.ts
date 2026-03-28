@@ -1,16 +1,6 @@
-import type { Browser } from 'puppeteer';
-import puppeteerVanilla from 'puppeteer';
-import { addExtra } from 'puppeteer-extra';
-import stealthPlugin from 'puppeteer-extra-plugin-stealth';
+import puppeteer, { type Browser } from 'puppeteer';
 import { proxyContext } from './proxy.js';
 import type { BrowserContext, Logger } from '../types/index.js';
-
-/** puppeteer-extra typings expect older PuppeteerNode; current puppeteer drops createBrowserFetcher. */
-const puppeteer = addExtra(puppeteerVanilla as never);
-
-const stealth = stealthPlugin();
-stealth.enabledEvasions = stealth.availableEvasions;
-puppeteer.use(stealth);
 
 const baseLaunchArgs = [
   '--disable-dev-shm-usage',
@@ -70,7 +60,7 @@ export function assertLaunchArgsSafe(args: string[]): void {
   );
 }
 
-/** Lets stealth/CDP finish tearing down pages before browser.close() to reduce TargetCloseError races. */
+/** Lets CDP finish tearing down pages before browser.close() to reduce TargetCloseError races. */
 const BROWSER_CLOSE_SETTLE_MS = 150;
 
 export async function browserContext(logger: Logger): Promise<BrowserContext> {
@@ -81,7 +71,7 @@ export async function browserContext(logger: Logger): Promise<BrowserContext> {
     for (const [proxyUrl, proxiedBrowser] of Object.entries(proxiedBrowsers)) {
       logger.log(` ⚠️  Closing headless browser for proxy server ${proxyUrl}`);
       const pages = await proxiedBrowser.pages();
-      await Promise.all(pages.map((p) => p.close().catch(() => {})));
+      await Promise.allSettled(pages.map((p) => p.close().catch(() => {})));
       await new Promise<void>((resolve) => {
         setTimeout(resolve, BROWSER_CLOSE_SETTLE_MS);
       });
