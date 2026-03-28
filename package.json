@@ -26,12 +26,16 @@
   "keywords": [],
   "license": "ISC",
   "dependencies": {
+    "@kreuzberg/html-to-markdown-node": "2.30.0",
     "cheerio": "^1.1.2",
     "commander": "^13.1.0",
     "dotenv": "^17.2.2",
     "puppeteer": "^24.17.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "optionalDependencies": {
+    "@kreuzberg/html-to-markdown-node-darwin-arm64": "2.30.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",

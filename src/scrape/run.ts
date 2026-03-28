@@ -1,6 +1,5 @@
 import 'dotenv/config';
 
-import assert from 'node:assert';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import { loggerContext } from './lib/logger.js';
@@ -9,8 +8,9 @@ import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { smartSave } from './lib/smart-save.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
-import type { BaseStrategy, ProcessedJob, Logger, BaseJob } from './types/index.js';
+import type { BaseJob, BaseStrategy, Logger, ProcessedJob } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
+import { convert } from '@kreuzberg/html-to-markdown-node';
 
 class HttpException extends Error {}
 
@@ -35,20 +35,6 @@ async function runStrategy(
             ` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`,
           );
           for await (const job of strategy.jobGenerator(listing, logger, cache)) {
-            assert(!('strategy_id' in job), 'strategy_id property already in job!');
-            assert(!('strategy_slug' in job), 'strategy_slug property already in job!');
-            assert(!('strategy_url' in job), 'strategy_url property already in job!');
-            assert(
-              !('strategy_html_content' in job),
-              'strategy_html_content property already in job!',
-            );
-            assert(
-              !('strategy_html_content_hash' in job),
-              'strategy_html_content_hash property already in job!',
-            );
-            assert(!('strategy_from_cache' in job), 'strategy_from_cache property already in job!');
-            assert(!('strategy_is_up' in job), 'strategy_is_up property already in job!');
-
             await withBrowser(async (browser) => {
               try {
                 const url = strategy.jobToUrl(job as BaseJob);
@@ -120,7 +106,6 @@ async function runStrategy(
                   strategy_slug: strategy.slug,
                   strategy_from_cache: fromCache,
                   strategy_is_up: fromCache ? null : true,
-                  strategy_html_content: extracted,
                   strategy_html_content_hash: crypto
                     .createHash('md5')
                     .update(extracted)
@@ -133,6 +118,26 @@ async function runStrategy(
                   `${strategy.jobToId(job as BaseJob)}.html`,
                 );
                 await smartSave(htmlFilePath, extracted, false, logger);
+
+                const mdFilePath = path.join(
+                  outDir,
+                  strategy.slug,
+                  `${strategy.jobToId(job as BaseJob)}.md`,
+                );
+
+                await smartSave(
+                  mdFilePath,
+                  convert(extracted, {
+                    // @ts-expect-error work around: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
+                    headingStyle: 'Atx',
+                    // @ts-expect-error work around: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
+                    codeBlockStyle: 'Backticks',
+                    wrap: true,
+                    wrapWidth: 100,
+                  }),
+                  false,
+                  logger,
+                );
 
                 const jsonFilePath = path.join(
                   outDir,

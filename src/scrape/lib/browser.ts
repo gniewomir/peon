@@ -70,6 +70,9 @@ export function assertLaunchArgsSafe(args: string[]): void {
   );
 }
 
+/** Lets stealth/CDP finish tearing down pages before browser.close() to reduce TargetCloseError races. */
+const BROWSER_CLOSE_SETTLE_MS = 150;
+
 export async function browserContext(logger: Logger): Promise<BrowserContext> {
   const { withProxy } = await proxyContext(logger);
   const proxiedBrowsers: Record<string, Browser> = {};
@@ -77,6 +80,11 @@ export async function browserContext(logger: Logger): Promise<BrowserContext> {
   const cleanup = async (): Promise<void> => {
     for (const [proxyUrl, proxiedBrowser] of Object.entries(proxiedBrowsers)) {
       logger.log(` ⚠️  Closing headless browser for proxy server ${proxyUrl}`);
+      const pages = await proxiedBrowser.pages();
+      await Promise.all(pages.map((p) => p.close().catch(() => {})));
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, BROWSER_CLOSE_SETTLE_MS);
+      });
       await proxiedBrowser.close();
       delete proxiedBrowsers[proxyUrl];
     }
