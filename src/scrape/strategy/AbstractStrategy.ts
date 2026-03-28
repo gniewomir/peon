@@ -37,7 +37,7 @@ export abstract class AbstractStrategy implements Strategy {
     this.ids = new Set<string>();
   }
 
-  abstract listingsGenerator(): AsyncGenerator<Listing>;
+  abstract jobListingsGenerator(): AsyncGenerator<Listing>;
 
   abstract jobGenerator(
     listing: Listing,
@@ -49,7 +49,7 @@ export abstract class AbstractStrategy implements Strategy {
 
   abstract jobToId(job: JobJson): string;
 
-  abstract extractContent(content: string): string;
+  abstract jobContent(content: string): string;
 
   async saveRaw(options: StrategySaveOptions): Promise<JobMetadata> {
     const { outDir, cached, job, url, content, logger } = options;
@@ -72,7 +72,7 @@ export abstract class AbstractStrategy implements Strategy {
 
     await fs.mkdir(jobDir, { recursive: true });
 
-    const extracted = this.extractContent(content);
+    const extracted = this.jobContent(content);
     const markdown = convert(extracted, {
       // @ts-expect-error work around: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
       headingStyle: 'Atx',

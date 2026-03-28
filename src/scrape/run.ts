@@ -23,7 +23,7 @@ async function runStrategy(strategy: Strategy, outDir: string, cacheDir: string)
     await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
       const { withBrowser, closeBrowser } = await browserContext(logger);
       try {
-        for await (const listing of strategy.listingsGenerator()) {
+        for await (const listing of strategy.jobListingsGenerator()) {
           logger.log(
             ` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`,
           );

@@ -24,7 +24,7 @@ export class NfjStrategy extends AbstractStrategy {
     super(NFJ_SLUG);
   }
 
-  async *listingsGenerator(): AsyncGenerator<Listing> {
+  async *jobListingsGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
     for (const listing of listings) {
       yield listing;
@@ -132,7 +132,7 @@ export class NfjStrategy extends AbstractStrategy {
     return job.id;
   }
 
-  extractContent(dirtyContent: string): string {
+  jobContent(dirtyContent: string): string {
     const content = clean(dirtyContent);
     assert(content.length > 0, 'extractContent: content must be a non empty string');
 

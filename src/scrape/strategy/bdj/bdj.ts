@@ -202,7 +202,7 @@ export class BdjStrategy extends AbstractStrategy {
     });
   }
 
-  async *listingsGenerator(): AsyncGenerator<Listing> {
+  async *jobListingsGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
     for (const listing of listings) {
       yield listing;
@@ -277,7 +277,7 @@ export class BdjStrategy extends AbstractStrategy {
     return job.id;
   }
 
-  extractContent(dirtyContent: string): string {
+  jobContent(dirtyContent: string): string {
     const $raw = cheerio.load(dirtyContent);
 
     // Accordions must be read before `clean()`: it strips `<button>` (accordion titles live there).

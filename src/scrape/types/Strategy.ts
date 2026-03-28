@@ -17,11 +17,11 @@ export interface Strategy {
   slug: string;
   stats: StrategyStats;
   ids: Set<string>;
-  listingsGenerator(): AsyncGenerator<Listing>;
+  jobListingsGenerator(): AsyncGenerator<Listing>;
   jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<JobJson>;
   jobToUrl(job: JobJson): string;
   jobToId(job: JobJson): string;
-  extractContent(content: string): string;
+  jobContent(content: string): string;
   saveRaw(options: StrategySaveOptions): Promise<JobMetadata>;
   saveClean(metadata: JobMetadata): Promise<JobMetadata>;
   saveNormalized(metadata: JobMetadata): Promise<JobMetadata>;

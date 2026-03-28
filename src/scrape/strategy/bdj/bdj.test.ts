@@ -13,7 +13,7 @@ describe('bdj extractContent', () => {
       join(__dirname, 'fixtures', '232726-senior-full-stack-developer-krakow-luxoft-dxc.html'),
       'utf8',
     );
-    const extracted = bdjStrategy().extractContent(html);
+    const extracted = bdjStrategy().jobContent(html);
     expect(extracted).toContain(
       'In our agile operating model, crews are aligned to larger products and services fulfilling client needs and encompass multiple autonomous pods.',
     );

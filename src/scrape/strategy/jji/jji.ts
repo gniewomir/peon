@@ -25,7 +25,7 @@ export class JjiStrategy extends AbstractStrategy {
     super(JJI_SLUG);
   }
 
-  async *listingsGenerator(): AsyncGenerator<Listing> {
+  async *jobListingsGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
     for (const listing of listings) {
       yield listing;
@@ -108,7 +108,7 @@ export class JjiStrategy extends AbstractStrategy {
     return job.guid;
   }
 
-  extractContent(dirtyContent: string): string {
+  jobContent(dirtyContent: string): string {
     const content = clean(dirtyContent);
     assert(content.length > 0, 'extractContent: content must be a non empty string');
 
