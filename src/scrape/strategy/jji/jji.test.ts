@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { extractContent } from './jji.js';
+import { jjiStrategy } from '../index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -12,7 +12,7 @@ const FIXTURE = '157b04b371c21a01b9a9a572d585.body.html';
 describe('jji extractContent', () => {
   it('preserves title, skill, location, and company from cached job page (Appliscale fixture)', () => {
     const html = readFileSync(join(__dirname, 'fixtures', FIXTURE), 'utf8');
-    const extracted = extractContent(html);
+    const extracted = jjiStrategy().extractContent(html);
     expect(extracted).toContain('Senior Backend Engineer (Node.js / AWS)');
     expect(extracted).toContain('JavaScript');
     expect(extracted).toContain('ul. profesora Michala Zyszkowskieg');
