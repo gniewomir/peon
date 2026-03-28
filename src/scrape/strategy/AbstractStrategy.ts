@@ -3,6 +3,7 @@ import { convert } from '@kreuzberg/html-to-markdown-node';
 import { smartSave } from '../lib/smart-save.js';
 import type {
   JobJson,
+  JobPageParser,
   Strategy,
   CacheOperations,
   Listing,
@@ -49,7 +50,11 @@ export abstract class AbstractStrategy implements Strategy {
 
   abstract jobToId(job: JobJson): string;
 
-  abstract jobContent(content: string): string;
+  protected abstract get jobPageParser(): JobPageParser;
+
+  jobContent(content: string): string {
+    return this.jobPageParser.extract(content);
+  }
 
   async saveRaw(options: StrategySaveOptions): Promise<JobMetadata> {
     const { outDir, cached, job, url, content, logger } = options;

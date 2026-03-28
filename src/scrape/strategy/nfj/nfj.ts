@@ -1,10 +1,10 @@
 import assert from 'node:assert';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
-import * as cheerio from 'cheerio';
-import { clean } from '../../lib/html.js';
 import type { JobJson, Strategy, CacheOperations, Logger, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
+import { NfjJobPageParser } from './job-page-parser.js';
+import { parseListingResponse } from './listing-parser.js';
 
 interface NFJListing extends Listing {
   meta: {
@@ -12,16 +12,17 @@ interface NFJListing extends Listing {
   };
 }
 
-interface NFJApiResponse {
-  postings: JobJson[];
-  totalPages?: number;
-}
-
 export const NFJ_SLUG = 'nfj';
 
 export class NfjStrategy extends AbstractStrategy {
+  private readonly nfjJobPageParser = new NfjJobPageParser();
+
   constructor() {
     super(NFJ_SLUG);
+  }
+
+  protected get jobPageParser(): NfjJobPageParser {
+    return this.nfjJobPageParser;
   }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
@@ -57,9 +58,9 @@ export class NfjStrategy extends AbstractStrategy {
 
       const cacheKey = cache.dailyCacheKey(url);
 
-      let content: NFJApiResponse;
+      let jsonText: string;
       if (cache.hasCacheKey(cacheKey, logger)) {
-        content = JSON.parse(await cache.readCache(cacheKey, logger)) as NFJApiResponse;
+        jsonText = await cache.readCache(cacheKey, logger);
       } else {
         const response = await fetch(url, {
           method: 'POST',
@@ -81,26 +82,40 @@ export class NfjStrategy extends AbstractStrategy {
           throw new Error(` ⚠️  HTTP ${response.status}: ${response.statusText}`);
         }
 
-        content = (await response.json()) as NFJApiResponse;
-        await cache.writeCache(cacheKey, JSON.stringify(content), logger);
+        const content = await response.json();
+        jsonText = JSON.stringify(content);
+        await cache.writeCache(cacheKey, jsonText, logger);
       }
 
-      if (!content || !content.postings || !Array.isArray(content.postings)) {
-        logger.log(' ⚠️  Invalid content structure or no data found', Object.keys(content));
+      const parsed = parseListingResponse(jsonText);
+      if (parsed === null) {
+        let keys: string[] = [];
+        try {
+          const o: unknown = JSON.parse(jsonText);
+          if (o && typeof o === 'object') {
+            keys = Object.keys(o as object);
+          }
+        } catch {
+          /* ignore */
+        }
+        logger.log(' ⚠️  Invalid content structure or no data found', keys);
         break;
       }
 
-      if (totalPages === null && content.totalPages !== undefined) {
-        totalPages = content.totalPages;
+      const { jobs, totalPages: responseTotalPages } = parsed;
+
+      if (totalPages === null && responseTotalPages !== undefined) {
+        totalPages = responseTotalPages;
       }
 
-      if (content.postings.length === 0) {
+      if (jobs.length === 0) {
         logger.log(' 👌 No more postings; NFJ API scraping complete.');
         break;
       }
 
-      while (content.postings.length > 0) {
-        const job = content.postings.pop();
+      const stack = [...jobs];
+      while (stack.length > 0) {
+        const job = stack.pop();
         if (job) {
           assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
           this.ids.add(job.id);
@@ -130,46 +145,6 @@ export class NfjStrategy extends AbstractStrategy {
   jobToId(job: JobJson): string {
     assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
     return job.id;
-  }
-
-  jobContent(dirtyContent: string): string {
-    const content = clean(dirtyContent);
-    assert(content.length > 0, 'extractContent: content must be a non empty string');
-
-    let $ = cheerio.load(content);
-    const payload = $('common-posting-content-wrapper').html();
-    assert(
-      typeof payload === 'string' && payload.length > 0,
-      'extractContent: payload must be a non empty string',
-    );
-
-    $ = cheerio.load(payload);
-    $('nfj-posting-similar').remove();
-    $('common-image-blur').remove();
-    $('common-posting-locations').remove();
-    $('popover-content').remove();
-
-    const validUntilText = $('common-posting-time-info').text();
-    const cleanValidUntilText = validUntilText.split('(')[0];
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cheerio each() binds loose Element
-    $('*').each(function (this: any) {
-      const $this = $(this);
-      const attrs = Object.keys(this.attribs || {});
-
-      attrs.forEach((attr) => {
-        $this.removeAttr(attr);
-      });
-
-      if ($this.text().trim() === '' && $this.children().length === 0) {
-        $this.remove();
-      }
-    });
-
-    return $.html()
-      .replaceAll('<!---->', '')
-      .replaceAll('<!--ngtns-->', '')
-      .replace(validUntilText, cleanValidUntilText);
   }
 }
 

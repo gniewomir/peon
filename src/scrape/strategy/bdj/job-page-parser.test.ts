@@ -2,17 +2,17 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { bdjStrategy } from '../index.js';
+import { BdjJobPageParser } from './job-page-parser.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-describe('bdj strategy jobContent (AbstractStrategy delegation)', () => {
+describe('BdjJobPageParser', () => {
   it('includes JD, company blurb, and sidebar metadata (Luxoft 232726 fixture)', () => {
     const html = readFileSync(
       join(__dirname, 'fixtures', '232726-senior-full-stack-developer-krakow-luxoft-dxc.html'),
       'utf8',
     );
-    const extracted = bdjStrategy().jobContent(html);
+    const extracted = new BdjJobPageParser().extract(html);
     expect(extracted).toContain(
       'In our agile operating model, crews are aligned to larger products and services fulfilling client needs and encompass multiple autonomous pods.',
     );

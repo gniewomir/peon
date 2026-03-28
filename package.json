@@ -19,7 +19,8 @@
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "overkill": "npm run lint && npm run format && npm run test && npm run build"
+    "overkill": "npm run lint && npm run format && npm run test && npm run build",
+    "scrape": "npm run peon scrape"
   },
   "engines": {
     "node": ">=22.0.0"
