@@ -18,14 +18,89 @@ interface LdJobPosting {
   description?: string;
 }
 
+/** Next.js listing SSR payload (`<script id="__NEXT_DATA__">`). */
+interface BdjListingNextData {
+  props?: {
+    pageProps?: {
+      jobs?: Array<{ id?: string }>;
+    };
+  };
+}
+
 export const BDJ_SLUG = 'bdj';
 
+const BDJ_ORIGIN = 'https://bulldogjob.pl';
+
+function normalizeBdjJobHref(href: string): string | null {
+  try {
+    const u = new URL(href, BDJ_ORIGIN);
+    if (!u.pathname.startsWith('/companies/jobs/')) {
+      return null;
+    }
+    const segment = u.pathname.replace(/^\/companies\/jobs\//, '');
+    if (segment.startsWith('s/') || !/^\d+-/.test(segment)) {
+      return null;
+    }
+    u.hash = '';
+    u.search = '';
+    let out = u.toString();
+    if (u.hostname === 'bulldogjob.com') {
+      out = out.replace('https://bulldogjob.com', BDJ_ORIGIN);
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/** Job links from a Bulldogjob listing page (`props.pageProps.jobs` in `__NEXT_DATA__`). */
+export function parseBdjListingJobsFromHtml(html: string): BDJJobJson[] {
+  const $ = cheerio.load(html);
+  const raw = $('#__NEXT_DATA__').html();
+  if (!raw) {
+    return [];
+  }
+
+  let data: BdjListingNextData;
+  try {
+    data = JSON.parse(raw) as BdjListingNextData;
+  } catch {
+    return [];
+  }
+
+  const rows = data.props?.pageProps?.jobs;
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const jobs: BDJJobJson[] = [];
+
+  for (const row of rows) {
+    const slug = row.id;
+    if (typeof slug !== 'string' || !/^\d+-/.test(slug)) {
+      continue;
+    }
+    const url = normalizeBdjJobHref(`/companies/jobs/${slug}`);
+    if (!url) {
+      continue;
+    }
+    const m = url.match(/\/companies\/jobs\/(\d+)-/);
+    if (!m) {
+      continue;
+    }
+    const id = m[1];
+    if (seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    jobs.push({ ...row, id, url });
+  }
+
+  return jobs;
+}
+
 export class BdjStrategy extends AbstractStrategy {
-  private static readonly ORIGIN = 'https://bulldogjob.pl';
-
-  /** SSR listing cards use this class; hrefs are canonical job URLs. */
-  private static readonly JOB_CARD_SELECTOR = 'a.JobListItem_item__fYh8y';
-
   constructor() {
     super(BDJ_SLUG);
   }
@@ -36,57 +111,6 @@ export class BdjStrategy extends AbstractStrategy {
       return baseListingUrl;
     }
     return `${baseListingUrl.replace(/\/$/, '')}/page,${page}`;
-  }
-
-  private static normalizeJobHref(href: string): string | null {
-    try {
-      const u = new URL(href, BdjStrategy.ORIGIN);
-      if (!u.pathname.startsWith('/companies/jobs/')) {
-        return null;
-      }
-      const segment = u.pathname.replace(/^\/companies\/jobs\//, '');
-      if (segment.startsWith('s/') || !/^\d+-/.test(segment)) {
-        return null;
-      }
-      u.hash = '';
-      u.search = '';
-      let out = u.toString();
-      if (u.hostname === 'bulldogjob.com') {
-        out = out.replace('https://bulldogjob.com', BdjStrategy.ORIGIN);
-      }
-      return out;
-    } catch {
-      return null;
-    }
-  }
-
-  private static parseJobsFromListingHtml(html: string): BDJJobJson[] {
-    const $ = cheerio.load(html);
-    const seen = new Set<string>();
-    const jobs: BDJJobJson[] = [];
-
-    $(BdjStrategy.JOB_CARD_SELECTOR).each((_, el) => {
-      const href = $(el).attr('href');
-      if (!href) {
-        return;
-      }
-      const url = BdjStrategy.normalizeJobHref(href);
-      if (!url) {
-        return;
-      }
-      const m = url.match(/\/companies\/jobs\/(\d+)-/);
-      if (!m) {
-        return;
-      }
-      const id = m[1];
-      if (seen.has(id)) {
-        return;
-      }
-      seen.add(id);
-      jobs.push({ id, url });
-    });
-
-    return jobs;
   }
 
   private static escapeHtmlText(text: string): string {
@@ -222,7 +246,7 @@ export class BdjStrategy extends AbstractStrategy {
         await cache.writeCache(cacheKey, html, logger);
       }
 
-      const jobs = BdjStrategy.parseJobsFromListingHtml(html);
+      const jobs = parseBdjListingJobsFromHtml(html);
       if (jobs.length === 0) {
         logger.log(' 👌 No job links on listing page; Bulldogjob listing complete.');
         break;
