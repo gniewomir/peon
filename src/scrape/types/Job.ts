@@ -24,7 +24,7 @@ export interface CleanJson {
   position: string;
   salary: string;
   contract_type: string;
-  contract_lenght: string;
+  contract_length: string;
   location: string;
   valid_until: string;
 }
