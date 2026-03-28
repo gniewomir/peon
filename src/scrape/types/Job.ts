@@ -8,13 +8,13 @@ export type JobMetadata = {
   job_url: string;
   job_staging_dir: string;
   files: {
-    cached: string;
-    meta: string;
-    json: string;
-    html: string;
-    md: string;
-    clean_json?: CleanJson;
-    normalized_json?: NormalizedJson;
+    job_cache: string;
+    job_meta: string;
+    listing_json: string;
+    job_html: string;
+    job_markdown: string;
+    job_clean_json?: CleanJson;
+    job_normalized_json?: NormalizedJson;
   };
 };
 

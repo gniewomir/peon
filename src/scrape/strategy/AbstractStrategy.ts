@@ -67,11 +67,11 @@ export abstract class AbstractStrategy implements Strategy {
       job_url: url,
       job_staging_dir: jobDir,
       files: {
-        cached,
-        meta: path.join(jobDir, `meta.json`),
-        json: path.join(jobDir, `${this.jobToId(job)}.json`),
-        html: path.join(jobDir, `${this.jobToId(job)}.html`),
-        md: path.join(jobDir, `${this.jobToId(job)}.md`),
+        job_cache: cached,
+        job_meta: path.join(jobDir, `meta.json`),
+        listing_json: path.join(jobDir, `listing.json`),
+        job_html: path.join(jobDir, `job.html`),
+        job_markdown: path.join(jobDir, `job.md`),
       },
     };
 
@@ -88,10 +88,10 @@ export abstract class AbstractStrategy implements Strategy {
     });
 
     await Promise.all([
-      smartSave(metadata.files.meta, metadata, false, logger),
-      smartSave(metadata.files.json, job, false, logger),
-      smartSave(metadata.files.html, extracted, false, logger),
-      smartSave(metadata.files.md, markdown, false, logger),
+      smartSave(metadata.files.job_meta, metadata, false, logger),
+      smartSave(metadata.files.listing_json, job, false, logger),
+      smartSave(metadata.files.job_html, extracted, false, logger),
+      smartSave(metadata.files.job_markdown, markdown, false, logger),
     ]);
 
     return metadata;
