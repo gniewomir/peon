@@ -4,6 +4,14 @@ import type { BaseJob } from './Job.js';
 import type { Listing } from './Listing.js';
 import type { CacheOperations } from './Cache.js';
 
+export interface StrategySaveOptions<TJob extends BaseJob> {
+  outDir: string;
+  job: TJob;
+  url: string;
+  content: string;
+  logger: Logger;
+}
+
 export interface Strategy<TJob extends BaseJob = BaseJob> {
   slug: string;
   stats: StrategyStats;
@@ -13,6 +21,7 @@ export interface Strategy<TJob extends BaseJob = BaseJob> {
   jobToUrl(job: TJob): string;
   jobToId(job: TJob): string;
   extractContent(content: string): string;
+  save(options: StrategySaveOptions<TJob>): Promise<number>;
 }
 
 export interface BaseStrategy {
@@ -24,4 +33,5 @@ export interface BaseStrategy {
   jobToUrl(job: BaseJob): string;
   jobToId(job: BaseJob): string;
   extractContent(content: string): string;
+  save(options: StrategySaveOptions<BaseJob>): Promise<number>;
 }

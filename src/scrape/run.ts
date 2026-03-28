@@ -5,11 +5,9 @@ import { loggerContext } from './lib/logger.js';
 import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
-import { smartSave } from './lib/smart-save.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
-import type { BaseJob, BaseStrategy, Logger, ProcessedJob } from './types/index.js';
+import type { BaseJob, BaseStrategy, Logger } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
-import { convert } from '@kreuzberg/html-to-markdown-node';
 
 class HttpException extends Error {}
 
@@ -94,49 +92,15 @@ async function runStrategy(
                   await new Promise((resolve) => setTimeout(resolve, wait));
                 }
 
-                const extracted = strategy.extractContent(content);
-                const processedJob: ProcessedJob = {
-                  ...job,
-                  strategy_id: strategy.jobToId(job as BaseJob),
-                  strategy_url: url,
-                  strategy_slug: strategy.slug,
-                };
-
-                const htmlFilePath = path.join(
+                const saveResult = await strategy.save({
                   outDir,
-                  strategy.slug,
-                  `${strategy.jobToId(job as BaseJob)}.html`,
-                );
-                await smartSave(htmlFilePath, extracted, false, logger);
-
-                const mdFilePath = path.join(
-                  outDir,
-                  strategy.slug,
-                  `${strategy.jobToId(job as BaseJob)}.md`,
-                );
-
-                await smartSave(
-                  mdFilePath,
-                  convert(extracted, {
-                    // @ts-expect-error work around: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
-                    headingStyle: 'Atx',
-                    // @ts-expect-error work around: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
-                    codeBlockStyle: 'Backticks',
-                    wrap: true,
-                    wrapWidth: 100,
-                  }),
-                  false,
+                  job: job as BaseJob,
+                  url,
+                  content,
                   logger,
-                );
+                });
 
-                const jsonFilePath = path.join(
-                  outDir,
-                  strategy.slug,
-                  `${strategy.jobToId(job as BaseJob)}.json`,
-                );
-                const jsonSaveResult = await smartSave(jsonFilePath, processedJob, false, logger);
-
-                strategy.stats.writes += jsonSaveResult;
+                strategy.stats.writes += saveResult;
               } catch (error) {
                 strategy.stats.errors += 1;
                 if (error instanceof HttpException) {

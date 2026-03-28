@@ -40,8 +40,8 @@ export function registerScrapeCommand(program: Command): void {
   const allowedOnly = [...strategyFactoryBySlug().keys()].join(', ');
   program
     .command('scrape')
-    .description('Scrape job boards into raw JSON')
-    .option('--out <dir>', 'Output directory for raw JSON (default: <repo>/data/raw)')
+    .description('Scrape job boards')
+    .option('--out <dir>', 'Output directory (default: <repo>/data/scrape)')
     .option(
       '--cache <dir>',
       'Cache base directory; each strategy uses <dir>/<slug>/ (default: <repo>/data/cache)',
@@ -49,7 +49,7 @@ export function registerScrapeCommand(program: Command): void {
     .option('--only <slugs>', `Comma-separated strategies to run (${allowedOnly})`)
     .action(async (opts: { out?: string; cache?: string; only?: string }) => {
       const root = getPeonRepoRoot();
-      const outDir = path.resolve(opts.out ?? path.join(root, 'data', 'raw'));
+      const outDir = path.resolve(opts.out ?? path.join(root, 'data', 'scrape'));
       const cacheDir = path.resolve(opts.cache ?? path.join(root, 'data', 'cache'));
       const strategies = selectStrategies(opts.only);
       await runScrape({ outDir, cacheDir, strategies });
