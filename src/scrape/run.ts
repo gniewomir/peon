@@ -94,6 +94,7 @@ async function runStrategy(
 
                 const saveResult = await strategy.save({
                   outDir,
+                  cached: cache.cacheFilePath(cacheKey),
                   job: job as BaseJob,
                   url,
                   content,

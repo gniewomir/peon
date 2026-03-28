@@ -1,6 +1,8 @@
 import type { Logger } from './Logger.js';
 
 export interface CacheOperations {
+  /** Absolute filesystem path for the cache file for this key. */
+  cacheFilePath(key: string): string;
   hasCacheKey(key: string, logger: Logger): boolean;
   readCache(key: string, logger: Logger): Promise<string>;
   writeCache(key: string, content: string, logger: Logger): Promise<number>;

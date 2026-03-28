@@ -6,6 +6,7 @@ import type { CacheOperations } from './Cache.js';
 
 export interface StrategySaveOptions<TJob extends BaseJob> {
   outDir: string;
+  cached: string;
   job: TJob;
   url: string;
   content: string;

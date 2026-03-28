@@ -51,7 +51,7 @@ export abstract class AbstractStrategy implements BaseStrategy {
   abstract extractContent(content: string): string;
 
   async save(options: StrategySaveOptions<BaseJob>): Promise<number> {
-    const { outDir, job, url, content, logger } = options;
+    const { outDir, cached, job, url, content, logger } = options;
     const jobId = this.jobToId(job);
     const jobDir = path.join(outDir, this.slug, jobId);
 
@@ -60,6 +60,7 @@ export abstract class AbstractStrategy implements BaseStrategy {
       strategy_url: url,
       strategy_slug: this.slug,
       files: {
+        cached,
         meta: path.join(jobDir, `meta.json`),
         json: path.join(jobDir, `${this.jobToId(job)}.json`),
         html: path.join(jobDir, `${this.jobToId(job)}.html`),

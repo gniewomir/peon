@@ -40,6 +40,10 @@ export function createCacheOperations(root: string): CacheOperations {
   const basePath = path.resolve(root);
 
   return {
+    cacheFilePath(key: string): string {
+      return path.resolve(cacheKeyToPath(key, basePath));
+    },
+
     hasCacheKey(key: string, logger: Logger): boolean {
       const cachePath = cacheKeyToPath(key, basePath);
       if (fsSync.existsSync(cachePath)) {
