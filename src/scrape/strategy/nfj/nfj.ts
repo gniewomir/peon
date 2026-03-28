@@ -2,14 +2,7 @@ import assert from 'node:assert';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import * as cheerio from 'cheerio';
 import { clean } from '../../lib/html.js';
-import type {
-  JobJson,
-  BaseStrategy,
-  CacheOperations,
-  Logger,
-  Listing,
-  NFJJobJson,
-} from '../../types/index.js';
+import type { JobJson, BaseStrategy, CacheOperations, Logger, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 
@@ -20,7 +13,7 @@ interface NFJListing extends Listing {
 }
 
 interface NFJApiResponse {
-  postings: NFJJobJson[];
+  postings: JobJson[];
   totalPages?: number;
 }
 
@@ -109,7 +102,7 @@ export class NfjStrategy extends AbstractStrategy {
       while (content.postings.length > 0) {
         const job = content.postings.pop();
         if (job) {
-          assert('id' in job, ' ⚠️  No id in NFJ job');
+          assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
           this.ids.add(job.id);
           yield job;
         }
@@ -130,12 +123,13 @@ export class NfjStrategy extends AbstractStrategy {
   }
 
   jobToUrl(job: JobJson): string {
-    const j = job as NFJJobJson;
-    return `https://nofluffjobs.com/job/${String(j.url)}`;
+    assert('url' in job && typeof job.url === 'string', ' ⚠️  No url in NFJ job');
+    return `https://nofluffjobs.com/job/${job.url}`;
   }
 
   jobToId(job: JobJson): string {
-    return (job as NFJJobJson).id;
+    assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
+    return job.id;
   }
 
   extractContent(dirtyContent: string): string {

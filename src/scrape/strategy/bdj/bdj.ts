@@ -2,14 +2,7 @@ import assert from 'node:assert';
 import * as cheerio from 'cheerio';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import { clean } from '../../lib/html.js';
-import type {
-  JobJson,
-  BaseStrategy,
-  BDJJobJson,
-  CacheOperations,
-  Logger,
-  Listing,
-} from '../../types/index.js';
+import type { JobJson, BaseStrategy, CacheOperations, Logger, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 
@@ -54,7 +47,7 @@ function normalizeBdjJobHref(href: string): string | null {
 }
 
 /** Job links from a Bulldogjob listing page (`props.pageProps.jobs` in `__NEXT_DATA__`). */
-export function parseBdjListingJobsFromHtml(html: string): BDJJobJson[] {
+export function parseBdjListingJobsFromHtml(html: string): JobJson[] {
   const $ = cheerio.load(html);
   const raw = $('#__NEXT_DATA__').html();
   if (!raw) {
@@ -74,7 +67,7 @@ export function parseBdjListingJobsFromHtml(html: string): BDJJobJson[] {
   }
 
   const seen = new Set<string>();
-  const jobs: BDJJobJson[] = [];
+  const jobs: JobJson[] = [];
 
   for (const row of rows) {
     const slug = row.id;
@@ -254,6 +247,7 @@ export class BdjStrategy extends AbstractStrategy {
 
       let yielded = 0;
       for (const job of jobs) {
+        assert('id' in job && typeof job.id === 'string');
         if (this.ids.has(job.id)) {
           continue;
         }
@@ -274,11 +268,13 @@ export class BdjStrategy extends AbstractStrategy {
   }
 
   jobToUrl(job: JobJson): string {
-    return (job as BDJJobJson).url;
+    assert('url' in job && typeof job.url === 'string');
+    return job.url;
   }
 
   jobToId(job: JobJson): string {
-    return (job as BDJJobJson).id;
+    assert('id' in job && typeof job.id === 'string');
+    return job.id;
   }
 
   extractContent(dirtyContent: string): string {

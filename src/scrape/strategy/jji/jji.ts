@@ -5,19 +5,12 @@ import assert from 'node:assert';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import * as cheerio from 'cheerio';
 import { clean } from '../../lib/html.js';
-import type {
-  JobJson,
-  BaseStrategy,
-  CacheOperations,
-  Logger,
-  JJIJobJson,
-  Listing,
-} from '../../types/index.js';
+import type { JobJson, BaseStrategy, CacheOperations, Logger, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 
 interface JJIApiResponse {
-  data: JJIJobJson[];
+  data: JobJson[];
   meta?: {
     next?: {
       cursor: number | null;
@@ -90,7 +83,7 @@ export class JjiStrategy extends AbstractStrategy {
       while (content.data.length > 0) {
         const job = content.data.pop();
         if (job) {
-          assert('guid' in job, ' ⚠️  No guid in JJI job');
+          assert('guid' in job && typeof job.guid === 'string', ' ⚠️  No guid in JJI job');
           this.ids.add(job.guid);
           yield job;
         }
@@ -106,12 +99,13 @@ export class JjiStrategy extends AbstractStrategy {
   }
 
   jobToUrl(job: JobJson): string {
-    const j = job as JJIJobJson;
-    return `https://justjoin.it/job-offer/${j.slug}`;
+    assert('slug' in job && typeof job.slug === 'string', ' ⚠️  No slug in JJI job');
+    return `https://justjoin.it/job-offer/${job.slug}`;
   }
 
   jobToId(job: JobJson): string {
-    return (job as JJIJobJson).guid;
+    assert('guid' in job && typeof job.guid === 'string', ' ⚠️  No guid in JJI job');
+    return job.guid;
   }
 
   extractContent(dirtyContent: string): string {
