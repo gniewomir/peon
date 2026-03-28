@@ -11,6 +11,7 @@ import type {
   StrategyStats,
 } from '../types/index.js';
 import fs from 'node:fs/promises';
+import type { JobMetadata } from '../types/Job.js';
 
 function createBaseStats(): StrategyStats {
   return {
@@ -50,12 +51,12 @@ export abstract class AbstractStrategy implements BaseStrategy {
 
   abstract extractContent(content: string): string;
 
-  async save(options: StrategySaveOptions<JobJson>): Promise<number> {
+  async save(options: StrategySaveOptions): Promise<number> {
     const { outDir, cached, job, url, content, logger } = options;
     const jobId = this.jobToId(job);
     const jobDir = path.join(outDir, this.slug, jobId);
 
-    const metadata = {
+    const metadata: JobMetadata = {
       strategy_id: this.jobToId(job),
       strategy_url: url,
       strategy_slug: this.slug,

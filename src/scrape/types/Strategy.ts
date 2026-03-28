@@ -4,25 +4,13 @@ import type { JobJson } from './Job.js';
 import type { Listing } from './Listing.js';
 import type { CacheOperations } from './Cache.js';
 
-export interface StrategySaveOptions<TJob extends JobJson> {
+export interface StrategySaveOptions {
   outDir: string;
   cached: string;
-  job: TJob;
+  job: JobJson;
   url: string;
   content: string;
   logger: Logger;
-}
-
-export interface Strategy<TJob extends JobJson = JobJson> {
-  slug: string;
-  stats: StrategyStats;
-  ids: Set<string>;
-  listingsGenerator(): AsyncGenerator<Listing>;
-  jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<TJob>;
-  jobToUrl(job: TJob): string;
-  jobToId(job: TJob): string;
-  extractContent(content: string): string;
-  save(options: StrategySaveOptions<TJob>): Promise<number>;
 }
 
 export interface BaseStrategy {
@@ -34,5 +22,5 @@ export interface BaseStrategy {
   jobToUrl(job: JobJson): string;
   jobToId(job: JobJson): string;
   extractContent(content: string): string;
-  save(options: StrategySaveOptions<JobJson>): Promise<number>;
+  save(options: StrategySaveOptions): Promise<number>;
 }
