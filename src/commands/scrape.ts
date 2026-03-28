@@ -38,7 +38,7 @@ function selectStrategies(only: string | undefined): BaseStrategy[] {
 
 export function registerScrapeCommand(program: Command): void {
   const allowedOnly = [...strategyFactoryBySlug().keys()].join(', ');
-  const defaultDir = 'raw';
+  const defaultDir = 'staging';
   program
     .command('scrape')
     .description('Scrape job boards')
