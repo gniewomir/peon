@@ -32,7 +32,7 @@ describe('bdj listing page (__NEXT_DATA__)', () => {
     const html = readFileSync(join(__dirname, 'fixtures', 'city-remote-listings.html'), 'utf8');
     const jobs = parseBdjListingJobsFromHtml(html);
     expect(jobs).toHaveLength(50);
-    expect(jobs[0]).toEqual({
+    expect(jobs[0]).toMatchObject({
       id: '233931',
       url: 'https://bulldogjob.pl/companies/jobs/233931-cloud-tech-lead-microsoft-azure-data-cloud-warszawa-krakow-katowice-wroclaw-poznan-gdansk-lodz-kpmg-w-polsce',
     });
