@@ -3,9 +3,10 @@ export interface JobJson {
 }
 
 export type JobMetadata = {
-  strategy_id: string;
-  strategy_url: string;
   strategy_slug: string;
+  job_id: string;
+  job_url: string;
+  job_staging_dir: string;
   files: {
     cached: string;
     meta: string;

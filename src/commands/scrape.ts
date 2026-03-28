@@ -3,7 +3,7 @@ import type { Command } from 'commander';
 import { getPeonRepoRoot } from '../scrape/repoRoot.js';
 import { runScrape } from '../scrape/run.js';
 import { allStrategies, strategyFactoryBySlug } from '../scrape/strategy/index.js';
-import type { BaseStrategy } from '../scrape/types/index.js';
+import type { Strategy } from '../scrape/types/index.js';
 
 function parseOnlySlugs(only: string | undefined): Set<string> | null {
   if (only === undefined || only.trim() === '') {
@@ -17,7 +17,7 @@ function parseOnlySlugs(only: string | undefined): Set<string> | null {
   );
 }
 
-function selectStrategies(only: string | undefined): BaseStrategy[] {
+function selectStrategies(only: string | undefined): Strategy[] {
   const wanted = parseOnlySlugs(only);
   const all = allStrategies();
   if (!wanted) {
@@ -25,7 +25,7 @@ function selectStrategies(only: string | undefined): BaseStrategy[] {
   }
   const bySlug = strategyFactoryBySlug();
   const allowedSlugs = [...bySlug.keys()].join(', ');
-  const selected: BaseStrategy[] = [];
+  const selected: Strategy[] = [];
   for (const slug of wanted) {
     const factory = bySlug.get(slug);
     if (!factory) {

@@ -3,7 +3,7 @@ import { convert } from '@kreuzberg/html-to-markdown-node';
 import { smartSave } from '../lib/smart-save.js';
 import type {
   JobJson,
-  BaseStrategy,
+  Strategy,
   CacheOperations,
   Listing,
   Logger,
@@ -26,7 +26,7 @@ function createBaseStats(): StrategyStats {
   };
 }
 
-export abstract class AbstractStrategy implements BaseStrategy {
+export abstract class AbstractStrategy implements Strategy {
   readonly slug: string;
   stats: StrategyStats;
   ids: Set<string>;
@@ -51,15 +51,16 @@ export abstract class AbstractStrategy implements BaseStrategy {
 
   abstract extractContent(content: string): string;
 
-  async save(options: StrategySaveOptions): Promise<number> {
+  async saveRaw(options: StrategySaveOptions): Promise<JobMetadata> {
     const { outDir, cached, job, url, content, logger } = options;
     const jobId = this.jobToId(job);
     const jobDir = path.join(outDir, this.slug, jobId);
 
     const metadata: JobMetadata = {
-      strategy_id: this.jobToId(job),
-      strategy_url: url,
       strategy_slug: this.slug,
+      job_id: this.jobToId(job),
+      job_url: url,
+      job_staging_dir: jobDir,
       files: {
         cached,
         meta: path.join(jobDir, `meta.json`),
@@ -88,6 +89,20 @@ export abstract class AbstractStrategy implements BaseStrategy {
       smartSave(metadata.files.md, markdown, false, logger),
     ]);
 
-    return 1;
+    return metadata;
+  }
+
+  /**
+   * TODO: placeholder
+   */
+  async saveClean(metadata: JobMetadata): Promise<JobMetadata> {
+    return metadata;
+  }
+
+  /**
+   * TODO: placeholder
+   */
+  async saveNormalized(metadata: JobMetadata): Promise<JobMetadata> {
+    return metadata;
   }
 }

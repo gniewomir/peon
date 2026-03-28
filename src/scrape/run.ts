@@ -6,7 +6,7 @@ import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
-import type { JobJson, BaseStrategy, Logger } from './types/index.js';
+import type { JobJson, Strategy, Logger } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
 
 class HttpException extends Error {}
@@ -14,14 +14,10 @@ class HttpException extends Error {}
 export interface RunScrapeOptions {
   outDir: string;
   cacheDir: string;
-  strategies: BaseStrategy[];
+  strategies: Strategy[];
 }
 
-async function runStrategy(
-  strategy: BaseStrategy,
-  outDir: string,
-  cacheDir: string,
-): Promise<void> {
+async function runStrategy(strategy: Strategy, outDir: string, cacheDir: string): Promise<void> {
   const { withLogger } = loggerContext(strategy.slug);
   await withLogger(async (logger: Logger) => {
     await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
@@ -92,7 +88,7 @@ async function runStrategy(
                   await new Promise((resolve) => setTimeout(resolve, wait));
                 }
 
-                const saveResult = await strategy.save({
+                const metadata = await strategy.saveRaw({
                   outDir,
                   cached: cache.cacheFilePath(cacheKey),
                   job: job as JobJson,
@@ -100,8 +96,10 @@ async function runStrategy(
                   content,
                   logger,
                 });
+                await strategy.saveClean(metadata);
+                await strategy.saveNormalized(metadata);
 
-                strategy.stats.writes += saveResult;
+                strategy.stats.writes += 1;
               } catch (error) {
                 strategy.stats.errors += 1;
                 if (error instanceof HttpException) {

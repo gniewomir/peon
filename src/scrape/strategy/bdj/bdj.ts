@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import * as cheerio from 'cheerio';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import { clean } from '../../lib/html.js';
-import type { JobJson, BaseStrategy, CacheOperations, Logger, Listing } from '../../types/index.js';
+import type { JobJson, Strategy, CacheOperations, Logger, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 
@@ -345,6 +345,6 @@ export class BdjStrategy extends AbstractStrategy {
   }
 }
 
-export function bdjStrategy(): BaseStrategy {
+export function bdjStrategy(): Strategy {
   return new BdjStrategy();
 }

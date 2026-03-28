@@ -1,6 +1,6 @@
 import type { Logger } from './Logger.js';
 import type { StrategyStats } from './Stats.js';
-import type { JobJson } from './Job.js';
+import type { JobJson, JobMetadata } from './Job.js';
 import type { Listing } from './Listing.js';
 import type { CacheOperations } from './Cache.js';
 
@@ -13,7 +13,7 @@ export interface StrategySaveOptions {
   logger: Logger;
 }
 
-export interface BaseStrategy {
+export interface Strategy {
   slug: string;
   stats: StrategyStats;
   ids: Set<string>;
@@ -22,5 +22,7 @@ export interface BaseStrategy {
   jobToUrl(job: JobJson): string;
   jobToId(job: JobJson): string;
   extractContent(content: string): string;
-  save(options: StrategySaveOptions): Promise<number>;
+  saveRaw(options: StrategySaveOptions): Promise<JobMetadata>;
+  saveClean(metadata: JobMetadata): Promise<JobMetadata>;
+  saveNormalized(metadata: JobMetadata): Promise<JobMetadata>;
 }
