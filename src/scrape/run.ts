@@ -1,7 +1,6 @@
 import 'dotenv/config';
 
 import * as path from 'node:path';
-import * as crypto from 'node:crypto';
 import { loggerContext } from './lib/logger.js';
 import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
@@ -41,12 +40,10 @@ async function runStrategy(
                 const cacheKey = cache.weeklyCacheKey(url);
 
                 let content: string;
-                let fromCache: boolean;
 
                 if (cache.hasCacheKey(cacheKey, logger)) {
                   content = await cache.readCache(cacheKey, logger);
                   strategy.stats.cache_hit += 1;
-                  fromCache = true;
                 } else {
                   logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
                   const page = await browser.newPage();
@@ -91,7 +88,6 @@ async function runStrategy(
 
                   strategy.stats.cache_writes += await cache.writeCache(cacheKey, content, logger);
                   strategy.stats.cache_miss += 1;
-                  fromCache = false;
 
                   const wait = getRandomNumber(1000, 5000);
                   logger.log(` 🕒 Waiting for ${Math.round(wait / 1000)}s`);
@@ -104,12 +100,6 @@ async function runStrategy(
                   strategy_id: strategy.jobToId(job as BaseJob),
                   strategy_url: url,
                   strategy_slug: strategy.slug,
-                  strategy_from_cache: fromCache,
-                  strategy_is_up: fromCache ? null : true,
-                  strategy_html_content_hash: crypto
-                    .createHash('md5')
-                    .update(extracted)
-                    .digest('hex'),
                 };
 
                 const htmlFilePath = path.join(
