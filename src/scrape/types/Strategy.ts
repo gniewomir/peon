@@ -22,7 +22,5 @@ export interface Strategy {
   jobToUrl(job: JobJson): string;
   jobToId(job: JobJson): string;
   jobContent(content: string): string;
-  saveRaw(options: StrategySaveOptions): Promise<JobMetadata>;
-  saveClean(metadata: JobMetadata): Promise<JobMetadata>;
-  saveNormalized(metadata: JobMetadata): Promise<JobMetadata>;
+  save(options: StrategySaveOptions): Promise<JobMetadata>;
 }

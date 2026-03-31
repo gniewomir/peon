@@ -5,6 +5,8 @@ import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { NfjJobPageParser } from './job-page-parser.js';
 import { parseListingResponse } from './listing-parser.js';
+import type { JobMetadata } from '../../types/Job.js';
+import { NfjCleaner } from './nfj.cleaner.js';
 
 interface NFJListing extends Listing {
   meta: {
@@ -18,7 +20,7 @@ export class NfjStrategy extends AbstractStrategy {
   private readonly nfjJobPageParser = new NfjJobPageParser();
 
   constructor() {
-    super(NFJ_SLUG);
+    super(NFJ_SLUG, new NfjCleaner());
   }
 
   protected get jobPageParser(): NfjJobPageParser {
@@ -145,6 +147,20 @@ export class NfjStrategy extends AbstractStrategy {
   jobToId(job: JobJson): string {
     assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
     return job.id;
+  }
+
+  async saveClean(metadata: JobMetadata): Promise<JobMetadata> {
+    return {
+      ...metadata,
+      files: {
+        ...metadata.files,
+        job_clean_json: '',
+      },
+    };
+  }
+
+  async saveNormalized(metadata: JobMetadata): Promise<JobMetadata> {
+    return metadata;
   }
 }
 

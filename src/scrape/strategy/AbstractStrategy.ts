@@ -13,6 +13,7 @@ import type {
 } from '../types/index.js';
 import fs from 'node:fs/promises';
 import type { JobMetadata } from '../types/Job.js';
+import type { AbstractCleaner } from './AbstractCleaner.js';
 
 function createBaseStats(): StrategyStats {
   return {
@@ -32,10 +33,24 @@ export abstract class AbstractStrategy implements Strategy {
   stats: StrategyStats;
   ids: Set<string>;
 
-  protected constructor(slug: string) {
+  protected constructor(
+    slug: string,
+    protected readonly cleaner: AbstractCleaner,
+  ) {
     this.slug = slug;
     this.stats = createBaseStats();
     this.ids = new Set<string>();
+  }
+
+  protected async readJsonFile<T extends object = Record<string, unknown>>(
+    filePath: string,
+  ): Promise<T> {
+    try {
+      const raw = await fs.readFile(filePath, 'utf-8');
+      return JSON.parse(raw) as T;
+    } catch (cause) {
+      throw new Error(`Failed to read/parse JSON file at "${filePath}"`, { cause });
+    }
   }
 
   abstract jobListingsGenerator(): AsyncGenerator<Listing>;
@@ -56,7 +71,7 @@ export abstract class AbstractStrategy implements Strategy {
     return this.jobPageParser.extract(content);
   }
 
-  async saveRaw(options: StrategySaveOptions): Promise<JobMetadata> {
+  async save(options: StrategySaveOptions): Promise<JobMetadata> {
     const { outDir, cached, job, url, content, logger } = options;
     const jobId = this.jobToId(job);
     const jobDir = path.join(outDir, this.slug, jobId);
@@ -72,6 +87,8 @@ export abstract class AbstractStrategy implements Strategy {
         listing_json: path.join(jobDir, `listing.json`),
         job_html: path.join(jobDir, `job.html`),
         job_markdown: path.join(jobDir, `job.md`),
+        job_clean_json: path.join(jobDir, `job.clean.json`),
+        job_normalized_json: path.join(jobDir, `job.normalized.json`),
       },
     };
 
@@ -87,27 +104,17 @@ export abstract class AbstractStrategy implements Strategy {
       wrapWidth: 100,
     });
 
-    await Promise.all([
+    const clean = this.cleaner.clean(job, metadata);
+    const normalized = {};
+    await Promise.allSettled([
       smartSave(metadata.files.job_meta, metadata, false, logger),
       smartSave(metadata.files.listing_json, job, false, logger),
       smartSave(metadata.files.job_html, extracted, false, logger),
       smartSave(metadata.files.job_markdown, markdown, false, logger),
+      smartSave(metadata.files.job_clean_json, clean, false, logger),
+      smartSave(metadata.files.job_normalized_json, normalized, false, logger),
     ]);
 
-    return metadata;
-  }
-
-  /**
-   * TODO: placeholder
-   */
-  async saveClean(metadata: JobMetadata): Promise<JobMetadata> {
-    return metadata;
-  }
-
-  /**
-   * TODO: placeholder
-   */
-  async saveNormalized(metadata: JobMetadata): Promise<JobMetadata> {
     return metadata;
   }
 }

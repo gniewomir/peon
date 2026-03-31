@@ -1,10 +1,11 @@
 import assert from 'node:assert';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
-import type { JobJson, Strategy, CacheOperations, Logger, Listing } from '../../types/index.js';
+import type { CacheOperations, JobJson, Listing, Logger, Strategy } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { JjiJobPageParser } from './job-page-parser.js';
 import { parseListingResponse } from './listing-parser.js';
+import { JjiCleaner } from './jji.cleaner.js';
 
 export const JJI_SLUG = 'jji';
 
@@ -12,7 +13,7 @@ export class JjiStrategy extends AbstractStrategy {
   private readonly jjiJobPageParser = new JjiJobPageParser();
 
   constructor() {
-    super(JJI_SLUG);
+    super(JJI_SLUG, new JjiCleaner());
   }
 
   protected get jobPageParser(): JjiJobPageParser {

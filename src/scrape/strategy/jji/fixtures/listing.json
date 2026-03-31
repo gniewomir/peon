@@ -1,0 +1,85 @@
+{
+  "guid": "6ebad053-9311-4c6a-b19b-3094dd7ff6f4",
+  "slug": "link-group-react-native-developer-warszawa-javascript-103e5728",
+  "title": "React Native Developer",
+  "requiredSkills": [
+    "React Native",
+    "SASS",
+    "HTML",
+    "React",
+    "CSS",
+    "SQL",
+    "JavaScript",
+    "TypeScript",
+    "UX/UI"
+  ],
+  "niceToHaveSkills": null,
+  "workplaceType": "remote",
+  "workingTime": "full_time",
+  "experienceLevel": "senior",
+  "employmentTypes": [
+    {
+      "from": 110,
+      "to": 140,
+      "currency": "pln",
+      "type": "b2b",
+      "unit": "hour",
+      "gross": false,
+      "fromChf": 23.5224,
+      "fromEur": 25.66113,
+      "fromGbp": 22.30591,
+      "fromPln": 110,
+      "fromUsd": 29.4481,
+      "toChf": 29.9376,
+      "toEur": 32.65962,
+      "toGbp": 28.38934,
+      "toPln": 140,
+      "toUsd": 37.4794
+    }
+  ],
+  "categoryId": 1,
+  "multilocation": [
+    {
+      "city": "Warszawa",
+      "slug": "link-group-react-native-developer-warszawa-javascript-103e5728",
+      "street": "-",
+      "latitude": 52.2296756,
+      "longitude": 21.0122287
+    },
+    {
+      "city": "Wrocław",
+      "slug": "link-group-react-native-developer-wroclaw-javascript-4d279328",
+      "street": "-",
+      "latitude": 51.1092948,
+      "longitude": 17.0386019
+    },
+    {
+      "city": "Kraków",
+      "slug": "link-group-react-native-developer-krakow-javascript-a56581ba",
+      "street": "-",
+      "latitude": 50.0646501,
+      "longitude": 19.9449799
+    }
+  ],
+  "city": "Warszawa",
+  "street": "-",
+  "latitude": "52.2296756",
+  "longitude": "21.0122287",
+  "remoteInterview": false,
+  "companyName": "Link Group",
+  "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/Z_sxsKj7-tHd-9Jn_bIBXrD4hUKXAtL-snUIzjPa1No/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/b8ec131a1074810a98be228aa03cc01502dd077b.jpg",
+  "publishedAt": "2026-03-29T09:00:08.514Z",
+  "lastPublishedAt": "2026-02-09T08:50:23.251Z",
+  "expiredAt": "2026-05-10T21:59:59.999Z",
+  "openToHireUkrainians": false,
+  "languages": [
+    {
+      "code": "en",
+      "level": "c1"
+    }
+  ],
+  "applyMethod": "external",
+  "isSuperOffer": true,
+  "promotedPosition": null,
+  "promotedKeyFilters": []
+}

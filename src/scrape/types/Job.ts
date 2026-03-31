@@ -13,8 +13,8 @@ export type JobMetadata = {
     listing_json: string;
     job_html: string;
     job_markdown: string;
-    job_clean_json?: CleanJson;
-    job_normalized_json?: NormalizedJson;
+    job_clean_json: string;
+    job_normalized_json: string;
   };
 };
 
@@ -22,11 +22,16 @@ export interface CleanJson {
   url: string;
   company: string;
   position: string;
-  salary: string;
-  contract_type: string;
-  contract_length: string;
-  location: string;
-  valid_until: string;
+  contract: {
+    type: string;
+    length: string;
+    from: string;
+    to: string;
+    currency: string;
+    unit: string;
+  }[];
+  locations: string[];
+  expires: string;
 }
 
 export interface NormalizedJson {

@@ -88,17 +88,14 @@ async function runStrategy(strategy: Strategy, outDir: string, cacheDir: string)
                   await new Promise((resolve) => setTimeout(resolve, wait));
                 }
 
-                await strategy
-                  .saveRaw({
-                    outDir,
-                    cached: cache.cacheFilePath(cacheKey),
-                    job: job as JobJson,
-                    url,
-                    content,
-                    logger,
-                  })
-                  .then((metadata) => strategy.saveClean(metadata))
-                  .then((metadata) => strategy.saveNormalized(metadata));
+                await strategy.save({
+                  outDir,
+                  cached: cache.cacheFilePath(cacheKey),
+                  job: job as JobJson,
+                  url,
+                  content,
+                  logger,
+                });
 
                 strategy.stats.writes += 1;
               } catch (error) {
