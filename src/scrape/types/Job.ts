@@ -22,7 +22,6 @@ export interface CleanJson {
   url: string;
   company: string;
   position: string;
-  /** Normalized label for required experience (e.g. senior, mid, lead); empty if unknown. */
   seniority_level: string;
   contract: {
     type: string;
@@ -34,6 +33,7 @@ export interface CleanJson {
   }[];
   locations: string[];
   expires: string;
+  required_skills: string[];
 }
 
 export interface NormalizedJson {

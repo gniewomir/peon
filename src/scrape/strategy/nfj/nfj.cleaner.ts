@@ -1,4 +1,5 @@
 import type { CleanJson, JobMetadata } from '../../types/Job.js';
+import { normalizeRequiredSkills } from '../../lib/skills.js';
 import type { Finder } from '../Finder.js';
 import { AbstractCleaner } from '../AbstractCleaner.js';
 
@@ -55,10 +56,31 @@ function nfjSeniorityLevel(finder: Finder, listing: Record<string, unknown>): st
   return parts.join(', ');
 }
 
+function nfjRequiredSkills(finder: Finder, listing: Record<string, unknown>): string[] {
+  const ordered: string[] = [];
+  const tilesRaw = optionalValueByPath(finder, listing, 'tiles.values');
+  if (Array.isArray(tilesRaw)) {
+    for (const item of tilesRaw) {
+      if (!item || typeof item !== 'object') continue;
+      const o = item as Record<string, unknown>;
+      if (o.type !== 'requirement') continue;
+      if (typeof o.value === 'string' && o.value.trim()) {
+        ordered.push(o.value.trim());
+      }
+    }
+  }
+  const tech = optionalValueByPath(finder, listing, 'technology');
+  if (typeof tech === 'string' && tech.trim()) {
+    ordered.push(tech.trim());
+  }
+  return normalizeRequiredSkills(ordered);
+}
+
 export class NfjCleaner extends AbstractCleaner {
   clean(listing: Record<string, unknown>, meta: JobMetadata): CleanJson {
     const locations = nfjLocations(this, listing);
     const seniority_level = nfjSeniorityLevel(this, listing);
+    const required_skills = nfjRequiredSkills(this, listing);
 
     const contract: CleanJson['contract'] = [];
     const salaryRaw = optionalValueByPath(this, listing, 'salary');
@@ -90,6 +112,7 @@ export class NfjCleaner extends AbstractCleaner {
       seniority_level,
       contract,
       company: this.stringValueByPath(listing, 'name'),
+      required_skills,
     } satisfies CleanJson;
   }
 }

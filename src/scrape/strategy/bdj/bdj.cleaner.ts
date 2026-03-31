@@ -1,4 +1,5 @@
 import type { CleanJson, JobMetadata } from '../../types/Job.js';
+import { normalizeRequiredSkills } from '../../lib/skills.js';
 import type { Finder } from '../Finder.js';
 import { AbstractCleaner } from '../AbstractCleaner.js';
 
@@ -108,6 +109,9 @@ export class BdjCleaner extends AbstractCleaner {
 
     const experienceLevel = optionalValueByPath(this, listing, 'experienceLevel');
     const seniority_level = typeof experienceLevel === 'string' ? experienceLevel : '';
+    const required_skills = normalizeRequiredSkills(
+      optionalValueByPath(this, listing, 'technologyTags'),
+    );
 
     return {
       url: meta.job_url,
@@ -120,6 +124,7 @@ export class BdjCleaner extends AbstractCleaner {
         bdjBoolFlag(optionalValueByPath(this, listing, 'remote')) ? 'remote' : '',
       ],
       contract,
+      required_skills,
     } satisfies CleanJson;
   }
 }
