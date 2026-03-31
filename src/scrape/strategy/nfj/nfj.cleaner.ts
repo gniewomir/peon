@@ -1,5 +1,5 @@
 import type { CleanJson, JobMetadata } from '../../types/Job.js';
-import { normalizeRequiredSkills } from '../../lib/skills.js';
+import { normalizeRequiredSkills } from '../skills.js';
 import type { Finder } from '../Finder.js';
 import { AbstractCleaner } from '../AbstractCleaner.js';
 
