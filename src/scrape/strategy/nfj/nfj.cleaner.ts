@@ -46,9 +46,19 @@ function nfjSalaryUnit(salary: Record<string, unknown>): string {
   return 'month';
 }
 
+function nfjSeniorityLevel(finder: Finder, listing: Record<string, unknown>): string {
+  if (!finder.hasPath(listing, 'seniority')) return '';
+  const parts = finder
+    .arrayValueByPath(listing, 'seniority')
+    .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+    .map((s) => s.trim());
+  return parts.join(', ');
+}
+
 export class NfjCleaner extends AbstractCleaner {
   clean(listing: Record<string, unknown>, meta: JobMetadata): CleanJson {
     const locations = nfjLocations(this, listing);
+    const seniority_level = nfjSeniorityLevel(this, listing);
 
     const contract: CleanJson['contract'] = [];
     const salaryRaw = optionalValueByPath(this, listing, 'salary');
@@ -62,16 +72,9 @@ export class NfjCleaner extends AbstractCleaner {
       if (typeof s.to === 'number' && !Number.isNaN(s.to)) to = String(s.to);
       if (to === '' && from !== '') to = from;
 
-      let length = '';
-      if (this.hasPath(listing, 'seniority')) {
-        length = this.arrayValueByPath(listing, 'seniority')
-          .filter((x): x is string => typeof x === 'string')
-          .join(', ');
-      }
-
       contract.push({
         type: typeof s.type === 'string' ? s.type : '',
-        length,
+        length: '',
         from,
         to,
         currency: typeof s.currency === 'string' ? s.currency : '',
@@ -84,6 +87,7 @@ export class NfjCleaner extends AbstractCleaner {
       url: meta.job_url,
       expires: '',
       position: this.stringValueByPath(listing, 'title'),
+      seniority_level,
       contract,
       company: this.stringValueByPath(listing, 'name'),
     } satisfies CleanJson;

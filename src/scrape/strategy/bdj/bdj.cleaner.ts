@@ -106,10 +106,14 @@ export class BdjCleaner extends AbstractCleaner {
       });
     }
 
+    const experienceLevel = optionalValueByPath(this, listing, 'experienceLevel');
+    const seniority_level = typeof experienceLevel === 'string' ? experienceLevel : '';
+
     return {
       url: meta.job_url,
       company: this.stringValueByPath(listing, 'company.name'),
       position: this.stringValueByPath(listing, 'position'),
+      seniority_level,
       expires: '',
       locations: [
         this.stringValueByPath(listing, 'city'),
