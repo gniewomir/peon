@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Command } from 'commander';
-import { getPeonRepoRoot } from '../scrape/repoRoot.js';
-import { ollamaChat } from '../llm/ollama.js';
-import { stripHtmlToText, truncate } from '../llm/text.js';
+import { getPeonRepoRoot } from '../repoRoot.js';
+import { ollamaChat } from './ollama.js';
+import { stripHtmlToText, truncate } from './text.js';
 
 type AnyRecord = Record<string, unknown>;
 
