@@ -6,17 +6,17 @@ import { JjiJobPageParser } from './job-page-parser.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** Snapshot of `data/cache/jji/5f/e9/157b04b371c21a01b9a9a572d585.cache` (weekly job page body HTML). */
-const FIXTURE = '157b04b371c21a01b9a9a572d585.body.html';
+const FIXTURE = 'offer.html';
 
 describe('JjiJobPageParser', () => {
-  it('preserves title, skill, location, and company from cached job page (Appliscale fixture)', () => {
+  it('preserves most important informations', () => {
     const html = readFileSync(join(__dirname, 'fixtures', FIXTURE), 'utf8');
     const extracted = new JjiJobPageParser().extract(html);
-    expect(extracted).toContain('Senior Backend Engineer (Node.js / AWS)');
-    expect(extracted).toContain('JavaScript');
-    expect(extracted).toContain('ul. profesora Michala Zyszkowskieg');
-    expect(extracted).toContain('Kraków');
-    expect(extracted).toContain('<h2>Appliscale</h2>');
+    expect(extracted).toContain('Senior Angular Developer');
+    expect(extracted).toContain('Link Group');
+    expect(extracted).toContain('TypeScript');
+    expect(extracted).toContain('Full-time');
+    expect(extracted).toContain('Remote');
+    expect(extracted).toContain('Previous work in large-scale, enterprise systems');
   });
 });

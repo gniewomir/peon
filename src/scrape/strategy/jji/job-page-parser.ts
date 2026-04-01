@@ -6,13 +6,36 @@ import * as cheerio from 'cheerio';
 import { clean } from '../../lib/html.js';
 import type { JobPageParser } from '../../types/index.js';
 
+/** Smallest ancestor of the title that still holds the full offer body (JJI stacks header + meta in shallow wrappers). */
+function jobOfferHtmlFragment($: cheerio.CheerioAPI): string | null {
+  const h1 = $('h1').first();
+  if (!h1.length) {
+    return $('h2').first().parent().parent().parent().html() ?? null;
+  }
+
+  const minAggregatedTextLen = 2000;
+  let cur = h1.parent();
+  while (cur.length) {
+    if (cur.text().length >= minAggregatedTextLen) {
+      return cur.html() ?? null;
+    }
+    const next = cur.parent();
+    if (!next.length) {
+      return cur.html() ?? null;
+    }
+    cur = next;
+  }
+
+  return null;
+}
+
 export class JjiJobPageParser implements JobPageParser {
   extract(dirtyContent: string): string {
     const content = clean(dirtyContent);
     assert(content.length > 0, 'extractContent: content must be a non empty string');
 
     let $ = cheerio.load(content);
-    const payload = $('h2').parent().parent().parent().html();
+    const payload = jobOfferHtmlFragment($);
 
     if (typeof payload === 'string' && payload.length > 0) {
       // ok
