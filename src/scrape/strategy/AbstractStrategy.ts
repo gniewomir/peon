@@ -104,13 +104,16 @@ export abstract class AbstractStrategy implements Strategy {
       wrapWidth: 100,
     });
 
-    const clean = this.cleaner.clean(job, metadata);
-    const normalized = {};
     await Promise.allSettled([
       smartSave(metadata.files.job_meta, metadata, false, logger),
       smartSave(metadata.files.listing_json, job, false, logger),
       smartSave(metadata.files.job_html, extracted, false, logger),
       smartSave(metadata.files.job_markdown, markdown, false, logger),
+    ]);
+
+    const clean = this.cleaner.clean(job, metadata);
+    const normalized = {};
+    await Promise.allSettled([
       smartSave(metadata.files.job_clean_json, clean, false, logger),
       smartSave(metadata.files.job_normalized_json, normalized, false, logger),
     ]);

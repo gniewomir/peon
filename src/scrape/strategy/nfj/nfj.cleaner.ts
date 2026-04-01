@@ -2,6 +2,44 @@ import type { CleanJson, JobMetadata } from '../../types/Job.js';
 import { normalizeRequiredSkills } from '../skills.js';
 import type { Finder } from '../Finder.js';
 import { AbstractCleaner } from '../AbstractCleaner.js';
+import { existsSync, readFileSync } from 'node:fs';
+
+/** Markdown line from NFJ job page, e.g. "- Offer valid until: 12.04.2026" (DD.MM.YYYY). */
+const NFJ_OFFER_VALID_UNTIL = /Offer valid until:\s*(\d{1,2})\.(\d{1,2})\.(\d{4})\b/i;
+
+function expiresFromNfjJobMarkdownPath(markdownPath: string): string {
+  if (!existsSync(markdownPath)) {
+    return '';
+  }
+  let md: string;
+  try {
+    md = readFileSync(markdownPath, 'utf8');
+  } catch {
+    return '';
+  }
+  const m = md.match(NFJ_OFFER_VALID_UNTIL);
+  if (!m) {
+    return '';
+  }
+  const day = Number.parseInt(m[1]!, 10);
+  const month = Number.parseInt(m[2]!, 10);
+  const year = Number.parseInt(m[3]!, 10);
+  if (!Number.isFinite(day) || !Number.isFinite(month) || !Number.isFinite(year)) {
+    return '';
+  }
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return '';
+  }
+  const exp = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+  if (
+    exp.getUTCFullYear() !== year ||
+    exp.getUTCMonth() !== month - 1 ||
+    exp.getUTCDate() !== day
+  ) {
+    return '';
+  }
+  return exp.toISOString();
+}
 
 function optionalValueByPath(finder: Finder, haystack: unknown, path: string): unknown {
   try {
@@ -107,7 +145,7 @@ export class NfjCleaner extends AbstractCleaner {
     return {
       locations,
       url: meta.job_url,
-      expires: '',
+      expires: expiresFromNfjJobMarkdownPath(meta.files.job_markdown),
       position: this.stringValueByPath(listing, 'title'),
       seniority_level,
       contract,
