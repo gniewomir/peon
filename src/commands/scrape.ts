@@ -1,9 +1,9 @@
 import path from 'node:path';
 import type { Command } from 'commander';
-import { getPeonRepoRoot } from '../scrape/repoRoot.js';
-import { runScrape } from '../scrape/run.js';
-import { allStrategies, strategyFactoryBySlug } from '../scrape/strategy/index.js';
-import type { Strategy } from '../scrape/types/index.js';
+import { getPeonRepoRoot } from './scrape/repoRoot.js';
+import { runScrape } from './scrape/run.js';
+import { allStrategies, strategyFactoryBySlug } from './scrape/strategy/index.js';
+import type { Strategy } from './scrape/types/index.js';
 
 function parseOnlySlugs(only: string | undefined): Set<string> | null {
   if (only === undefined || only.trim() === '') {
