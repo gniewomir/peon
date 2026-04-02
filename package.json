@@ -21,7 +21,7 @@
     "test": "vitest run",
     "test:integration": "vitest run -c vitest.integration.config.ts",
     "overkill": "npm run lint && npm run format && npm run test && npm run build",
-    "scrape": "npm run peon scrape"
+    "scrape": "npm run peon -- scrape"
   },
   "engines": {
     "node": ">=22.0.0"

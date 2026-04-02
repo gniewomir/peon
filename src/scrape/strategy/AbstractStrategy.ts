@@ -74,7 +74,7 @@ export abstract class AbstractStrategy implements Strategy {
   async save(options: StrategySaveOptions): Promise<JobMetadata> {
     const { outDir, cached, job, url, content, logger } = options;
     const jobId = this.jobToId(job);
-    const jobDir = path.join(outDir, this.slug, jobId);
+    const jobDir = path.join(outDir, `${this.slug}-${jobId}`);
 
     const metadata: JobMetadata = {
       strategy_slug: this.slug,
