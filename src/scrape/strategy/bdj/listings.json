@@ -1,14 +1,6 @@
 [
   {
-    "url": "https://bulldogjob.pl/companies/jobs/s/city,Remote",
-    "description": "BDJ, IT offers filtered by Remote"
-  },
-  {
-    "url": "https://bulldogjob.pl/companies/jobs/s/role,backend",
-    "description": "BDJ, Backend role"
-  },
-  {
-    "url": "https://bulldogjob.pl/companies/jobs/s/skills,TypeScript",
-    "description": "BDJ, TypeScript skill"
+    "url": "https://bulldogjob.pl/companies/jobs/s/withSalary,true/city,Remote,Krak%C3%B3w",
+    "description": "BDJ, IT offers filtered by wt Sallary, Kraków or Remote"
   }
 ]
