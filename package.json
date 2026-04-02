@@ -19,6 +19,7 @@
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:integration": "vitest run -c vitest.integration.config.ts",
     "overkill": "npm run lint && npm run format && npm run test && npm run build",
     "scrape": "npm run peon scrape"
   },
@@ -32,7 +33,9 @@
     "cheerio": "^1.1.2",
     "commander": "^13.1.0",
     "dotenv": "^17.2.2",
-    "puppeteer": "^24.17.0"
+    "ollama": "^0.6.3",
+    "puppeteer": "^24.17.0",
+    "zod": "^4.3.6"
   },
   "optionalDependencies": {
     "@kreuzberg/html-to-markdown-node-darwin-arm64": "2.30.0"
