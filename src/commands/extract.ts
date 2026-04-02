@@ -1,9 +1,9 @@
 import path from 'node:path';
 import type { Command } from 'commander';
-import { getPeonRepoRoot } from './scrape/repoRoot.js';
-import { runScrape } from './scrape/run.js';
-import { allStrategies, strategyFactoryBySlug } from './scrape/strategy/index.js';
-import type { Strategy } from './scrape/types/index.js';
+import { getPeonRepoRoot } from './extract/repoRoot.js';
+import { runScrape } from './extract/run.js';
+import { allStrategies, strategyFactoryBySlug } from './extract/strategy/index.js';
+import type { Strategy } from './extract/types/index.js';
 
 function parseOnlySlugs(only: string | undefined): Set<string> | null {
   if (only === undefined || only.trim() === '') {
@@ -36,11 +36,11 @@ function selectStrategies(only: string | undefined): Strategy[] {
   return selected;
 }
 
-export function registerScrapeCommand(program: Command): void {
+export function registerExtractCommand(program: Command): void {
   const allowedOnly = [...strategyFactoryBySlug().keys()].join(', ');
   const defaultDir = 'staging';
   program
-    .command('scrape')
+    .command('extract')
     .description('Scrape job boards')
     .option('--out <dir>', 'Output directory (default: <repo>/data/${defaultDir})')
     .option(

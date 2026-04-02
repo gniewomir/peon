@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { registerScrapeCommand } from './commands/scrape.js';
+import { registerExtractCommand } from './commands/extract.js';
 
 const program = new Command();
 
 program.name('peon').description('Peon CLI').version('1.0.0');
 
-registerScrapeCommand(program);
+registerExtractCommand(program);
 
 program.parse();

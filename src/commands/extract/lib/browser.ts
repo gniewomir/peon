@@ -49,7 +49,7 @@ export function assertLaunchArgsSafe(args: string[]): void {
   }
   if (process.env.PEON_SCRAPER_ALLOW_UNSAFE_SANDBOX === '1') {
     console.warn(
-      'peon scrape: PEON_SCRAPER_ALLOW_UNSAFE_SANDBOX=1 — launching with sandbox-disabling flags:',
+      'peon extract: PEON_SCRAPER_ALLOW_UNSAFE_SANDBOX=1 — launching with sandbox-disabling flags:',
       unsafe.join(', '),
     );
     return;
