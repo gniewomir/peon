@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 import * as cheerio from 'cheerio';
+import type { AnyNode } from 'domhandler';
 import { clean } from '../../lib/html.js';
 import type { JobPageParser } from '../../types/index.js';
 
@@ -11,6 +12,24 @@ interface LdJobPosting {
 export class BdjJobPageParser implements JobPageParser {
   private static escapeHtmlText(text: string): string {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /**
+   * Job title and company sit in `main` above accordions: company `h2` immediately before position `h1`.
+   * `body.innerHTML` from the scraper still contains `<main>`, so this works on live pages.
+   */
+  private static headerHtml($page: cheerio.CheerioAPI): string {
+    const h1 = $page('main h1').first();
+    if (h1.length === 0) {
+      return '';
+    }
+    const parts: string[] = [];
+    const companyHeading = h1.prev('h2');
+    if (companyHeading.length > 0) {
+      parts.push($page.html(companyHeading));
+    }
+    parts.push($page.html(h1));
+    return parts.join('');
   }
 
   /** Company profile / marketing copy lives in `div.content` blocks without `list--check` (outside accordions). */
@@ -29,6 +48,36 @@ export class BdjJobPageParser implements JobPageParser {
     return chunks.join('');
   }
 
+  /**
+   * Salary in the aside: either a headline `p` with `text-2xl` plus optional `p.text-gray-300` (+ VAT / mies.),
+   * or a single `p.text-gray-300` under `div.relative` ("No salary info"). Do not use the first `p.text-gray-300`
+   * globally — when a range exists it is the second line and `.first()` would drop the PLN amounts.
+   */
+  private static asideSalaryParagraphs(
+    $page: cheerio.CheerioAPI,
+    aside: cheerio.Cheerio<AnyNode>,
+  ): string[] {
+    const headline = aside.find('p[class*="text-2xl"]').first();
+    if (headline.length > 0) {
+      const lines: string[] = [];
+      const block = headline.parent();
+      block.children('p').each((_, el) => {
+        const t = $page(el).text().replace(/\s+/g, ' ').trim();
+        if (t.length > 0) {
+          lines.push(t);
+        }
+      });
+      return lines;
+    }
+    const noInfo = aside
+      .find('div.relative p.text-gray-300')
+      .first()
+      .text()
+      .replace(/\s+/g, ' ')
+      .trim();
+    return noInfo.length > 0 ? [noInfo] : [];
+  }
+
   /** Salary, validity, and location appear in `<aside>` and are not part of accordion / JSON-LD description. */
   private static sidebarMetadataHtml($page: cheerio.CheerioAPI): string {
     const aside = $page('aside').first();
@@ -36,9 +85,8 @@ export class BdjJobPageParser implements JobPageParser {
       return '';
     }
     const parts: string[] = [];
-    const salary = aside.find('p.text-gray-300').first().text().replace(/\s+/g, ' ').trim();
-    if (salary.length > 0) {
-      parts.push(`<p>${BdjJobPageParser.escapeHtmlText(salary)}</p>`);
+    for (const line of BdjJobPageParser.asideSalaryParagraphs($page, aside)) {
+      parts.push(`<p>${BdjJobPageParser.escapeHtmlText(line)}</p>`);
     }
     aside.find('p.text-gray-400').each((_, el) => {
       const t = $page(el).text().replace(/\s+/g, ' ').trim();
@@ -160,6 +208,11 @@ export class BdjJobPageParser implements JobPageParser {
       typeof descriptionHtml === 'string' && descriptionHtml.length > 0,
       'extractContent: JobPosting description not found (JSON-LD or SSR body container)',
     );
+
+    const header = BdjJobPageParser.headerHtml($raw);
+    if (header.length > 0) {
+      descriptionHtml = `${header}${descriptionHtml}`;
+    }
 
     const appended = `${BdjJobPageParser.extraMainColumnHtml($raw)}${BdjJobPageParser.sidebarMetadataHtml($raw)}`;
     if (appended.length > 0) {
