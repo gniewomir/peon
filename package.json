@@ -21,7 +21,8 @@
     "test": "vitest run",
     "test:integration": "vitest run -c vitest.integration.config.ts",
     "overkill": "npm run lint && npm run format && npm run test && npm run build",
-    "extract": "npm run peon -- extract"
+    "extract": "npm run peon -- extract",
+    "transform": "npm run peon -- transform"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -31,6 +32,7 @@
   "dependencies": {
     "@kreuzberg/html-to-markdown-node": "2.30.0",
     "cheerio": "^1.1.2",
+    "chokidar": "^5.0.0",
     "commander": "^13.1.0",
     "dotenv": "^17.2.2",
     "ollama": "^0.6.3",
