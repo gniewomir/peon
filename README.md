@@ -1,6 +1,18 @@
 # Peon
 
-CLI tooling for scraping job boards into raw JSON. Node.js 22+.
+Work in progress: A CLI ETL pipeline for extracting IT-related jobs from Polish IT job boards, transforming them into a common data format, and loading them into a chosen data store. 
+
+Intended feature set: 
+* Ability to run locally using local LLMs or be deployed to an external server
+* Aggressive caching to be fair to job boards and reduce unnecessary work
+* Pluggable data scraping and data cleaning strategies
+* Parallelization with limits (i.e., no more than X LLM requests running concurrently)
+* Incremental processing: the next ETL step is run when prerequisites are fulfilled
+* Quarantine for failing workloads
+* Combining scraped structured data with LLM-based parsing of unstructured data to get uniform and mostly complete output
+* Deduplication by aggregation of offers from diffrent sources refering to one position
+* Ability to filter scraped jobs by dimensions non-existent on job boards (e.g., filtering out corporate or startup environments, finding companies offering RSU packages, etc.)
+* Ability to filter offers from multiple sources using uniform criteria
 
 ## Local LLM: Qwen2.5 7B (Apple Silicon)
 
