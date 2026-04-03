@@ -1,7 +1,7 @@
 import type { CleanJson, JobMetadata } from '../../../types/Job.js';
 import { normalizeRequiredSkills } from '../../lib/skills.js';
 import type { Finder } from '../../lib/finder.js';
-import { AbstractCleaner } from '../AbstractCleaner.js';
+import { AbstractCleaner } from './AbstractCleaner.js';
 
 /**
  * Bulldogjob listing rows historically used booleans for contract/remote flags.
@@ -70,7 +70,7 @@ function bdjCurrency(currency: unknown): string {
   return typeof currency === 'string' ? currency : '';
 }
 
-export class BdjCleaner extends AbstractCleaner {
+export class CleanerBdj extends AbstractCleaner {
   clean(listing: Record<string, unknown>, meta: JobMetadata): CleanJson {
     let from = '';
     let to = '';
@@ -126,5 +126,9 @@ export class BdjCleaner extends AbstractCleaner {
       contract,
       required_skills,
     } satisfies CleanJson;
+  }
+
+  strategy(): string {
+    return 'bdj';
   }
 }

@@ -79,26 +79,15 @@ export abstract class AbstractStrategy implements Strategy {
       files: {
         job_cache: cached,
         job_meta: path.join(jobDir, `meta.json`),
-        job_json: path.join(jobDir, `job.json`),
-        job_html: path.join(jobDir, `job.html`),
-        job_markdown: path.join(jobDir, `job.md`),
-        job_clean_json: path.join(jobDir, `job.clean.json`),
-        job_clean_normalized_json: path.join(jobDir, `job.normalized.json`),
-        job_interrogated_json: path.join(jobDir, `job.interrogated.json`),
-        job_interrogated_normalized_json: path.join(jobDir, `job.interrogated.normalized.json`),
-        job_combined_json: path.join(jobDir, `job.combined.json`),
       },
     };
 
     await fs.mkdir(jobDir, { recursive: true });
 
-    const html = this.jobContent(content);
-
-    await smartSave(metadata.files.job_meta, metadata, false, logger);
-
     await Promise.all([
-      smartSave(metadata.files.job_json, job, false, logger),
-      smartSave(metadata.files.job_html, html, false, logger),
+      smartSave(path.join(jobDir, `meta.json`), metadata, false, logger),
+      smartSave(path.join(jobDir, `raw-job.json`), job, false, logger),
+      smartSave(path.join(jobDir, `raw-job.html`), content, false, logger),
     ]);
 
     return metadata;

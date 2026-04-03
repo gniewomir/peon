@@ -7,9 +7,14 @@ export class LinkedListNode<T> {
 
 export class LinkedList<T> {
   private head: LinkedListNode<T> | null = null;
+  private tail: LinkedListNode<T> | null = null;
 
   prepend(value: T): void {
-    this.head = new LinkedListNode(value, this.head);
+    const node = new LinkedListNode(value, this.head);
+    this.head = node;
+    if (!this.tail) {
+      this.tail = node;
+    }
   }
 
   append(value: T): void {
@@ -17,14 +22,12 @@ export class LinkedList<T> {
 
     if (!this.head) {
       this.head = node;
+      this.tail = node;
       return;
     }
 
-    let current = this.head;
-    while (current.next) {
-      current = current.next;
-    }
-    current.next = node;
+    this.tail!.next = node;
+    this.tail = node;
   }
 
   remove(value: T): boolean {
@@ -34,6 +37,9 @@ export class LinkedList<T> {
 
     if (this.head.value === value) {
       this.head = this.head.next;
+      if (!this.head) {
+        this.tail = null;
+      }
       return true;
     }
 
@@ -46,6 +52,9 @@ export class LinkedList<T> {
       return false;
     }
 
+    if (current.next === this.tail) {
+      this.tail = current;
+    }
     current.next = current.next.next;
     return true;
   }
@@ -57,6 +66,9 @@ export class LinkedList<T> {
 
     const value = this.head.value;
     this.head = this.head.next;
+    if (!this.head) {
+      this.tail = null;
+    }
     return value;
   }
 

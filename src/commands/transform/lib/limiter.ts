@@ -1,4 +1,5 @@
 type AsyncTask<T> = () => Promise<T>;
+import { LinkedList } from './linked-list.js';
 
 export interface ConcurrencyLimiter {
   run<T>(task: AsyncTask<T>): Promise<T>;
@@ -12,14 +13,28 @@ export function createConcurrencyLimiter(concurrency: number): ConcurrencyLimite
   }
 
   let active = 0;
-  const queue: Array<() => void> = [];
+  const queue = new LinkedList<() => void>();
+  let queued = 0;
+
+  const enqueue = (task: () => void): void => {
+    queue.append(task);
+    queued += 1;
+  };
+
+  const dequeue = (): (() => void) | undefined => {
+    const task = queue.shift();
+    if (task !== undefined) {
+      queued -= 1;
+    }
+    return task;
+  };
 
   const schedule = (): void => {
     if (active >= concurrency) {
       return;
     }
 
-    const startTask = queue.shift();
+    const startTask = dequeue();
     if (!startTask) {
       return;
     }
@@ -30,7 +45,7 @@ export function createConcurrencyLimiter(concurrency: number): ConcurrencyLimite
 
   const run = <T>(task: AsyncTask<T>): Promise<T> =>
     new Promise<T>((resolve, reject) => {
-      queue.push(() => {
+      enqueue(() => {
         task()
           .then(resolve, reject)
           .finally(() => {
@@ -45,6 +60,6 @@ export function createConcurrencyLimiter(concurrency: number): ConcurrencyLimite
   return {
     run,
     activeCount: () => active,
-    pendingCount: () => queue.length,
+    pendingCount: () => queued,
   };
 }

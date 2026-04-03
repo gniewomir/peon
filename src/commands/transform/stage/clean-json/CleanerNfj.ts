@@ -1,7 +1,7 @@
 import type { CleanJson, JobMetadata } from '../../../types/Job.js';
 import { normalizeRequiredSkills } from '../../lib/skills.js';
 import type { Finder } from '../../lib/finder.js';
-import { AbstractCleaner } from '../AbstractCleaner.js';
+import { AbstractCleaner } from './AbstractCleaner.js';
 
 function optionalValueByPath(finder: Finder, haystack: unknown, path: string): unknown {
   try {
@@ -76,7 +76,7 @@ function nfjRequiredSkills(finder: Finder, listing: Record<string, unknown>): st
   return normalizeRequiredSkills(ordered);
 }
 
-export class NfjCleaner extends AbstractCleaner {
+export class CleanerNfj extends AbstractCleaner {
   clean(listing: Record<string, unknown>, meta: JobMetadata): CleanJson {
     const locations = nfjLocations(this, listing);
     const seniority_level = nfjSeniorityLevel(this, listing);
@@ -114,5 +114,9 @@ export class NfjCleaner extends AbstractCleaner {
       company: this.stringValueByPath(listing, 'name'),
       required_skills,
     } satisfies CleanJson;
+  }
+
+  strategy(): string {
+    return 'nfj';
   }
 }

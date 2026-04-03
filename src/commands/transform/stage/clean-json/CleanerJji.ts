@@ -1,8 +1,8 @@
 import type { CleanJson, JobMetadata } from '../../../types/Job.js';
 import { normalizeRequiredSkills } from '../../lib/skills.js';
-import { AbstractCleaner } from '../AbstractCleaner.js';
+import { AbstractCleaner } from './AbstractCleaner.js';
 
-export class JjiCleaner extends AbstractCleaner {
+export class CleanerJji extends AbstractCleaner {
   clean(listing: Record<string, unknown>, meta: JobMetadata): CleanJson {
     const experienceLevel = listing['experienceLevel'];
     const seniority_level = typeof experienceLevel === 'string' ? experienceLevel : '';
@@ -32,5 +32,9 @@ export class JjiCleaner extends AbstractCleaner {
       company: this.stringValueByPath(listing, 'companyName'),
       required_skills,
     } satisfies CleanJson;
+  }
+
+  strategy(): string {
+    return 'jji';
   }
 }

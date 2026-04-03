@@ -3,7 +3,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import { defaultInterrogateConfig, interrogateJobOffer, type InterrogateConfig } from './index.js';
+import {
+  defaultInterrogateConfig,
+  interrogateJobOffer,
+  type InterrogateConfig,
+} from './interrogate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

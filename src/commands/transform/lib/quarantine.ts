@@ -1,6 +1,7 @@
 import { cp, mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import type { Logger } from '../../types/Logger.js';
+import type { StagingFileEvent } from '../types.js';
 
 function utcTimestamp(): string {
   return new Date()
@@ -8,10 +9,6 @@ function utcTimestamp(): string {
     .replaceAll('-', '')
     .replaceAll(':', '')
     .replace(/\.\d{3}Z$/, 'Z');
-}
-
-function quarantineDirFromStagingDir(stagingDir: string): string {
-  return path.join(path.dirname(stagingDir), 'quarantine');
 }
 
 async function moveWithFallback(sourceDir: string, destDir: string): Promise<void> {
@@ -26,15 +23,14 @@ async function moveWithFallback(sourceDir: string, destDir: string): Promise<voi
 
 export async function quarantineJobDirectory(params: {
   logger: Logger;
-  stagingDir: string;
+  quarantineDir: string;
   jobDir: string;
   stage: string;
   error: unknown;
-  inputPaths: string[];
+  event: StagingFileEvent;
 }): Promise<void> {
-  const { logger, stagingDir, jobDir, stage, error, inputPaths } = params;
-  const quarantineDir = quarantineDirFromStagingDir(stagingDir);
-  await mkdir(quarantineDir, { recursive: true });
+  const { logger, jobDir, stage, error, event } = params;
+  await mkdir(params.quarantineDir, { recursive: true });
 
   const message = error instanceof Error ? error.message : String(error);
   const stack = error instanceof Error ? error.stack : undefined;
@@ -48,7 +44,7 @@ export async function quarantineJobDirectory(params: {
         error: message,
         stack,
         timestamp: new Date().toISOString(),
-        inputPaths,
+        event,
       },
       null,
       2,
@@ -57,7 +53,7 @@ export async function quarantineJobDirectory(params: {
   );
 
   const destinationName = `${path.basename(jobDir)}__${utcTimestamp()}`;
-  const destination = path.join(quarantineDir, destinationName);
+  const destination = path.join(params.quarantineDir, destinationName);
   try {
     await moveWithFallback(jobDir, destination);
     logger.error(`quarantined ${jobDir} -> ${destination}`);
