@@ -10,6 +10,7 @@ export type JobMetadata = {
   files: {
     job_cache: string;
     job_meta: string;
+    [key: string]: string;
   };
 };
 

@@ -3,7 +3,6 @@ import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import type { JobJson, Strategy, CacheOperations, Logger, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import { NfjJobPageParser } from './job-page-parser.js';
 import { parseListingResponse } from './listing-parser.js';
 import type { JobMetadata } from '../../../types/Job.js';
 
@@ -16,14 +15,8 @@ interface NFJListing extends Listing {
 export const NFJ_SLUG = 'nfj';
 
 export class NfjStrategy extends AbstractStrategy {
-  private readonly nfjJobPageParser = new NfjJobPageParser();
-
   constructor() {
     super(NFJ_SLUG);
-  }
-
-  protected get jobPageParser(): NfjJobPageParser {
-    return this.nfjJobPageParser;
   }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {

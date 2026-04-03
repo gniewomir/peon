@@ -1,15 +1,20 @@
 import assert from 'node:assert';
 import * as cheerio from 'cheerio';
 import type { AnyNode } from 'domhandler';
-import { clean } from '../../lib/html.js';
-import type { JobPageParser } from '../../types/index.js';
+import { clean } from '../../../extract/lib/html.js';
+import { AbstractHtmlPreparer } from './AbstractHtmlPreparer.js';
+import { stripAllAttributesAndPruneEmpty } from './html-utils.js';
 
 interface LdJobPosting {
   '@type'?: string;
   description?: string;
 }
 
-export class BdjJobPageParser implements JobPageParser {
+export class HtmlPreparerBdj extends AbstractHtmlPreparer {
+  strategy(): string {
+    return 'bdj';
+  }
+
   private static escapeHtmlText(text: string): string {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
@@ -85,13 +90,13 @@ export class BdjJobPageParser implements JobPageParser {
       return '';
     }
     const parts: string[] = [];
-    for (const line of BdjJobPageParser.asideSalaryParagraphs($page, aside)) {
-      parts.push(`<p>${BdjJobPageParser.escapeHtmlText(line)}</p>`);
+    for (const line of HtmlPreparerBdj.asideSalaryParagraphs($page, aside)) {
+      parts.push(`<p>${HtmlPreparerBdj.escapeHtmlText(line)}</p>`);
     }
     aside.find('p.text-gray-400').each((_, el) => {
       const t = $page(el).text().replace(/\s+/g, ' ').trim();
       if (t.startsWith('Valid for')) {
-        parts.push(`<p>${BdjJobPageParser.escapeHtmlText(t)}</p>`);
+        parts.push(`<p>${HtmlPreparerBdj.escapeHtmlText(t)}</p>`);
       }
     });
     aside.find('div.flex').each((_, row) => {
@@ -100,14 +105,14 @@ export class BdjJobPageParser implements JobPageParser {
       if (label === 'Location') {
         const loc = $row.find('p.text-md').first().text().replace(/\s+/g, ' ').trim();
         if (loc.length > 0) {
-          parts.push(`<p>${BdjJobPageParser.escapeHtmlText(loc)}</p>`);
+          parts.push(`<p>${HtmlPreparerBdj.escapeHtmlText(loc)}</p>`);
         }
       }
     });
     if (parts.length === 0) {
       return '';
     }
-    return `<h2>${BdjJobPageParser.escapeHtmlText('Job listing')}</h2>${parts.join('')}`;
+    return `<h2>${HtmlPreparerBdj.escapeHtmlText('Job listing')}</h2>${parts.join('')}`;
   }
 
   /** Bulldogjob splits the JD into multiple `#accordionGroup` blocks (h3 + section each). */
@@ -127,7 +132,7 @@ export class BdjJobPageParser implements JobPageParser {
           return;
         }
         if (heading.length > 0) {
-          chunks.push(`<h2>${BdjJobPageParser.escapeHtmlText(heading)}</h2>${inner}`);
+          chunks.push(`<h2>${HtmlPreparerBdj.escapeHtmlText(heading)}</h2>${inner}`);
         } else {
           chunks.push(inner);
         }
@@ -139,25 +144,11 @@ export class BdjJobPageParser implements JobPageParser {
     return chunks.join('');
   }
 
-  private static stripAllAttributes($: cheerio.CheerioAPI): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cheerio each() binds loose Element
-    $('*').each(function (this: any) {
-      const $this = $(this);
-      const attrs = Object.keys(this.attribs || {});
-      attrs.forEach((attr) => {
-        $this.removeAttr(attr);
-      });
-      if ($this.text().trim() === '' && $this.children().length === 0) {
-        $this.remove();
-      }
-    });
-  }
-
-  extract(dirtyContent: string): string {
+  prepare(dirtyContent: string): string {
     const $raw = cheerio.load(dirtyContent);
 
     // Accordions must be read before `clean()`: it strips `<button>` (accordion titles live there).
-    let descriptionHtml: string | undefined = BdjJobPageParser.descriptionFromJobAccordions($raw);
+    let descriptionHtml: string | undefined = HtmlPreparerBdj.descriptionFromJobAccordions($raw);
 
     const content = clean(dirtyContent);
     assert(content.length > 0, 'extractContent: content must be a non empty string');
@@ -209,18 +200,19 @@ export class BdjJobPageParser implements JobPageParser {
       'extractContent: JobPosting description not found (JSON-LD or SSR body container)',
     );
 
-    const header = BdjJobPageParser.headerHtml($raw);
+    const header = HtmlPreparerBdj.headerHtml($raw);
     if (header.length > 0) {
       descriptionHtml = `${header}${descriptionHtml}`;
     }
 
-    const appended = `${BdjJobPageParser.extraMainColumnHtml($raw)}${BdjJobPageParser.sidebarMetadataHtml($raw)}`;
+    const appended = `${HtmlPreparerBdj.extraMainColumnHtml($raw)}${HtmlPreparerBdj.sidebarMetadataHtml($raw)}`;
     if (appended.length > 0) {
       descriptionHtml += appended;
     }
 
     const $ = cheerio.load(descriptionHtml);
-    BdjJobPageParser.stripAllAttributes($);
+    stripAllAttributesAndPruneEmpty($);
+    assert($('h1').length >= 1, 'extractContent: expected at least one h1 in prepared BDJ HTML');
 
     return $.html().replaceAll('<!---->', '');
   }

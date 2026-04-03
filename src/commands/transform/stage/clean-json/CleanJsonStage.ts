@@ -30,24 +30,24 @@ export class CleanJsonStage extends AbstractStage {
   }
 
   protected inputs(): string[] {
-    return ['raw-job.json'];
+    return ['job.json'];
   }
 
   protected outputs(): string[] {
-    return ['job.json'];
+    return ['job.clean.json'];
   }
 
   protected async payload(event: StagingFileEvent): Promise<void> {
     const meta = await this.readMetadata(dirname(event.payload));
     const listing = await this.readJson<Record<string, unknown>>(
-      path.join(dirname(event.payload), `raw-job.json`),
+      path.join(dirname(event.payload), `job.json`),
     );
     const cleaner = this.cleaners.get(meta.strategy_slug);
     if (!cleaner) {
       throw new Error(`No cleaner registered for strategy "${meta.strategy_slug}"`);
     }
     const cleaned = cleaner.clean(listing, meta);
-    const output = path.join(dirname(event.payload), `job.json`);
+    const output = path.join(dirname(event.payload), `job.clean.json`);
     await smartSave(output, cleaned, false, this.logger);
     this.logger.log(`cleaned job json: ${event.payload} => ${output}`);
   }

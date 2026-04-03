@@ -1,0 +1,27 @@
+import type { JobMetadata } from '../../../types/Job.js';
+import { AbstractJsonPreparer } from './AbstractJsonPreparer.js';
+import { requireObject } from './prepare-object.js';
+
+export class JsonPreparerNfj extends AbstractJsonPreparer {
+  strategy(): string {
+    return 'nfj';
+  }
+
+  prepare(input: unknown, meta: JobMetadata): Record<string, unknown> {
+    const job = requireObject(input, {
+      strategy: this.strategy(),
+      filePath: `${meta.job_staging_dir}/raw-job.json`,
+    });
+    if (typeof job.id !== 'string' || job.id.length === 0) {
+      throw new Error(
+        `NFJ job payload missing non-empty "id" in "${meta.job_staging_dir}/raw-job.json"`,
+      );
+    }
+    if (typeof job.url !== 'string' || job.url.length === 0) {
+      throw new Error(
+        `NFJ job payload missing non-empty "url" in "${meta.job_staging_dir}/raw-job.json"`,
+      );
+    }
+    return job;
+  }
+}

@@ -21,6 +21,5 @@ export interface Strategy {
   jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<JobJson>;
   jobToUrl(job: JobJson): string;
   jobToId(job: JobJson): string;
-  jobContent(content: string): string;
   save(options: StrategySaveOptions): Promise<JobMetadata>;
 }

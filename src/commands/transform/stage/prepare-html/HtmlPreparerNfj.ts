@@ -1,10 +1,15 @@
 import assert from 'node:assert';
 import * as cheerio from 'cheerio';
-import { clean } from '../../lib/html.js';
-import type { JobPageParser } from '../../types/index.js';
+import { clean } from '../../../extract/lib/html.js';
+import { AbstractHtmlPreparer } from './AbstractHtmlPreparer.js';
+import { stripAllAttributesAndPruneEmpty } from './html-utils.js';
 
-export class NfjJobPageParser implements JobPageParser {
-  extract(dirtyContent: string): string {
+export class HtmlPreparerNfj extends AbstractHtmlPreparer {
+  strategy(): string {
+    return 'nfj';
+  }
+
+  prepare(dirtyContent: string): string {
     const content = clean(dirtyContent);
     assert(content.length > 0, 'extractContent: content must be a non empty string');
 
@@ -24,19 +29,7 @@ export class NfjJobPageParser implements JobPageParser {
     const validUntilText = $('common-posting-time-info').text();
     const cleanValidUntilText = validUntilText.split('(')[0];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cheerio each() binds loose Element
-    $('*').each(function (this: any) {
-      const $this = $(this);
-      const attrs = Object.keys(this.attribs || {});
-
-      attrs.forEach((attr) => {
-        $this.removeAttr(attr);
-      });
-
-      if ($this.text().trim() === '' && $this.children().length === 0) {
-        $this.remove();
-      }
-    });
+    stripAllAttributesAndPruneEmpty($);
 
     return $.html()
       .replaceAll('<!---->', '')

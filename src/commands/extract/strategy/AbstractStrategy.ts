@@ -2,7 +2,6 @@ import * as path from 'node:path';
 import { smartSave } from '../../lib/smart-save.js';
 import type {
   JobJson,
-  JobPageParser,
   Strategy,
   CacheOperations,
   Listing,
@@ -59,12 +58,6 @@ export abstract class AbstractStrategy implements Strategy {
   abstract jobToUrl(job: JobJson): string;
 
   abstract jobToId(job: JobJson): string;
-
-  protected abstract get jobPageParser(): JobPageParser;
-
-  jobContent(content: string): string {
-    return this.jobPageParser.extract(content);
-  }
 
   async save(options: StrategySaveOptions): Promise<JobMetadata> {
     const { outDir, cached, job, url, content, logger } = options;

@@ -3,8 +3,9 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import assert from 'node:assert';
 import * as cheerio from 'cheerio';
-import { clean } from '../../lib/html.js';
-import type { JobPageParser } from '../../types/index.js';
+import { clean } from '../../../extract/lib/html.js';
+import { AbstractHtmlPreparer } from './AbstractHtmlPreparer.js';
+import { stripAllAttributesAndPruneEmpty } from './html-utils.js';
 
 /** Smallest ancestor of the title that still holds the full offer body (JJI stacks header + meta in shallow wrappers). */
 function jobOfferHtmlFragment($: cheerio.CheerioAPI): string | null {
@@ -29,8 +30,12 @@ function jobOfferHtmlFragment($: cheerio.CheerioAPI): string | null {
   return null;
 }
 
-export class JjiJobPageParser implements JobPageParser {
-  extract(dirtyContent: string): string {
+export class HtmlPreparerJji extends AbstractHtmlPreparer {
+  strategy(): string {
+    return 'jji';
+  }
+
+  prepare(dirtyContent: string): string {
     const content = clean(dirtyContent);
     assert(content.length > 0, 'extractContent: content must be a non empty string');
 
@@ -60,24 +65,15 @@ export class JjiJobPageParser implements JobPageParser {
     );
 
     $ = cheerio.load(payload);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cheerio each() binds loose Element
-    $('*').each(function (this: any) {
-      const attrs = Object.keys(this.attribs || {});
-      const $this = $(this);
 
-      attrs.forEach((attr) => {
-        $this.removeAttr(attr);
-      });
-
+    $('*').each((_, el) => {
+      const $this = $(el);
       if ($this.text().trim() === 'ADVERTISEMENT: Recommended by Just Join IT') {
-        $this.remove();
-        return;
-      }
-
-      if ($this.text().trim() === '' && $this.children().length === 0) {
         $this.remove();
       }
     });
+
+    stripAllAttributesAndPruneEmpty($);
 
     assert($('h1').length === 1, ' ⚠️  Unexpected output after parsing jji job html - h1');
 

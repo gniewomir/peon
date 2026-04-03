@@ -3,20 +3,13 @@ import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import type { CacheOperations, JobJson, Listing, Logger, Strategy } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import { JjiJobPageParser } from './job-page-parser.js';
 import { parseListingResponse } from './listing-parser.js';
 
 export const JJI_SLUG = 'jji';
 
 export class JjiStrategy extends AbstractStrategy {
-  private readonly jjiJobPageParser = new JjiJobPageParser();
-
   constructor() {
     super(JJI_SLUG);
-  }
-
-  protected get jobPageParser(): JjiJobPageParser {
-    return this.jjiJobPageParser;
   }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {

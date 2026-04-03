@@ -2,16 +2,16 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { JjiJobPageParser } from './job-page-parser.js';
+import { HtmlPreparerJji } from './HtmlPreparerJji.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const FIXTURE = 'offer.html';
+const FIXTURE = join(__dirname, '../../../extract/strategy/jji/fixtures/offer.html');
 
-describe('JjiJobPageParser', () => {
+describe('HtmlPreparerJji', () => {
   it('preserves most important informations', () => {
-    const html = readFileSync(join(__dirname, 'fixtures', FIXTURE), 'utf8');
-    const extracted = new JjiJobPageParser().extract(html);
+    const html = readFileSync(FIXTURE, 'utf8');
+    const extracted = new HtmlPreparerJji().prepare(html);
     expect(extracted).toContain('Senior Angular Developer');
     expect(extracted).toContain('Link Group');
     expect(extracted).toContain('TypeScript');

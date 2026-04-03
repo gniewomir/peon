@@ -3,20 +3,13 @@ import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import type { JobJson, Strategy, CacheOperations, Logger, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import { BdjJobPageParser } from './job-page-parser.js';
 import { parseListingResponse } from './listing-parser.js';
 
 export const BDJ_SLUG = 'bdj';
 
 export class BdjStrategy extends AbstractStrategy {
-  private readonly bdjJobPageParser = new BdjJobPageParser();
-
   constructor() {
     super(BDJ_SLUG);
-  }
-
-  protected get jobPageParser(): BdjJobPageParser {
-    return this.bdjJobPageParser;
   }
 
   private static listingPageUrl(baseListingUrl: string, page: number): string {
