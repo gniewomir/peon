@@ -10,11 +10,14 @@ export type JobMetadata = {
   files: {
     job_cache: string;
     job_meta: string;
-    listing_json: string;
+    job_json: string;
     job_html: string;
     job_markdown: string;
     job_clean_json: string;
-    job_normalized_json: string;
+    job_clean_normalized_json: string;
+    job_interrogated_json: string;
+    job_interrogated_normalized_json: string;
+    job_combined_json: string;
   };
 };
 

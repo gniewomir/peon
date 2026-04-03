@@ -1,4 +1,4 @@
-import type { Logger } from './Logger.js';
+import type { Logger } from '../../types/Logger.js';
 
 export interface CacheOperations {
   /** Absolute filesystem path for the cache file for this key. */

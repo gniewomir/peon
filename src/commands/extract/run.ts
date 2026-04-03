@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import * as path from 'node:path';
-import { loggerContext } from './lib/logger.js';
+import { loggerContext } from '../lib/logger.js';
 import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';

@@ -3,7 +3,7 @@ import * as fsSync from 'node:fs';
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';
 import assert from 'node:assert';
-import type { Logger } from '../types/index.js';
+import type { Logger } from '../extract/types/index.js';
 
 export async function smartSave(
   filePath: string,

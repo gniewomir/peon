@@ -1,6 +1,6 @@
-import type { Logger } from './Logger.js';
+import type { Logger } from '../../types/Logger.js';
 import type { StrategyStats } from './Stats.js';
-import type { JobJson, JobMetadata } from './Job.js';
+import type { JobJson, JobMetadata } from '../../types/Job.js';
 import type { Listing } from './Listing.js';
 import type { CacheOperations } from './Cache.js';
 
