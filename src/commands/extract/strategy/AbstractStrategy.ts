@@ -92,13 +92,13 @@ export abstract class AbstractStrategy implements Strategy {
 
     await fs.mkdir(jobDir, { recursive: true });
 
-    const extracted = this.jobContent(content);
+    const html = this.jobContent(content);
 
     await smartSave(metadata.files.job_meta, metadata, false, logger);
 
     await Promise.all([
       smartSave(metadata.files.job_json, job, false, logger),
-      smartSave(metadata.files.job_html, extracted, false, logger),
+      smartSave(metadata.files.job_html, html, false, logger),
     ]);
 
     return metadata;
