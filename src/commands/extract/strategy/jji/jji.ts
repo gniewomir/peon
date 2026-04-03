@@ -5,7 +5,6 @@ import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { JjiJobPageParser } from './job-page-parser.js';
 import { parseListingResponse } from './listing-parser.js';
-import { JjiCleaner } from './jji.cleaner.js';
 
 export const JJI_SLUG = 'jji';
 
@@ -13,7 +12,7 @@ export class JjiStrategy extends AbstractStrategy {
   private readonly jjiJobPageParser = new JjiJobPageParser();
 
   constructor() {
-    super(JJI_SLUG, new JjiCleaner());
+    super(JJI_SLUG);
   }
 
   protected get jobPageParser(): JjiJobPageParser {

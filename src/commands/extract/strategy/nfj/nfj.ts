@@ -5,8 +5,7 @@ import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { NfjJobPageParser } from './job-page-parser.js';
 import { parseListingResponse } from './listing-parser.js';
-import type { JobMetadata } from '../../types/Job.js';
-import { NfjCleaner } from './nfj.cleaner.js';
+import type { JobMetadata } from '../../../types/Job.js';
 
 interface NFJListing extends Listing {
   meta: {
@@ -20,7 +19,7 @@ export class NfjStrategy extends AbstractStrategy {
   private readonly nfjJobPageParser = new NfjJobPageParser();
 
   constructor() {
-    super(NFJ_SLUG, new NfjCleaner());
+    super(NFJ_SLUG);
   }
 
   protected get jobPageParser(): NfjJobPageParser {

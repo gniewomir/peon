@@ -5,7 +5,6 @@ import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { BdjJobPageParser } from './job-page-parser.js';
 import { parseListingResponse } from './listing-parser.js';
-import { BdjCleaner } from './bdj.cleaner.js';
 
 export const BDJ_SLUG = 'bdj';
 
@@ -13,7 +12,7 @@ export class BdjStrategy extends AbstractStrategy {
   private readonly bdjJobPageParser = new BdjJobPageParser();
 
   constructor() {
-    super(BDJ_SLUG, new BdjCleaner());
+    super(BDJ_SLUG);
   }
 
   protected get jobPageParser(): BdjJobPageParser {

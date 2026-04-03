@@ -1,36 +1,7 @@
-import type { CleanJson, JobMetadata } from '../../types/Job.js';
-import { normalizeRequiredSkills } from '../skills.js';
-import type { Finder } from '../Finder.js';
+import type { CleanJson, JobMetadata } from '../../../types/Job.js';
+import { normalizeRequiredSkills } from '../../../lib/skills.js';
+import type { Finder } from '../../../lib/finder.js';
 import { AbstractCleaner } from '../AbstractCleaner.js';
-import { existsSync, readFileSync } from 'node:fs';
-
-/** Sidebar line from BDJ HTML → markdown, e.g. "Valid for 18 days". */
-const BDJ_VALID_FOR_DAYS = /Valid for\s+(\d+)\s+days?\b/i;
-
-function expiresFromBdjJobMarkdownPath(markdownPath: string): string {
-  if (!existsSync(markdownPath)) {
-    return '';
-  }
-  let md: string;
-  try {
-    md = readFileSync(markdownPath, 'utf8');
-  } catch {
-    return '';
-  }
-  const m = md.match(BDJ_VALID_FOR_DAYS);
-  if (!m) {
-    return '';
-  }
-  const days = Number.parseInt(m[1]!, 10);
-  if (!Number.isFinite(days) || days < 0) {
-    return '';
-  }
-  const now = new Date();
-  const exp = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days, 23, 59, 59, 999),
-  );
-  return exp.toISOString();
-}
 
 /**
  * Bulldogjob listing rows historically used booleans for contract/remote flags.
@@ -147,7 +118,7 @@ export class BdjCleaner extends AbstractCleaner {
       company: this.stringValueByPath(listing, 'company.name'),
       position: this.stringValueByPath(listing, 'position'),
       seniority_level,
-      expires: expiresFromBdjJobMarkdownPath(meta.files.job_markdown),
+      expires: '',
       locations: [
         this.stringValueByPath(listing, 'city'),
         bdjBoolFlag(optionalValueByPath(this, listing, 'remote')) ? 'remote' : '',

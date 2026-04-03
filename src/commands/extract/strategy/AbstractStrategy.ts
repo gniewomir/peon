@@ -1,6 +1,5 @@
 import * as path from 'node:path';
-import { convert } from '@kreuzberg/html-to-markdown-node';
-import { smartSave } from '../lib/smart-save.js';
+import { smartSave } from '../../lib/smart-save.js';
 import type {
   JobJson,
   JobPageParser,
@@ -12,8 +11,7 @@ import type {
   StrategyStats,
 } from '../types/index.js';
 import fs from 'node:fs/promises';
-import type { JobMetadata } from '../types/Job.js';
-import type { AbstractCleaner } from './AbstractCleaner.js';
+import type { JobMetadata } from '../../types/Job.js';
 
 function createBaseStats(): StrategyStats {
   return {
@@ -33,10 +31,7 @@ export abstract class AbstractStrategy implements Strategy {
   stats: StrategyStats;
   ids: Set<string>;
 
-  protected constructor(
-    slug: string,
-    protected readonly cleaner: AbstractCleaner,
-  ) {
+  protected constructor(slug: string) {
     this.slug = slug;
     this.stats = createBaseStats();
     this.ids = new Set<string>();
@@ -84,38 +79,26 @@ export abstract class AbstractStrategy implements Strategy {
       files: {
         job_cache: cached,
         job_meta: path.join(jobDir, `meta.json`),
-        listing_json: path.join(jobDir, `listing.json`),
+        job_json: path.join(jobDir, `job.json`),
         job_html: path.join(jobDir, `job.html`),
         job_markdown: path.join(jobDir, `job.md`),
         job_clean_json: path.join(jobDir, `job.clean.json`),
-        job_normalized_json: path.join(jobDir, `job.normalized.json`),
+        job_clean_normalized_json: path.join(jobDir, `job.normalized.json`),
+        job_interrogated_json: path.join(jobDir, `job.interrogated.json`),
+        job_interrogated_normalized_json: path.join(jobDir, `job.interrogated.normalized.json`),
+        job_combined_json: path.join(jobDir, `job.combined.json`),
       },
     };
 
     await fs.mkdir(jobDir, { recursive: true });
 
     const extracted = this.jobContent(content);
-    const markdown = convert(extracted, {
-      // @ts-expect-error work around: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
-      headingStyle: 'Atx',
-      // @ts-expect-error work around: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
-      codeBlockStyle: 'Backticks',
-      wrap: true,
-      wrapWidth: 100,
-    });
 
-    await Promise.allSettled([
-      smartSave(metadata.files.job_meta, metadata, false, logger),
-      smartSave(metadata.files.listing_json, job, false, logger),
+    await smartSave(metadata.files.job_meta, metadata, false, logger);
+
+    await Promise.all([
+      smartSave(metadata.files.job_json, job, false, logger),
       smartSave(metadata.files.job_html, extracted, false, logger),
-      smartSave(metadata.files.job_markdown, markdown, false, logger),
-    ]);
-
-    const clean = this.cleaner.clean(job, metadata);
-    const normalized = {};
-    await Promise.allSettled([
-      smartSave(metadata.files.job_clean_json, clean, false, logger),
-      smartSave(metadata.files.job_normalized_json, normalized, false, logger),
     ]);
 
     return metadata;
