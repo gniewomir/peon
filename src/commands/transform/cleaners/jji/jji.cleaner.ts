@@ -1,5 +1,5 @@
 import type { CleanJson, JobMetadata } from '../../../types/Job.js';
-import { normalizeRequiredSkills } from '../../../lib/skills.js';
+import { normalizeRequiredSkills } from '../../lib/skills.js';
 import { AbstractCleaner } from '../AbstractCleaner.js';
 
 export class JjiCleaner extends AbstractCleaner {

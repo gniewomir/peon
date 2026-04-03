@@ -12,10 +12,6 @@ export async function smartSave(
   logger: Logger,
 ): Promise<number> {
   assert(filePath.indexOf('undefined') === -1, 'filePath cannot contain "undefined" string.');
-  assert(
-    typeof logger === 'object' && 'log' in logger && 'error' in logger,
-    'logger must be a proper logger.',
-  );
 
   try {
     const newContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;

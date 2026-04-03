@@ -1,6 +1,6 @@
 import type { CleanJson, JobMetadata } from '../../../types/Job.js';
-import { normalizeRequiredSkills } from '../../../lib/skills.js';
-import type { Finder } from '../../../lib/finder.js';
+import { normalizeRequiredSkills } from '../../lib/skills.js';
+import type { Finder } from '../../lib/finder.js';
 import { AbstractCleaner } from '../AbstractCleaner.js';
 
 function optionalValueByPath(finder: Finder, haystack: unknown, path: string): unknown {
