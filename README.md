@@ -1,20 +1,45 @@
 # Peon
 
-Work in progress: A CLI ETL pipeline for extracting IT-related jobs from Polish IT job boards, transforming them into a common data format, and loading them into a chosen data store.
+Work in progress: a CLI ETL pipeline for extracting IT-related jobs from Polish IT job boards, transforming them into a common data format, and loading them into a chosen data store.
+
+Intended architecture:
+
+- each ETL step (extract, transform, load) runs as a separate CLI script
+  - each CLI script can run concurrently with its peers or completely independently
+  - after extraction, each script reacts to staging changes and performs work if required inputs become available
+- extraction (scraping) is parallelized at the data-provider level, but not deeper
+  - no DDoSing data providers
+  - unstructured data processing, not scraping, seems to be the bottleneck (subject to change with a switch to a cloud-based LLM)
+
+Data quality goals:
+
+- data-quality gate as a transformation stage
+  - if a cheaper model fails to extract enough information, use a more powerful one
+  - if there are still quality issues, quarantine pending investigation
+
+Token economy goals:
+
+- serve unstructured inputs to the LLM as markdown, stripping as much noise as possible from both HTML and derived markdown
+- consider structured data authoritative; craft a minimal prompt only to fill gaps (if any)
+- revisit the schema often to determine which "fuzzy" fields add real value and provide an accurate signal
+- use the cheapest possible model to parse unstructured inputs, then combine the results with available structured data
+- establish rough daily limits for token input/output to keep worst-case costs somewhat predictable
+- drop expired offers as early in the process as possible
+- deduplicate as early in the process as possible
 
 Intended feature set:
 
-- Ability to run locally using local LLMs or be deployed to an external server
-- Aggressive caching to be fair to job boards and eliminate superfluous work
-- Pluggable data scraping and data cleaning strategies
-- Parallelization with limits (i.e., no more than X LLM requests running concurrently)
-- Incremental processing: the next ETL step is run when prerequisites are fulfilled
-- Quarantine for failing workloads
-- Combining scraped structured data with LLM-based parsing of unstructured data to get uniform and mostly complete output
-- Disambiguation of used terms using shared dictionary
-- Deduplication by aggregation of offers from diffrent sources refering to one position
-- Ability to filter offers from multiple sources using uniform criteria
-- Ability to filter scraped jobs by dimensions non-existent on job boards (e.g., filtering out corporate or startup environments, finding companies offering RSU packages, etc.)
+- ability to run locally or be deployed to an external server
+- ability to freely switch between local and cloud LLMs
+- aggressive caching to be fair to job boards
+- pluggable data-scraping and data-cleaning strategies
+- parallelization with limits (i.e., no more than X LLM requests running concurrently)
+- quarantine for failing workloads
+- combining scraped structured data with LLM-based parsing of unstructured data to get uniform, mostly complete output
+- disambiguation of terms using a shared dictionary
+- deduplication by aggregating offers from different sources that refer to one position
+- ability to filter offers from multiple sources using uniform criteria
+- ability to filter scraped jobs by dimensions that do not exist on job boards (e.g., filtering out corporate or startup environments, finding companies that offer RSU packages, etc.)
 
 ## Local LLM: Qwen2.5 7B (Apple Silicon)
 
