@@ -13,7 +13,7 @@ export abstract class AbstractStage {
   protected stagingDir;
 
   public constructor({ logger, stagingDir }: { logger: Logger; stagingDir: string }) {
-    this.logger = logger;
+    this.logger = logger.withSuffix(this.name());
     this.stagingDir = stagingDir;
     this.quarantineDir = dirname(stagingDir);
   }

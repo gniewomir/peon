@@ -15,6 +15,8 @@ afterEach(async () => {
 
 function logger(): Logger {
   return {
+    withSuffix: () => logger(),
+    debug: () => undefined,
     log: () => undefined,
     warn: () => undefined,
     error: () => undefined,
