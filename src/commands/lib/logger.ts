@@ -1,4 +1,4 @@
-import type { Logger, LoggerContext } from '../extract/types/index.js';
+import type { Logger, LoggerContext } from '../types/Logger.js';
 
 export function loggerContext(prefix: string): LoggerContext {
   const createLogger = (): Logger => {

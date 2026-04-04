@@ -43,6 +43,7 @@ export abstract class AbstractStage {
     }
 
     if (!inputsAlreadyExist) {
+      this.logger.warn(`Missing inputs: ${event.payload}`);
       return false;
     }
 
@@ -56,6 +57,7 @@ export abstract class AbstractStage {
     ).every((val) => val);
 
     if (outputsAlreadyExist) {
+      this.logger.warn(`Output already exists: ${event.payload}`);
       return false;
     }
 

@@ -11,7 +11,7 @@ async function consumer({
   enabled,
   buffer,
   registry,
-  delay = 200,
+  delay = 2000,
 }: {
   logger: Logger;
   stagingDir: string;
