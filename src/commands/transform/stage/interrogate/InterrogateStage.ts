@@ -14,7 +14,7 @@ export class InterrogateStage extends AbstractStage {
   constructor({
     logger,
     stagingDir,
-    concurrencyLimit = 2,
+    concurrencyLimit = 1,
   }: {
     logger: Logger;
     stagingDir: string;
