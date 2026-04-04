@@ -1,6 +1,12 @@
 import type { Logger, LoggerContext } from '../types/Logger.js';
 
-export function loggerContext(prefix: string): LoggerContext {
+export function loggerContext({
+  prefix,
+  verbose = false,
+}: {
+  prefix: string;
+  verbose?: boolean;
+}): LoggerContext {
   const createLogger = (currentPrefix: string): Logger => {
     return {
       withSuffix: (suffix: string): Logger => {
@@ -13,16 +19,19 @@ export function loggerContext(prefix: string): LoggerContext {
         return createLogger(`${currentPrefix}-${trimmedSuffix}`);
       },
       debug: (message: string, ...rest: unknown[]): void => {
-        console.debug(`${currentPrefix}-dbg 🐛: ${message.trim()}`, ...rest);
+        if (!verbose) {
+          return;
+        }
+        console.debug(`[${currentPrefix}-dbg] 🐛: ${message.trim()}`, ...rest);
       },
       log: (message: string, ...rest: unknown[]): void => {
-        console.log(`${currentPrefix}-inf ☕: ${message.trim()}`, ...rest);
+        console.log(`[${currentPrefix}-inf] ☕: ${message.trim()}`, ...rest);
       },
       warn: (message: string, ...rest: unknown[]): void => {
-        console.warn(`${currentPrefix}-wrn ⚠️: ${message.trim()}`, ...rest);
+        console.warn(`[${currentPrefix}-wrn] ⚠️: ${message.trim()}`, ...rest);
       },
       error: (message: string, ...rest: unknown[]): void => {
-        console.error(`${currentPrefix}-err ❌: ${message.trim()}`, ...rest);
+        console.error(`[${currentPrefix}-err] ❌: ${message.trim()}`, ...rest);
       },
     };
   };

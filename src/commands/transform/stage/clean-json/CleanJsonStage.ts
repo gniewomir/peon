@@ -4,6 +4,7 @@ import { type AbstractCleaner } from './AbstractCleaner.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import type { Logger } from '../../../types/Logger.js';
 import path, { dirname } from 'node:path';
+import { stripRootPath } from '../../../../root.js';
 
 export class CleanJsonStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractCleaner>();
@@ -49,6 +50,8 @@ export class CleanJsonStage extends AbstractStage {
     const cleaned = cleaner.clean(listing, meta);
     const output = path.join(dirname(event.payload), `job.clean.json`);
     await smartSave(output, cleaned, false, this.logger);
-    this.logger.log(`cleaned job json: ${event.payload} => ${output}`);
+    this.logger.log(
+      `cleaned job json: ${stripRootPath(event.payload)} => ${stripRootPath(output)}`,
+    );
   }
 }

@@ -6,6 +6,7 @@ import type { Logger } from '../../../types/Logger.js';
 import { type ConcurrencyLimiter, createConcurrencyLimiter } from '../../lib/limiter.js';
 import { readFile } from 'fs/promises';
 import path, { dirname } from 'path';
+import { stripRootPath } from '../../../../root.js';
 
 export class InterrogateStage extends AbstractStage {
   private readonly concurrencyLimit: number;
@@ -14,7 +15,7 @@ export class InterrogateStage extends AbstractStage {
   constructor({
     logger,
     stagingDir,
-    concurrencyLimit = 1,
+    concurrencyLimit = 3,
   }: {
     logger: Logger;
     stagingDir: string;
@@ -38,16 +39,18 @@ export class InterrogateStage extends AbstractStage {
   }
 
   protected async payload(event: StagingFileEvent): Promise<void> {
-    /**
-     * ATM locally we have to accept 30+ sec for prompt while running with local LLM
-     * Diminishings returns from concurrent request above two, maybe three could be expected
-     */
     await this.concurrencyLimiter.run(async () => {
       const markdown = await readFile(event.payload, 'utf8');
       const confession = await interrogateJobOffer(markdown);
       const output = path.join(dirname(event.payload), `job.interrogated.json`);
       await smartSave(output, confession, false, this.logger);
-      this.logger.log(`interrogated markdown: ${event.payload} => ${output}`);
+      this.logger.log(
+        `interrogated markdown: ${stripRootPath(event.payload)} => ${stripRootPath(output)}`,
+        {
+          active: this.concurrencyLimiter.activeCount(),
+          pending: this.concurrencyLimiter.pendingCount(),
+        },
+      );
     });
   }
 }

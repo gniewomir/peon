@@ -15,10 +15,16 @@ export interface RunScrapeOptions {
   outDir: string;
   cacheDir: string;
   strategies: Strategy[];
+  verbose: boolean;
 }
 
-async function runStrategy(strategy: Strategy, outDir: string, cacheDir: string): Promise<void> {
-  const { withLogger } = loggerContext(strategy.slug);
+async function runStrategy(
+  strategy: Strategy,
+  outDir: string,
+  cacheDir: string,
+  verbose: boolean,
+): Promise<void> {
+  const { withLogger } = loggerContext({ prefix: strategy.slug, verbose });
   await withLogger(async (logger: Logger) => {
     await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
       const { withBrowser, closeBrowser } = await browserContext(logger);
@@ -128,12 +134,14 @@ async function runStrategy(strategy: Strategy, outDir: string, cacheDir: string)
 }
 
 export async function runScrape(options: RunScrapeOptions): Promise<void> {
-  const { withLogger } = loggerContext('scr');
+  const { withLogger } = loggerContext({ prefix: 'scr', verbose: options.verbose });
   await withLogger(async (logger: Logger) => {
     const strategies = options.strategies;
     try {
       await Promise.all(
-        strategies.map(async (strategy) => runStrategy(strategy, options.outDir, options.cacheDir)),
+        strategies.map(async (strategy) =>
+          runStrategy(strategy, options.outDir, options.cacheDir, options.verbose),
+        ),
       );
       logger.log(' ✅ All strategies finished successfully. Done');
     } catch (error) {

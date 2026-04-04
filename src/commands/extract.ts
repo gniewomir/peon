@@ -42,17 +42,18 @@ export function registerExtractCommand(program: Command): void {
   program
     .command('extract')
     .description('Scrape job boards')
+    .option('-v, --verbose', 'Enable debug logs')
     .option('--out <dir>', 'Output directory (default: <repo>/data/${defaultDir})')
     .option(
       '--cache <dir>',
       'Cache base directory; each strategy uses <dir>/<slug>/ (default: <repo>/data/cache)',
     )
     .option('--only <slugs>', `Comma-separated strategies to run (${allowedOnly})`)
-    .action(async (opts: { out?: string; cache?: string; only?: string }) => {
+    .action(async (opts: { out?: string; cache?: string; only?: string; verbose?: boolean }) => {
       const root = rootPath();
       const outDir = path.resolve(opts.out ?? path.join(root, 'data', defaultDir));
       const cacheDir = path.resolve(opts.cache ?? path.join(root, 'data', 'cache'));
       const strategies = selectStrategies(opts.only);
-      await runScrape({ outDir, cacheDir, strategies });
+      await runScrape({ outDir, cacheDir, strategies, verbose: Boolean(opts.verbose) });
     });
 }

@@ -5,6 +5,7 @@ import { smartSave } from '../../../lib/smart-save.js';
 import type { StagingFileEvent } from '../../types.js';
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractHtmlPreparer } from './AbstractHtmlPreparer.js';
+import { stripRootPath } from '../../../../root.js';
 
 export class PrepareHtmlStage extends AbstractStage {
   private readonly preparers = new Map<string, AbstractHtmlPreparer>();
@@ -48,6 +49,8 @@ export class PrepareHtmlStage extends AbstractStage {
     const prepared = preparer.prepare(input);
     const output = path.join(jobDir, 'job.html');
     await smartSave(output, prepared, false, this.logger);
-    this.logger.log(`prepared job html: ${event.payload} => ${output}`);
+    this.logger.log(
+      `prepared job html: ${stripRootPath(event.payload)} => ${stripRootPath(output)}`,
+    );
   }
 }

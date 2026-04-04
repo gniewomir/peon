@@ -6,6 +6,7 @@ import type { JobMetadata } from '../../types/Job.js';
 import path, { dirname } from 'node:path';
 import { constants } from 'node:fs';
 import { access } from 'node:fs/promises';
+import { stripRootPath } from '../../../root.js';
 
 export abstract class AbstractStage {
   protected logger;
@@ -43,7 +44,7 @@ export abstract class AbstractStage {
     }
 
     if (!inputsAlreadyExist) {
-      this.logger.warn(`Missing inputs: ${event.payload}`);
+      this.logger.debug(`Missing inputs: ${event.payload}`);
       return false;
     }
 
@@ -57,7 +58,7 @@ export abstract class AbstractStage {
     ).every((val) => val);
 
     if (outputsAlreadyExist) {
-      this.logger.warn(`Output already exists: ${event.payload}`);
+      this.logger.debug(`Output already exists: ${event.payload}`);
       return false;
     }
 
@@ -73,7 +74,9 @@ export abstract class AbstractStage {
       if (!(await this.jobDirectoryExists(event))) return;
       if (!(await this.preconditionsMeet(event))) return;
       await this.payload(event);
+      this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] processed`);
     } catch (error) {
+      this.logger.error(`[${event.type}:${stripRootPath(event.payload)}] failed`, error);
       await quarantineJobDirectory({
         logger: this.logger,
         jobDir: dirname(event.payload),

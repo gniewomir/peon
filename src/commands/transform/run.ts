@@ -5,62 +5,81 @@ import type { Logger } from '../types/Logger.js';
 import type { StagingFileEvent } from './types.js';
 import { createRegistry } from './stage/index.js';
 import type { StagesRegistry } from './stage/StagesRegistry.js';
+import { LinkedList } from './lib/linked-list.js';
+import { stripRootPath } from '../../root.js';
 
 async function consumer({
   logger,
-  enabled,
   buffer,
   registry,
-  delay = 2000,
+  delay = 500,
+  shutdown,
 }: {
   logger: Logger;
   stagingDir: string;
-  enabled: () => boolean;
+  shutdown: () => boolean;
   buffer: Queue<StagingFileEvent>;
   registry: StagesRegistry;
   delay?: number;
 }): Promise<void> {
-  while (enabled() || !buffer.isEmpty()) {
+  const running = new LinkedList<Promise<unknown>>();
+  while (!shutdown() || !buffer.isEmpty()) {
     const event = buffer.shift();
     if (!event) {
-      logger.warn(`no buffered events, waiting ${delay}ms`);
+      logger.debug(`no buffered events, waiting ${delay}ms`);
       await new Promise<void>((resolve) => setTimeout(resolve, delay));
       continue;
     }
-    void registry.handleStagingEvent(event);
+    const tracked = registry
+      .handleStagingEvent(event)
+      .catch((error) => {
+        logger.error(`failed to process ${event.payload}`, error);
+      })
+      .finally(() => {
+        running.remove(tracked);
+      });
+    running.append(tracked);
   }
+  await Promise.allSettled(running.toArray());
 }
 
-export async function runTransform(options: { stagingDir: string }): Promise<void> {
-  const { stagingDir } = options;
-  const { withLogger } = loggerContext('transform');
+export async function runTransform(options: {
+  stagingDir: string;
+  verbose: boolean;
+}): Promise<void> {
+  const { stagingDir, verbose } = options;
+  const { withLogger } = loggerContext({ prefix: 'transform', verbose });
   const buffer = new Queue<StagingFileEvent>();
-  let listen = true;
   const watcher = chokidar.watch(stagingDir, {
     ignoreInitial: false,
     persistent: true,
   });
 
   await withLogger(async (logger) => {
-    watcher.on('add', (filePath) => {
-      console.log(`added: ${filePath}`);
-      if (listen) buffer.append({ type: 'add', payload: filePath });
-    });
-
-    watcher.on('change', (filePath) => {
-      logger.log(`changed: ${filePath}`);
-      if (listen) buffer.append({ type: 'change', payload: filePath });
-    });
-
-    watcher.on('error', (error) => {
-      throw error;
-    });
+    let shuttingDown = false;
 
     await new Promise<void>((resolve, reject) => {
+      watcher.on('add', (filePath) => {
+        logger.debug(`added: ${filePath}`);
+        buffer.append({ type: 'add', payload: filePath });
+      });
+
+      watcher.on('change', (filePath) => {
+        logger.debug(`changed: ${filePath}`);
+        buffer.append({ type: 'change', payload: filePath });
+      });
+
+      watcher.on('error', (error) => {
+        logger.error('error watching staging directory', error);
+        if (shuttingDown) return;
+        shuttingDown = true;
+        void shutdown(error);
+      });
+
       const drain = consumer({
         logger,
         stagingDir,
-        enabled: () => listen,
+        shutdown: () => shuttingDown,
         buffer,
         registry: createRegistry({
           logger,
@@ -68,12 +87,16 @@ export async function runTransform(options: { stagingDir: string }): Promise<voi
         }),
       });
 
-      const shutdown = async () => {
+      const shutdown = async (cause?: unknown) => {
         logger.log('shutting down watcher...');
-        listen = false;
+
         try {
           await watcher.close();
           await drain;
+          if (cause !== undefined) {
+            reject(cause);
+            return;
+          }
           resolve();
         } catch (error) {
           reject(error);
@@ -81,14 +104,18 @@ export async function runTransform(options: { stagingDir: string }): Promise<voi
       };
 
       process.once('SIGINT', () => {
+        if (shuttingDown) return;
+        shuttingDown = true;
         void shutdown();
       });
 
       process.once('SIGTERM', () => {
+        if (shuttingDown) return;
+        shuttingDown = true;
         void shutdown();
       });
 
-      logger.log(`Watching for changes in: ${stagingDir}`);
+      logger.log(`Watching for changes in: ${stripRootPath(stagingDir)}`);
     });
   });
 }

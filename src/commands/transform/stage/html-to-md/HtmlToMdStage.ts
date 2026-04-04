@@ -4,6 +4,7 @@ import { readFile } from 'fs/promises';
 import { convert } from '@kreuzberg/html-to-markdown-node';
 import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
+import { stripRootPath } from '../../../../root.js';
 
 export class HtmlToMdStage extends AbstractStage {
   name(): string {
@@ -30,6 +31,8 @@ export class HtmlToMdStage extends AbstractStage {
     });
     const output = path.join(dirname(event.payload), `job.md`);
     await smartSave(output, markdown, false, this.logger);
-    this.logger.log(`html to markdown: ${event.payload} => ${output}`);
+    this.logger.log(
+      `html to markdown: ${stripRootPath(event.payload)} => ${stripRootPath(output)}`,
+    );
   }
 }

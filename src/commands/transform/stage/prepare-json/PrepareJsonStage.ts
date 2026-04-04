@@ -4,6 +4,7 @@ import { smartSave } from '../../../lib/smart-save.js';
 import type { StagingFileEvent } from '../../types.js';
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractJsonPreparer } from './AbstractJsonPreparer.js';
+import { stripRootPath } from '../../../../root.js';
 
 export class PrepareJsonStage extends AbstractStage {
   private readonly preparers = new Map<string, AbstractJsonPreparer>();
@@ -47,6 +48,8 @@ export class PrepareJsonStage extends AbstractStage {
     const prepared = preparer.prepare(input, meta);
     const output = path.join(jobDir, 'job.json');
     await smartSave(output, prepared, false, this.logger);
-    this.logger.log(`prepared job json: ${event.payload} => ${output}`);
+    this.logger.log(
+      `prepared job json: ${stripRootPath(event.payload)} => ${stripRootPath(output)}`,
+    );
   }
 }
