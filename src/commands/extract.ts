@@ -1,6 +1,6 @@
 import path from 'node:path';
 import type { Command } from 'commander';
-import { getPeonRepoRoot } from './extract/repoRoot.js';
+import { rootPath } from '../root.js';
 import { runScrape } from './extract/run.js';
 import { allStrategies, strategyFactoryBySlug } from './extract/strategy/index.js';
 import type { Strategy } from './extract/types/index.js';
@@ -49,7 +49,7 @@ export function registerExtractCommand(program: Command): void {
     )
     .option('--only <slugs>', `Comma-separated strategies to run (${allowedOnly})`)
     .action(async (opts: { out?: string; cache?: string; only?: string }) => {
-      const root = getPeonRepoRoot();
+      const root = rootPath();
       const outDir = path.resolve(opts.out ?? path.join(root, 'data', defaultDir));
       const cacheDir = path.resolve(opts.cache ?? path.join(root, 'data', 'cache'));
       const strategies = selectStrategies(opts.only);
