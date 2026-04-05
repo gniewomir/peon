@@ -5,6 +5,7 @@ import type { StagingFileEvent } from '../../types.js';
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractJsonPreparer } from './AbstractJsonPreparer.js';
 import { stripRootPath } from '../../../../root.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
 
 export class PrepareJsonStage extends AbstractStage {
   private readonly preparers = new Map<string, AbstractJsonPreparer>();
@@ -34,6 +35,10 @@ export class PrepareJsonStage extends AbstractStage {
 
   protected outputs(): string[] {
     return ['job.json'];
+  }
+
+  protected guards(): AbstractGuard[] {
+    return [];
   }
 
   protected async payload(event: StagingFileEvent): Promise<void> {

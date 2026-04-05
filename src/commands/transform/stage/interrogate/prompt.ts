@@ -53,7 +53,3 @@ export function buildUserPrompt(jobMarkdown: string): string {
     '>>>',
   ].join('\n');
 }
-
-export function minifyJsonString(prettyJson: string): string {
-  return JSON.stringify(JSON.parse(prettyJson));
-}

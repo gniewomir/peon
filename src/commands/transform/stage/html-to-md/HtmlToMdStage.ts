@@ -5,6 +5,7 @@ import { convert } from '@kreuzberg/html-to-markdown-node';
 import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
 import { stripRootPath } from '../../../../root.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
 
 export class HtmlToMdStage extends AbstractStage {
   name(): string {
@@ -17,6 +18,10 @@ export class HtmlToMdStage extends AbstractStage {
 
   protected outputs(): string[] {
     return ['job.md'];
+  }
+
+  protected guards(): AbstractGuard[] {
+    return [];
   }
 
   protected async payload(event: StagingFileEvent): Promise<void> {

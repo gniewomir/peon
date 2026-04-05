@@ -3,7 +3,7 @@ import { z } from 'zod';
 const unknownString = z.string().default('unknown').catch('unknown');
 const unknownBool = z.boolean().nullable().default(null).catch(null);
 
-export const QuestionsSchema = z.object({
+export const ConfessionSchema = z.object({
   job: z.object({
     title: unknownString,
     company: unknownString,
@@ -85,4 +85,4 @@ export const QuestionsSchema = z.object({
   }),
 });
 
-export type Questions = z.infer<typeof QuestionsSchema>;
+export type Confession = z.infer<typeof ConfessionSchema>;

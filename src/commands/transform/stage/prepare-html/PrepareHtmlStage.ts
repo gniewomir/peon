@@ -6,6 +6,7 @@ import type { StagingFileEvent } from '../../types.js';
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractHtmlPreparer } from './AbstractHtmlPreparer.js';
 import { stripRootPath } from '../../../../root.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
 
 export class PrepareHtmlStage extends AbstractStage {
   private readonly preparers = new Map<string, AbstractHtmlPreparer>();
@@ -35,6 +36,10 @@ export class PrepareHtmlStage extends AbstractStage {
 
   protected outputs(): string[] {
     return ['job.html'];
+  }
+
+  protected guards(): AbstractGuard[] {
+    return [];
   }
 
   protected async payload(event: StagingFileEvent): Promise<void> {

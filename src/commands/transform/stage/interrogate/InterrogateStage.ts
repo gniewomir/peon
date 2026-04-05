@@ -7,6 +7,7 @@ import { type ConcurrencyLimiter, createConcurrencyLimiter } from '../../lib/lim
 import { readFile } from 'fs/promises';
 import path, { dirname } from 'path';
 import { stripRootPath } from '../../../../root.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
 
 export class InterrogateStage extends AbstractStage {
   private readonly concurrencyLimit: number;
@@ -36,6 +37,10 @@ export class InterrogateStage extends AbstractStage {
 
   protected outputs(): string[] {
     return ['job.interrogated.json'];
+  }
+
+  protected guards(): AbstractGuard[] {
+    return [];
   }
 
   protected async payload(event: StagingFileEvent): Promise<void> {

@@ -5,6 +5,7 @@ import { smartSave } from '../../../lib/smart-save.js';
 import type { Logger } from '../../../types/Logger.js';
 import path, { dirname } from 'node:path';
 import { stripRootPath } from '../../../../root.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
 
 export class CleanJsonStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractCleaner>();
@@ -36,6 +37,10 @@ export class CleanJsonStage extends AbstractStage {
 
   protected outputs(): string[] {
     return ['job.clean.json'];
+  }
+
+  protected guards(): AbstractGuard[] {
+    return [];
   }
 
   protected async payload(event: StagingFileEvent): Promise<void> {

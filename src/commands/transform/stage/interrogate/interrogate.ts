@@ -2,10 +2,10 @@ import { toJSONSchema } from 'zod';
 
 import { defaultInterrogateConfig, type InterrogateConfig } from './config.js';
 import { buildUserPrompt, systemPrompt } from './prompt.js';
-import { QuestionsSchema, type Questions } from './schema.js';
+import { ConfessionSchema, type Confession } from './schema.js';
 
 /** Zod 4 provides `toJSONSchema`; third-party `zod-to-json-schema` does not support Zod 4 schemas. */
-const questionsJsonSchema = toJSONSchema(QuestionsSchema, { target: 'draft-07' });
+const questionsJsonSchema = toJSONSchema(ConfessionSchema, { target: 'draft-07' });
 
 function normalizeHost(host: string): string {
   return host.replace(/\/+$/, '');
@@ -31,7 +31,7 @@ function mergeInterrogateConfig(overrides?: Partial<InterrogateConfig>): Interro
 export async function interrogateJobOffer(
   markdown: string,
   configOverrides?: Partial<InterrogateConfig>,
-): Promise<Questions> {
+): Promise<Confession> {
   const config = mergeInterrogateConfig(configOverrides);
   const host = normalizeHost(config.host);
 
@@ -67,8 +67,8 @@ export async function interrogateJobOffer(
 
   const raw = (data as { response: string }).response.trim();
   const parsedJson: unknown = JSON.parse(raw);
-  return QuestionsSchema.parse(parsedJson);
+  return ConfessionSchema.parse(parsedJson);
 }
 
-export type { Questions } from './schema.js';
+export type { Confession } from './schema.js';
 export { defaultInterrogateConfig, type InterrogateConfig } from './config.js';
