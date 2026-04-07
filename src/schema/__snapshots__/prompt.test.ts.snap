@@ -16,13 +16,6 @@ Output contract:
 
 Field guidance:
 
-offer:
-- url (string, nullable): Job offer URL
-- source (string, nullable): Job offer source
-- publishedAt (string, nullable): Offer publication date and time
-- expiresAt (string, nullable): Offer expiration date and time
-- updatedAt (string, nullable): Offer last update date and time
-
 employer:
 - name (string, nullable): Employer name
 - type ({startup,scaleup,corporation,outsourcing agency,software house}): Employer company type

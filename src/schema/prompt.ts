@@ -263,7 +263,7 @@ Rules:
 - If a string value cannot be confidently inferred, output null.
 - For booleans: true/false if clearly stated or strongly implied; otherwise null.
 - For arrays: always output an array (use [] if none).
-- Prefer short, canonical tokens in lists (e.g. "TypeScript", "PostgreSQL", "AWS", "Docker"). Keep original capitalization.    
+- Prefer short, canonical tokens in lists (e.g. "TypeScript", "PostgreSQL", "AWS", "Docker"). Keep original capitalization.
 `;
 
 export function buildUserPrompt(jobMarkdown: string): string {
