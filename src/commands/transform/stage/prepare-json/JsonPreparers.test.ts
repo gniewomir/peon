@@ -8,7 +8,7 @@ const meta: JobMetadata = {
   strategy_slug: 'nfj',
   job_id: '1',
   job_url: 'https://example.com/job',
-  job_staging_dir: '/tmp/job',
+  job_dir: '/tmp/job',
   files: {
     job_cache: '/tmp/cache',
     job_meta: '/tmp/meta.json',

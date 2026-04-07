@@ -68,7 +68,7 @@ export abstract class AbstractStrategy implements Strategy {
       strategy_slug: this.slug,
       job_id: this.jobToId(job),
       job_url: url,
-      job_staging_dir: jobDir,
+      job_dir: jobDir,
       files: {
         job_cache: cached,
         job_meta: path.join(jobDir, `meta.json`),

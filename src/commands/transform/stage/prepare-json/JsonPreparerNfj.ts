@@ -10,17 +10,13 @@ export class JsonPreparerNfj extends AbstractJsonPreparer {
   prepare(input: unknown, meta: JobMetadata): Record<string, unknown> {
     const job = requireObject(input, {
       strategy: this.strategy(),
-      filePath: `${meta.job_staging_dir}/raw-job.json`,
+      filePath: `${meta.job_dir}/raw-job.json`,
     });
     if (typeof job.id !== 'string' || job.id.length === 0) {
-      throw new Error(
-        `NFJ job payload missing non-empty "id" in "${meta.job_staging_dir}/raw-job.json"`,
-      );
+      throw new Error(`NFJ job payload missing non-empty "id" in "${meta.job_dir}/raw-job.json"`);
     }
     if (typeof job.url !== 'string' || job.url.length === 0) {
-      throw new Error(
-        `NFJ job payload missing non-empty "url" in "${meta.job_staging_dir}/raw-job.json"`,
-      );
+      throw new Error(`NFJ job payload missing non-empty "url" in "${meta.job_dir}/raw-job.json"`);
     }
     return job;
   }

@@ -3,8 +3,16 @@ import type { StagingFileEvent } from '../types.js';
 import { readFile } from 'fs/promises';
 import type { JobMetadata } from '../../types/Job.js';
 import path, { dirname } from 'node:path';
-import { constants, writeFileSync } from 'node:fs';
-import { access, cp, mkdir, rename, rm } from 'node:fs/promises';
+import {
+  constants,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { access } from 'node:fs/promises';
 import { stripRootPath } from '../../../root.js';
 import type { AbstractGuard } from './AbstractGuard.js';
 import { GuardDecisionTrash } from './GuardDecisionTrash.js';
@@ -38,28 +46,30 @@ export abstract class AbstractStage {
       if (await this.exists(jobErrorPath)) return;
       if (!(await this.preconditionsMeet(event))) return;
       await this.payload(event);
-      this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] processed`);
       const guardDecisions = await Promise.all(
         this.guards().map((guard) => guard.guard({ jobDir, output_paths: this.outputs() })),
       );
       for (const decision of guardDecisions) {
         if (decision instanceof GuardDecisionQuarantine) {
-          this.saveErrorChain({ jobErrorPath, error: decision, event });
-          await this.quarantine(jobDir);
-          this.logger.warn(`[${event.type}:${stripRootPath(event.payload)}] quarantined by guard`);
-          return;
+          throw decision;
         }
         if (decision instanceof GuardDecisionTrash) {
-          this.saveErrorChain({ jobErrorPath, error: decision, event });
-          await this.trash(jobDir);
-          this.logger.warn(`[${event.type}:${stripRootPath(event.payload)}] trashed by guard`);
-          return;
+          throw decision;
         }
       }
     } catch (error) {
       this.saveErrorChain({ jobErrorPath, error, event });
-      await this.quarantine(jobDir);
-      this.logger.warn(`[${event.type}:${stripRootPath(event.payload)}] failed and was trashed`);
+      if (error instanceof GuardDecisionTrash) {
+        this.trash(jobDir);
+        this.logger.warn(`[${event.type}:${stripRootPath(event.payload)}] trashed by guard`);
+        return;
+      }
+      this.quarantine(jobDir);
+      this.logger.warn(
+        `[${event.type}:${stripRootPath(event.payload)}] failed and was quarantined`,
+      );
+    } finally {
+      this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] processed`);
     }
   }
 
@@ -161,30 +171,36 @@ export abstract class AbstractStage {
     );
   }
 
-  private async quarantine(jobDir: string): Promise<void> {
+  private quarantine(jobDir: string) {
     const quarantinedJobDir = path.join(
       this.quarantineDir,
       `${path.basename(jobDir)}-${Date.now()}`,
     );
-    await mkdir(quarantinedJobDir, { recursive: true });
+    if (existsSync(quarantinedJobDir)) {
+      return;
+    }
+    mkdirSync(quarantinedJobDir, { recursive: true });
     try {
-      await rename(jobDir, quarantinedJobDir);
+      renameSync(jobDir, quarantinedJobDir);
       return;
     } catch {
-      await cp(jobDir, quarantinedJobDir, { recursive: true });
-      await rm(jobDir, { recursive: true, force: true });
+      cpSync(jobDir, quarantinedJobDir, { recursive: true });
+      rmSync(jobDir, { recursive: true, force: true });
     }
   }
 
-  private async trash(jobDir: string): Promise<void> {
+  private trash(jobDir: string) {
     const trashedJobDir = path.join(this.trashDir, `${path.basename(jobDir)}-${Date.now()}`);
-    await mkdir(trashedJobDir, { recursive: true });
+    if (existsSync(trashedJobDir)) {
+      return;
+    }
+    mkdirSync(trashedJobDir, { recursive: true });
     try {
-      await rename(jobDir, trashedJobDir);
+      renameSync(jobDir, trashedJobDir);
       return;
     } catch {
-      await cp(jobDir, trashedJobDir, { recursive: true });
-      await rm(jobDir, { recursive: true, force: true });
+      cpSync(jobDir, trashedJobDir, { recursive: true });
+      rmSync(jobDir, { recursive: true, force: true });
     }
   }
 

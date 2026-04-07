@@ -6,11 +6,10 @@ export type JobMetadata = {
   strategy_slug: string;
   job_id: string;
   job_url: string;
-  job_staging_dir: string;
+  job_dir: string;
   files: {
     job_cache: string;
     job_meta: string;
-    [key: string]: string;
   };
 };
 

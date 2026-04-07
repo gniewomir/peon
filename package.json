@@ -22,7 +22,10 @@
     "test:integration": "vitest run -c vitest.integration.config.ts",
     "overkill": "npm run lint && npm run format && npm run test && npm run build",
     "extract": "npm run peon -- extract",
-    "transform": "npm run peon -- transform"
+    "transform": "npm run peon -- transform",
+    "clean:data": "node scripts/clean-data.mjs",
+    "clean:cache": "node scripts/clean-cache.mjs",
+    "clean:all": "node scripts/clean-all.mjs"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -30,6 +33,7 @@
   "keywords": [],
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^1.48.0",
     "@kreuzberg/html-to-markdown-node": "2.30.0",
     "cheerio": "^1.1.2",
     "chokidar": "^5.0.0",

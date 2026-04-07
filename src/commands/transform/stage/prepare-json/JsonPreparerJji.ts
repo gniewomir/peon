@@ -10,17 +10,13 @@ export class JsonPreparerJji extends AbstractJsonPreparer {
   prepare(input: unknown, meta: JobMetadata): Record<string, unknown> {
     const job = requireObject(input, {
       strategy: this.strategy(),
-      filePath: `${meta.job_staging_dir}/raw-job.json`,
+      filePath: `${meta.job_dir}/raw-job.json`,
     });
     if (typeof job.guid !== 'string' || job.guid.length === 0) {
-      throw new Error(
-        `JJI job payload missing non-empty "guid" in "${meta.job_staging_dir}/raw-job.json"`,
-      );
+      throw new Error(`JJI job payload missing non-empty "guid" in "${meta.job_dir}/raw-job.json"`);
     }
     if (typeof job.slug !== 'string' || job.slug.length === 0) {
-      throw new Error(
-        `JJI job payload missing non-empty "slug" in "${meta.job_staging_dir}/raw-job.json"`,
-      );
+      throw new Error(`JJI job payload missing non-empty "slug" in "${meta.job_dir}/raw-job.json"`);
     }
     return job;
   }
