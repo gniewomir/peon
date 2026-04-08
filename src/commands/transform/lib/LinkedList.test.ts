@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { LinkedList } from './linked-list.js';
+import { LinkedList } from './LinkedList.js';
 
 describe('LinkedList', () => {
   it('starts with size zero', () => {

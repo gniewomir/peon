@@ -1,6 +1,6 @@
 import type { Logger } from '../../types/Logger.js';
 import type { StrategyStats } from './Stats.js';
-import type { JobJson, JobMetadata } from '../../types/Job.js';
+import type { JobJson } from '../../types/Job.js';
 import type { Listing } from './Listing.js';
 import type { CacheOperations } from './Cache.js';
 
@@ -21,5 +21,5 @@ export interface Strategy {
   jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<JobJson>;
   jobToUrl(job: JobJson): string;
   jobToId(job: JobJson): string;
-  save(options: StrategySaveOptions): Promise<JobMetadata>;
+  save(options: StrategySaveOptions): Promise<void>;
 }

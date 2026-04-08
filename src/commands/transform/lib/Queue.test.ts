@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Queue } from './queue.js';
+import { Queue } from './Queue.js';
 
 describe('Queue', () => {
   it('enqueues and dequeues in FIFO order', () => {
@@ -55,14 +55,5 @@ describe('Queue', () => {
     queue.enqueue(3);
 
     expect(queue.toArray()).toEqual([1, 2, 3]);
-  });
-
-  it('supports append and shift aliases', () => {
-    const queue = new Queue<number>();
-    queue.append(1);
-    queue.append(2);
-
-    expect(queue.shift()).toBe(1);
-    expect(queue.shift()).toBe(2);
   });
 });

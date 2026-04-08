@@ -10,7 +10,7 @@ import type {
   StrategyStats,
 } from '../types/index.js';
 import fs from 'node:fs/promises';
-import type { JobMetadata } from '../../types/Job.js';
+import { metaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
 
 function createBaseStats(): StrategyStats {
   return {
@@ -36,17 +36,6 @@ export abstract class AbstractStrategy implements Strategy {
     this.ids = new Set<string>();
   }
 
-  protected async readJsonFile<T extends object = Record<string, unknown>>(
-    filePath: string,
-  ): Promise<T> {
-    try {
-      const raw = await fs.readFile(filePath, 'utf-8');
-      return JSON.parse(raw) as T;
-    } catch (cause) {
-      throw new Error(`Failed to read/parse JSON file at "${filePath}"`, { cause });
-    }
-  }
-
   abstract jobListingsGenerator(): AsyncGenerator<Listing>;
 
   abstract jobGenerator(
@@ -59,30 +48,30 @@ export abstract class AbstractStrategy implements Strategy {
 
   abstract jobToId(job: JobJson): string;
 
-  async save(options: StrategySaveOptions): Promise<JobMetadata> {
+  async save(options: StrategySaveOptions): Promise<void> {
     const { outDir, cached, job, url, content, logger } = options;
     const jobId = this.jobToId(job);
     const jobDir = path.join(outDir, `${this.slug}-${jobId}`);
 
-    const metadata: JobMetadata = {
-      strategy_slug: this.slug,
-      job_id: this.jobToId(job),
-      job_url: url,
-      job_dir: jobDir,
-      files: {
-        job_cache: cached,
-        job_meta: path.join(jobDir, `meta.json`),
+    const meta = metaSchema.parse({
+      offer: {
+        id: this.jobToId(job),
+        url,
+        source: this.slug,
+        publishedAt: null,
+        updatedAt: null,
+        expiresAt: null,
+        cachePath: cached,
+        stagingPath: jobDir,
       },
-    };
+    } satisfies TMetaSchema);
 
     await fs.mkdir(jobDir, { recursive: true });
 
     await Promise.all([
-      smartSave(path.join(jobDir, `meta.json`), metadata, false, logger),
-      smartSave(path.join(jobDir, `raw-job.json`), job, false, logger),
-      smartSave(path.join(jobDir, `raw-job.html`), content, false, logger),
+      smartSave(path.join(jobDir, `raw.meta.json`), meta, false, logger),
+      smartSave(path.join(jobDir, `raw.job.json`), job, false, logger),
+      smartSave(path.join(jobDir, `raw.job.html`), content, false, logger),
     ]);
-
-    return metadata;
   }
 }

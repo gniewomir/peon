@@ -8,17 +8,18 @@ import {
   existsSync,
   mkdirSync,
   renameSync,
+  rmdirSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
 import { access } from 'node:fs/promises';
 import { stripRootPath } from '../../../../root.js';
-import type { AbstractGuard } from '../abstract-guard/AbstractGuard.js';
-import { GuardDecisionTrash } from '../abstract-guard/GuardDecisionTrash.js';
-import { GuardDecisionQuarantine } from '../abstract-guard/GuardDecisionQuarantine.js';
-
+import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
+import { GuardDecisionTrash } from '../lib.guard/GuardDecisionTrash.js';
+import { GuardDecisionQuarantine } from '../lib.guard/GuardDecisionQuarantine.js';
 import type { TMetaSchema } from '../../../../schema/schema.meta.js';
 import { smartSave } from '../../../lib/smart-save.js';
+import { GuardDecisionLoad } from '../lib.guard/GuardDecisionLoad.js';
 
 export abstract class AbstractStage {
   protected logger;
@@ -34,40 +35,52 @@ export abstract class AbstractStage {
   }
 
   public abstract name(): string;
-  protected abstract inputs(): string[];
-  protected abstract output(): string;
+  protected abstract inputFiles(): string[];
+  protected abstract outputFile(): string;
   protected abstract payload(event: StagingFileEvent): Promise<string | object>;
   protected abstract guards(): AbstractGuard[];
 
   public async runIfPreconditionsMet(event: StagingFileEvent): Promise<void> {
     const jobDir = dirname(event.payload);
-    const jobErrorPath = path.join(jobDir, `errors-${Date.now()}.json`);
     try {
-      if (!this.isFileCreationOrUpdateEvent(event)) return;
-      if (!(await this.exists(jobDir))) return;
-      if (await this.exists(jobErrorPath)) return;
       if (!(await this.preconditionsMeet(event))) return;
       const result = await this.payload(event);
       const guardDecisions = await Promise.all(this.guards().map((guard) => guard.guard(result)));
+      await smartSave(path.join(jobDir, this.outputFile()), result, false, this.logger);
       for (const decision of guardDecisions) {
         if (decision instanceof GuardDecisionQuarantine) {
-          throw decision;
+          this.saveErrorChain({
+            jobErrorPath: path.join(jobDir, `errors.json`),
+            error: decision,
+            event,
+          });
+          this.quarantine(jobDir);
+          this.logger.warn(
+            `[${event.type}:${stripRootPath(event.payload)}] was quarantined by guard`,
+          );
+          break;
         }
         if (decision instanceof GuardDecisionTrash) {
-          throw decision;
+          this.saveErrorChain({
+            jobErrorPath: path.join(jobDir, `errors.json`),
+            error: decision,
+            event,
+          });
+          this.logger.warn(`[${event.type}:${stripRootPath(event.payload)}] was trashed by guard`);
+          this.trash(jobDir);
+          break;
+        }
+        if (decision instanceof GuardDecisionLoad) {
+          this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] was loaded by guard`);
+          this.load(jobDir);
+          break;
         }
       }
-      await smartSave(path.join(jobDir, this.output()), result, false, this.logger);
     } catch (error) {
-      this.saveErrorChain({ jobErrorPath, error, event });
-      if (error instanceof GuardDecisionTrash) {
-        this.trash(jobDir);
-        this.logger.warn(`[${event.type}:${stripRootPath(event.payload)}] trashed by guard`);
-        return;
-      }
+      this.saveErrorChain({ jobErrorPath: path.join(jobDir, `errors.json`), error, event });
       this.quarantine(jobDir);
-      this.logger.warn(
-        `[${event.type}:${stripRootPath(event.payload)}] failed and was quarantined`,
+      this.logger.error(
+        `[${event.type}:${stripRootPath(event.payload)}] was quarantined by unhanded error`,
       );
     } finally {
       this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] processed`);
@@ -75,7 +88,12 @@ export abstract class AbstractStage {
   }
 
   protected async preconditionsMeet(event: StagingFileEvent): Promise<boolean> {
-    const inputs = this.inputs();
+    const jobDir = dirname(event.payload);
+
+    if (!this.isFileCreationOrUpdateEvent(event)) return false;
+    if (!(await this.exists(jobDir))) return false;
+
+    const inputs = this.inputFiles();
     let inputsAlreadyExist: boolean;
 
     switch (inputs.length) {
@@ -83,7 +101,7 @@ export abstract class AbstractStage {
         inputsAlreadyExist = true;
         break;
       case 1:
-        inputsAlreadyExist = event.payload.endsWith(`/${this.inputs()[0]}`);
+        inputsAlreadyExist = event.payload.endsWith(`/${this.inputFiles()[0]}`);
         break;
       default:
         inputsAlreadyExist = (
@@ -100,7 +118,9 @@ export abstract class AbstractStage {
       return false;
     }
 
-    const outputAlreadyExist = await this.exists(path.join(dirname(event.payload), this.output()));
+    const outputAlreadyExist = await this.exists(
+      path.join(dirname(event.payload), this.outputFile()),
+    );
 
     if (outputAlreadyExist) {
       this.logger.debug(`Output already exists: ${event.payload}`);
@@ -171,6 +191,7 @@ export abstract class AbstractStage {
       `${path.basename(jobDir)}-${Date.now()}`,
     );
     if (existsSync(quarantinedJobDir)) {
+      this.logger.warn(`${stripRootPath(quarantinedJobDir)} was already quarantined!`);
       return;
     }
     mkdirSync(quarantinedJobDir, { recursive: true });
@@ -186,7 +207,7 @@ export abstract class AbstractStage {
   private trash(jobDir: string) {
     const trashedJobDir = path.join(this.trashDir, `${path.basename(jobDir)}-${Date.now()}`);
     if (existsSync(trashedJobDir)) {
-      return;
+      rmdirSync(trashedJobDir, { recursive: true });
     }
     mkdirSync(trashedJobDir, { recursive: true });
     try {
@@ -194,6 +215,21 @@ export abstract class AbstractStage {
       return;
     } catch {
       cpSync(jobDir, trashedJobDir, { recursive: true });
+      rmSync(jobDir, { recursive: true, force: true });
+    }
+  }
+
+  private load(jobDir: string) {
+    const loadJobDir = path.join(this.trashDir, `${path.basename(jobDir)}}`);
+    if (existsSync(loadJobDir)) {
+      rmdirSync(loadJobDir, { recursive: true });
+    }
+    mkdirSync(loadJobDir, { recursive: true });
+    try {
+      renameSync(jobDir, loadJobDir);
+      return;
+    } catch {
+      cpSync(jobDir, loadJobDir, { recursive: true });
       rmSync(jobDir, { recursive: true, force: true });
     }
   }

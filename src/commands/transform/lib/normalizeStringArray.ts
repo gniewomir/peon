@@ -1,7 +1,7 @@
 /**
  * Trim, drop empties, dedupe case-insensitively; first occurrence wins.
  */
-export function normalizeRequiredSkills(values: unknown): string[] {
+export function normalizeStringArray(values: unknown): string[] {
   if (!Array.isArray(values)) return [];
   const seen = new Set<string>();
   const out: string[] = [];

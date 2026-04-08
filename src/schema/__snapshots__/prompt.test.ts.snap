@@ -18,14 +18,14 @@ Field guidance:
 
 employer:
 - name (string, nullable): Employer name
-- type ({startup,scaleup,corporation,outsourcing agency,software house}): Employer company type
+- type (string, nullable): Employer company type
 
 role:
 - title (string, nullable): Role title
-- seniority ({intern,junior,regular,senior,expert,staff,principal,lead,management}): Role seniority
-- focus ({backend,frontend,fullstack,devops,security,mobile,design,testing,management}): Primary role focus
-- specialization ({specialized,generalist}): Role specialization profile
-- scope ({full-time,part-time,project}): Role engagement scope
+- seniority (string, nullable): Role seniority
+- focus (string, nullable): Primary role focus
+- specialization (string, nullable): Role specialization profile
+- scope (string, nullable): Role engagement scope
 
 workplace:
 - isRemote (boolean, nullable): Whether fully remote work is allowed
@@ -35,16 +35,21 @@ workplace:
 - cities (array): Allowed work locations (cities)
 
 contract:
-- type ({employment,b2b/contractor,mandate contract,internship}): Contract type
-- pto (boolean, nullable): Whether paid time off is provided
-- bankHolidays (boolean, nullable): Whether paid bank holidays are provided
+- type (array): Available contract types
+- pto (boolean, nullable): Whether paid time off is provided (true for employment contract type)
+- bankHolidays (boolean, nullable): Whether paid bank holidays are provided (true for employment contract type)
 
-salary:
-- transparentCompensation (boolean, nullable): Whether salary range is disclosed
-- from (string, nullable): Minimum compensation amount (number as string)
-- to (string, nullable): Maximum compensation amount (number as string)
-- currency (string, nullable): Compensation currency
-- unit ({hour,day,week,month,year}): Compensation period unit
+salaryCoE:
+- from (string, nullable): Minimum compensation amount for employment (number as string)
+- to (string, nullable): Maximum compensation amount for employment (number as string)
+- currency (string, nullable): Compensation currency for employment
+- unit (string, nullable): Compensation period unit for employment
+
+salaryB2B:
+- from (string, nullable): Minimum compensation amount for B2B (number as string)
+- to (string, nullable): Maximum compensation amount for B2B  (number as string)
+- currency (string, nullable): Compensation currency for B2B
+- unit (string, nullable): Compensation period unit for B2B
 
 benefits:
 - rsu (boolean, nullable): Whether equity-based compensation is provided
@@ -63,6 +68,6 @@ technicalEnvironment:
 - aiFriendly (boolean, nullable): Whether AI tooling familiarity is a plus
 - ddd (boolean, nullable): Whether Domain-Driven Design is used or expected
 - testFirst (boolean, nullable): Whether testing-first practices are emphasized
-- architecture ({monolith,microservices,embedded,lambda/edge}): System architecture style (lamda/edge, if Vercel is a requirement)
-- stage ({greenfield,mature,legacy}): System lifecycle stage"
+- architecture (string, nullable): System architecture style (lamda/edge, if Vercel is a requirement)
+- stage (string, nullable): System lifecycle stage"
 `;

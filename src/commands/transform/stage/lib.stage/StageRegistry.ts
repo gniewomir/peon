@@ -1,5 +1,5 @@
-import type { AbstractStage } from './abstract-stage/AbstractStage.js';
-import type { StagingFileEvent } from '../types.js';
+import type { AbstractStage } from './AbstractStage.js';
+import type { StagingFileEvent } from '../../types.js';
 
 export class StageRegistry {
   private readonly stages: Map<string, AbstractStage> = new Map();

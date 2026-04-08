@@ -1,8 +1,8 @@
-import { normalizeRequiredSkills } from '../../lib/skills.js';
-import type { Finder } from '../../lib/finder.js';
+import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
 import { AbstractCleaner } from './AbstractCleaner.js';
 import { nullSchema, type TSchema } from '../../../../schema/schema.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
+import type { Finder } from '../../lib/Finder.js';
 
 function bdjBoolFlag(value: unknown): boolean {
   if (typeof value === 'boolean') {
@@ -84,7 +84,7 @@ export class CleanerBdj extends AbstractCleaner {
     }
     const experienceLevel = optionalValueByPath(this, listing, 'experienceLevel');
     const seniority_level = typeof experienceLevel === 'string' ? experienceLevel : '';
-    const required_skills = normalizeRequiredSkills(
+    const required_skills = normalizeStringArray(
       optionalValueByPath(this, listing, 'technologyTags'),
     );
 

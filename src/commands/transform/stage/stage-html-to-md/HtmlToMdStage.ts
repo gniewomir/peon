@@ -1,19 +1,19 @@
-import { AbstractStage } from '../AbstractStage.js';
+import { AbstractStage } from '../lib.stage/AbstractStage.js';
 import type { StagingFileEvent } from '../../types.js';
 import { readFile } from 'fs/promises';
 import { convert } from '@kreuzberg/html-to-markdown-node';
-import type { AbstractGuard } from '../AbstractGuard.js';
+import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 
 export class HtmlToMdStage extends AbstractStage {
   name(): string {
     return 'html-to-md';
   }
 
-  protected inputs(): string[] {
+  protected inputFiles(): string[] {
     return ['clean.job.html'];
   }
 
-  protected output(): string {
+  protected outputFile(): string {
     return 'job.md';
   }
 

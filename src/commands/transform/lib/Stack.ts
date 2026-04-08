@@ -1,4 +1,4 @@
-import { LinkedList } from './linked-list.js';
+import { LinkedList } from './LinkedList.js';
 
 export class Stack<T> {
   private readonly items = new LinkedList<T>();
@@ -18,7 +18,7 @@ export class Stack<T> {
   }
 
   peek(): T | undefined {
-    return this.items.toArray()[0];
+    return this.items.peekHead();
   }
 
   size(): number {

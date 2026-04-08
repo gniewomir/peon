@@ -1,14 +1,16 @@
 import type { StagingFileEvent } from '../../types.js';
-import { AbstractStage } from '../AbstractStage.js';
+import { AbstractStage } from '../lib.stage/AbstractStage.js';
 import type { Logger } from '../../../types/Logger.js';
-import { type ConcurrencyLimiter, createConcurrencyLimiter } from '../../lib/limiter.js';
+import {
+  type ConcurrencyLimiter,
+  createConcurrencyLimiter,
+} from '../../lib/createConcurrencyLimiter.js';
 import { readFile } from 'fs/promises';
-import type { AbstractGuard } from '../AbstractGuard.js';
+import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 import { respond } from '../../../../schema/local-ollama.js';
-import { deepVisitor } from '../../lib/deepVisitor.js';
-import type { TSchema } from '../../../../schema/schema.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
+import { qualityEstimator } from '../lib.stage/qualityEstimator.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimit: number;
@@ -32,11 +34,11 @@ export class LlmStage extends AbstractStage {
     return 'llm';
   }
 
-  protected inputs(): string[] {
+  protected inputFiles(): string[] {
     return ['job.md'];
   }
 
-  protected output(): string {
+  protected outputFile(): string {
     return 'llm.job.json';
   }
 
@@ -44,28 +46,22 @@ export class LlmStage extends AbstractStage {
     return [];
   }
 
+  /**
+   * NOTE: Rerunning transform script will repopulate this queue
+   *       as long as chokidar ignoreInitial = false
+   */
   protected async payload(event: StagingFileEvent) {
+    if (this.concurrencyLimiter.pendingCount()) {
+      this.logger.warn(`LLM:`, {
+        pending: this.concurrencyLimiter.pendingCount(),
+        active: this.concurrencyLimiter.activeCount(),
+      });
+    }
     return await this.concurrencyLimiter.run(async () => {
       const markdown = await readFile(event.payload, 'utf8');
-      const quality = (output: TSchema) => {
-        let valid = 0;
-        let total = 0;
-
-        deepVisitor(output, (value) => {
-          if (value === '' || value === null || (Array.isArray(value) && value.length === 0)) {
-            //
-          } else {
-            valid++;
-          }
-          total++;
-        });
-
-        return valid / total;
-      };
-
       const { output, ...debug } = await respond({
         input: markdown,
-        quality,
+        quality: qualityEstimator,
         model: 'qwen2.5:7b',
       });
 

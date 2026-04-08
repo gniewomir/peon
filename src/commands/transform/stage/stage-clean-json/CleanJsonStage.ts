@@ -1,9 +1,9 @@
-import { AbstractStage } from '../AbstractStage.js';
+import { AbstractStage } from '../lib.stage/AbstractStage.js';
 import type { StagingFileEvent } from '../../types.js';
 import { type AbstractCleaner } from './AbstractCleaner.js';
 import type { Logger } from '../../../types/Logger.js';
 import path, { dirname } from 'node:path';
-import type { AbstractGuard } from '../AbstractGuard.js';
+import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 import assert from 'node:assert';
 
 export class CleanJsonStage extends AbstractStage {
@@ -30,11 +30,11 @@ export class CleanJsonStage extends AbstractStage {
     return 'clean-json';
   }
 
-  protected inputs(): string[] {
+  protected inputFiles(): string[] {
     return ['raw.job.json'];
   }
 
-  protected output(): string {
+  protected outputFile(): string {
     return 'clean.job.json';
   }
 
@@ -51,7 +51,7 @@ export class CleanJsonStage extends AbstractStage {
     const cleaner = this.cleaners.get(source);
     assert(cleaner, `no cleaner registered for source "${source}"`);
 
-    const input = path.join(jobDir, this.inputs()[0]);
+    const input = path.join(jobDir, this.inputFiles()[0]);
     const raw = await this.readJson(input);
     return cleaner.clean(raw);
   }

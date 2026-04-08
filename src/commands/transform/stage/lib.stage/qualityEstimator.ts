@@ -1,7 +1,7 @@
 import type { TSchema } from '../../../../schema/schema.js';
 import { deepVisitor } from '../../lib/deepVisitor.js';
 
-export const quality = (output: TSchema) => {
+export const qualityEstimator = (output: TSchema) => {
   let valid = 0;
   let total = 0;
 
@@ -13,6 +13,8 @@ export const quality = (output: TSchema) => {
     }
     total++;
   });
+
+  if (total === 0 || valid === 0) return 0;
 
   return valid / total;
 };

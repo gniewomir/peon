@@ -1,12 +1,12 @@
 import chokidar from 'chokidar';
-import { Queue } from './lib/queue.js';
+import { Queue } from './lib/Queue.js';
 import { loggerContext } from '../lib/logger.js';
 import type { Logger } from '../types/Logger.js';
 import type { StagingFileEvent } from './types.js';
-import { createRegistry } from './stage/index.js';
-import type { StagesRegistry } from './stage/StagesRegistry.js';
-import { LinkedList } from './lib/linked-list.js';
+import { createStageRegistry } from './stage/lib.stage/createStageRegistry.js';
+import { LinkedList } from './lib/LinkedList.js';
 import { stripRootPath } from '../../root.js';
+import type { StageRegistry } from './stage/lib.stage/StageRegistry.js';
 
 async function consumer({
   logger,
@@ -19,12 +19,12 @@ async function consumer({
   stagingDir: string;
   shutdown: () => boolean;
   buffer: Queue<StagingFileEvent>;
-  registry: StagesRegistry;
+  registry: StageRegistry;
   delay?: number;
 }): Promise<void> {
   const running = new LinkedList<Promise<unknown>>();
   while (!shutdown() || !buffer.isEmpty()) {
-    const event = buffer.shift();
+    const event = buffer.dequeue();
     if (!event) {
       logger.debug(`no buffered events, waiting ${delay}ms`);
       await new Promise<void>((resolve) => setTimeout(resolve, delay));
@@ -60,18 +60,20 @@ export async function runTransform(options: {
 
     await new Promise<void>((resolve, reject) => {
       watcher.on('add', (filePath) => {
+        if (shuttingDown) return;
         logger.debug(`added: ${filePath}`);
-        buffer.append({ type: 'add', payload: filePath });
+        buffer.enqueue({ type: 'add', payload: filePath });
       });
 
       watcher.on('change', (filePath) => {
+        if (shuttingDown) return;
         logger.debug(`changed: ${filePath}`);
-        buffer.append({ type: 'change', payload: filePath });
+        buffer.enqueue({ type: 'change', payload: filePath });
       });
 
       watcher.on('error', (error) => {
-        logger.error('error watching staging directory', error);
         if (shuttingDown) return;
+        logger.error('error watching staging directory', error);
         shuttingDown = true;
         void shutdown(error);
       });
@@ -81,7 +83,7 @@ export async function runTransform(options: {
         stagingDir,
         shutdown: () => shuttingDown,
         buffer,
-        registry: createRegistry({
+        registry: createStageRegistry({
           logger,
           stagingDir,
         }),

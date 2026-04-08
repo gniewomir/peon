@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Stack } from './stack.js';
+import { Stack } from './Stack.js';
 
 describe('Stack', () => {
   it('pushes and pops in LIFO order', () => {

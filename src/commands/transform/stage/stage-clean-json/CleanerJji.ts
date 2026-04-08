@@ -1,4 +1,4 @@
-import { normalizeRequiredSkills } from '../../lib/skills.js';
+import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
 import { AbstractCleaner } from './AbstractCleaner.js';
 import { nullSchema, type TSchema } from '../../../../schema/schema.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
@@ -7,7 +7,7 @@ export class CleanerJji extends AbstractCleaner {
   clean(listing: Record<string, unknown>): TSchema {
     const experienceLevel = listing['experienceLevel'];
     const seniority = typeof experienceLevel === 'string' ? experienceLevel : '';
-    const required_skills = normalizeRequiredSkills(listing['requiredSkills']);
+    const required_skills = normalizeStringArray(listing['requiredSkills']);
 
     const cities = this.arrayValueByPath(listing, 'multilocation').map((location) => {
       return this.stringValueByPath(location, 'city');

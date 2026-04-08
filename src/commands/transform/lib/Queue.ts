@@ -1,4 +1,4 @@
-import { LinkedList } from './linked-list.js';
+import { LinkedList } from './LinkedList.js';
 
 export class Queue<T> {
   private readonly items = new LinkedList<T>();
@@ -18,7 +18,7 @@ export class Queue<T> {
   }
 
   peek(): T | undefined {
-    return this.items.toArray()[0];
+    return this.items.peekHead();
   }
 
   size(): number {
@@ -31,13 +31,5 @@ export class Queue<T> {
 
   toArray(): T[] {
     return this.items.toArray();
-  }
-
-  append(value: T): void {
-    this.enqueue(value);
-  }
-
-  shift(): T | undefined {
-    return this.dequeue();
   }
 }

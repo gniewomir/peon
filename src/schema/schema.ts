@@ -1,22 +1,7 @@
 import { toJSONSchema, z } from 'zod';
-import { sBool, sDateTime, sEnum, sNamespace, sString, sStringArray } from './schema.utils.js';
+import { sBool, sEnum, sEnumArray, sNamespace, sString, sStringArray } from './schema.utils.js';
 
-const metaObject = {
-  offer: sNamespace(
-    {
-      id: sString('Job offer URL'),
-      url: sString('Job offer URL'),
-      source: sString('Job offer source'),
-      publishedAt: sDateTime('Offer publication date and time'),
-      expiresAt: sDateTime('Offer expiration date and time'),
-      updatedAt: sDateTime('Offer last update date and time'),
-    },
-    'Job offer metadata',
-  ),
-};
-export const metaSchema = sNamespace(metaObject, 'Job offer metadata');
-
-const schemaObject = {
+export const schemaObject = {
   employer: sNamespace(
     {
       name: sString('Employer name'),
@@ -75,24 +60,34 @@ const schemaObject = {
   ),
   contract: sNamespace(
     {
-      type: sEnum(
-        ['employment', 'b2b/contractor', 'mandate contract', 'internship'],
-        'Contract type',
+      type: sEnumArray(['employment', 'b2b/contractor', 'other'], 'Available contract types'),
+      pto: sBool('Whether paid time off is provided (true for employment contract type)'),
+      bankHolidays: sBool(
+        'Whether paid bank holidays are provided (true for employment contract type)',
       ),
-      pto: sBool('Whether paid time off is provided'),
-      bankHolidays: sBool('Whether paid bank holidays are provided'),
     },
     'Contract terms',
   ),
-  salary: sNamespace(
+  salaryCoE: sNamespace(
     {
-      transparentCompensation: sBool('Whether salary range is disclosed'),
-      from: sString('Minimum compensation amount (number as string)'),
-      to: sString('Maximum compensation amount (number as string)'),
-      currency: sString('Compensation currency'),
-      unit: sEnum(['hour', 'day', 'week', 'month', 'year'], 'Compensation period unit'),
+      from: sString('Minimum compensation amount for employment (number as string)'),
+      to: sString('Maximum compensation amount for employment (number as string)'),
+      currency: sString('Compensation currency for employment'),
+      unit: sEnum(
+        ['hour', 'day', 'week', 'month', 'year'],
+        'Compensation period unit for employment',
+      ),
     },
-    'Compensation details',
+    'Employment compensation details',
+  ),
+  salaryB2B: sNamespace(
+    {
+      from: sString('Minimum compensation amount for B2B (number as string)'),
+      to: sString('Maximum compensation amount for B2B  (number as string)'),
+      currency: sString('Compensation currency for B2B '),
+      unit: sEnum(['hour', 'day', 'week', 'month', 'year'], 'Compensation period unit for B2B '),
+    },
+    'B2B compensation details',
   ),
   benefits: sNamespace(
     {
@@ -134,17 +129,57 @@ Rules:
 - Prefer short, canonical tokens in lists (e.g. "TypeScript", "PostgreSQL", "AWS", "Docker"). Keep original capitalization.
 `,
 );
-
-export const combined = sNamespace(
-  {
-    ...metaObject,
-    ...schemaObject,
-  },
-  'Combined schema',
-);
-
-export type TMetaSchema = z.infer<typeof metaSchema>;
 export type TSchema = z.infer<typeof schema>;
-export type TCombinedSchema = z.infer<typeof combined>;
-
 export const jsonSchema = toJSONSchema(schema, { target: 'draft-07' });
+export const nullSchema: TSchema = {
+  employer: { name: null, type: null },
+  role: {
+    title: null,
+    seniority: null,
+    focus: null,
+    specialization: null,
+    scope: null,
+  },
+  workplace: {
+    isRemote: null,
+    isHybrid: null,
+    isOnsite: null,
+    travel: null,
+    cities: [],
+  },
+  contract: {
+    type: [],
+    pto: null,
+    bankHolidays: null,
+  },
+  salaryCoE: {
+    from: null,
+    to: null,
+    currency: null,
+    unit: null,
+  },
+  salaryB2B: {
+    from: null,
+    to: null,
+    currency: null,
+    unit: null,
+  },
+  benefits: {
+    rsu: null,
+    bonus: null,
+    multisport: null,
+  },
+  naturalLanguages: [],
+  hardTechnologyRequirements: [],
+  optionalTechnologyRequirements: [],
+  hardSkills: [],
+  softSkills: [],
+  technicalEnvironment: {
+    aiFirst: null,
+    aiFriendly: null,
+    ddd: null,
+    testFirst: null,
+    architecture: null,
+    stage: null,
+  },
+};

@@ -2,9 +2,9 @@ import path, { dirname } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { Logger } from '../../../types/Logger.js';
 import type { StagingFileEvent } from '../../types.js';
-import { AbstractStage } from '../AbstractStage.js';
+import { AbstractStage } from '../lib.stage/AbstractStage.js';
 import type { AbstractHtmlCleaner } from './AbstractHtmlCleaner.js';
-import type { AbstractGuard } from '../AbstractGuard.js';
+import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 import assert from 'node:assert';
 
 export class CleanHtmlStage extends AbstractStage {
@@ -29,11 +29,11 @@ export class CleanHtmlStage extends AbstractStage {
     return 'clean-html';
   }
 
-  protected inputs(): string[] {
+  protected inputFiles(): string[] {
     return ['raw.job.html'];
   }
 
-  protected output(): string {
+  protected outputFile(): string {
     return 'clean.job.html';
   }
 

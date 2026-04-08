@@ -13,7 +13,7 @@ export type JobMetadata = {
   };
 };
 
-export interface CleanJson {
+export interface TCleanJson {
   url: string;
   company: string;
   position: string;

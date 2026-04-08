@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createConcurrencyLimiter } from './limiter.js';
+import { createConcurrencyLimiter } from './createConcurrencyLimiter.js';
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {

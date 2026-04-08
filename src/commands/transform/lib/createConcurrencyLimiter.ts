@@ -1,5 +1,5 @@
 type AsyncTask<T> = () => Promise<T>;
-import { LinkedList } from './linked-list.js';
+import { LinkedList } from './LinkedList.js';
 
 export interface ConcurrencyLimiter {
   run<T>(task: AsyncTask<T>): Promise<T>;
