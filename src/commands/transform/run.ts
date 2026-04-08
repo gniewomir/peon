@@ -24,13 +24,11 @@ export async function runTransform(options: {
     });
 
     watcher.on('add', (filePath) => {
-      if (shuttingDown) return;
       logger.debug(`added: ${filePath}`);
       orchestrator.handleStagingEvent({ type: 'add', payload: filePath });
     });
 
     watcher.on('change', (filePath) => {
-      if (shuttingDown) return;
       logger.debug(`changed: ${filePath}`);
       orchestrator.handleStagingEvent({ type: 'change', payload: filePath });
     });
@@ -42,30 +40,33 @@ export async function runTransform(options: {
 
     watcher.on('error', (error) => {
       logger.error('watcher error', error);
-      shuttingDown = true;
-      void shutdown(error);
+      shutdown(error);
     });
 
-    const shutdown = async (cause?: unknown) => {
-      logger.log('shutting down watcher...');
-      await watcher.close();
-      await orchestrator.shutdown();
+    const shutdown = (cause?: unknown) => {
+      if (shuttingDown) return;
       if (cause) {
-        throw cause;
+        logger.error('shutting down because of error', cause);
       }
+      logger.log('gracefully shutting down...');
+      shuttingDown = true;
+      new Promise<void>((resolve) => {
+        setTimeout(() => {
+          logger.warn('shutdown timeout (30s) forcing exit...');
+          process.exit(1);
+        }, 1000 * 30);
+        watcher
+          .close()
+          .then(() => orchestrator.shutdown())
+          .then(() => {
+            logger.log('cleanup complete');
+            resolve();
+          });
+      });
     };
 
-    process.once('SIGINT', () => {
-      if (shuttingDown) return;
-      shuttingDown = true;
-      void shutdown();
-    });
-
-    process.once('SIGTERM', () => {
-      if (shuttingDown) return;
-      shuttingDown = true;
-      void shutdown();
-    });
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
 
     logger.log(`Watching for changes in: ${stripRootPath(stagingDir)}`);
   });
