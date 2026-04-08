@@ -70,12 +70,9 @@ export class LlmStage extends AbstractStage {
    */
   protected async payload(event: StagingFileEvent) {
     if (this.concurrencyLimiter.pendingCount()) {
-      this.logger.warn(`LLM:`, {
-        pending: this.concurrencyLimiter.pendingCount(),
-        active: this.concurrencyLimiter.activeCount(),
-        minExecutionTimeMs: this.minimumExecutionTimeLimit,
-        concurrencyLimit: this.concurrencyLimit,
-      });
+      this.logger.warn(
+        `LLM: pending ${this.concurrencyLimiter.pendingCount()}; active: ${this.concurrencyLimiter.activeCount()}`,
+      );
     }
     const result = await this.concurrencyLimiter.run(() =>
       this.minimumExecutionTimeLimiter(async () => {
@@ -96,12 +93,9 @@ export class LlmStage extends AbstractStage {
       }),
     );
     if (this.concurrencyLimiter.pendingCount()) {
-      this.logger.warn(`LLM:`, {
-        pending: this.concurrencyLimiter.pendingCount(),
-        active: this.concurrencyLimiter.activeCount(),
-        minExecutionTimeMs: this.minimumExecutionTimeLimit,
-        concurrencyLimit: this.concurrencyLimit,
-      });
+      this.logger.warn(
+        `LLM: pending ${this.concurrencyLimiter.pendingCount()}; active: ${this.concurrencyLimiter.activeCount()}`,
+      );
     }
     return result;
   }
