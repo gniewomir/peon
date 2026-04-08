@@ -49,6 +49,7 @@ export abstract class AbstractStage {
       const result = await this.payload(event);
       const guardDecisions = await Promise.all(this.guards().map((guard) => guard.guard(result)));
       await smartSave(path.join(jobDir, this.outputFile()), result, false, this.logger);
+      this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] processed`);
       for (const decision of guardDecisions) {
         if (decision instanceof GuardDecisionQuarantine) {
           this.saveErrorChain({
@@ -84,8 +85,6 @@ export abstract class AbstractStage {
       this.logger.error(
         `[${event.type}:${stripRootPath(event.payload)}] was quarantined by unhanded error`,
       );
-    } finally {
-      this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] processed`);
     }
   }
 
