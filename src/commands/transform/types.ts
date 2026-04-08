@@ -1,5 +1,4 @@
 export type StagingFileEvent = {
-  type: 'add' | 'change' | 'removeDirectory' | 'error';
+  type: 'add' | 'change';
   payload: string;
-  error?: unknown;
 };

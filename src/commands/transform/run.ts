@@ -33,13 +33,7 @@ export async function runTransform(options: {
       orchestrator.handleStagingEvent({ type: 'change', payload: filePath });
     });
 
-    watcher.on('unlinkDir', (directoryPath) => {
-      logger.warn(`removed directory: ${directoryPath}`);
-      orchestrator.handleStagingEvent({ type: 'removeDirectory', payload: directoryPath });
-    });
-
     watcher.on('error', (error) => {
-      logger.error('watcher error', error);
       shutdown(error);
     });
 
