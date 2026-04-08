@@ -6,7 +6,7 @@ import {
 } from '../../lib/createConcurrencyLimiter.js';
 import { readFile } from 'fs/promises';
 import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
-import { respond } from '../../../../schema/local-ollama.js';
+import { respond } from '../../../../llm/local-ollama.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
 import { qualityEstimator } from '../lib.stage/qualityEstimator.js';

@@ -1,4 +1,4 @@
-import type { TSchema } from './schema.js';
+import type { TSchema } from '../schema/schema.js';
 
 export type TModelResponse = {
   model: string;

@@ -1,6 +1,6 @@
 import { toJSONSchema } from 'zod';
 
-import { schema } from './schema.js';
+import { schema } from '../schema/schema.js';
 
 type JsonSchemaNode = Record<string, unknown>;
 type LeafField = {

@@ -1,5 +1,5 @@
 import { buildUserPrompt, fullSystemPrompt } from './prompt.js';
-import { jsonSchema, schema } from './schema.js';
+import { jsonSchema, schema } from '../schema/schema.js';
 import type { TModelInput, TModelResponse } from './types.js';
 
 const defaultOllamaConfig = {

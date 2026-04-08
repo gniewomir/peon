@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { type GenerateContentConfig, GoogleGenAI } from '@google/genai';
 import { basicSystemPrompt, buildUserPrompt } from './prompt.js';
 import type { TModelInput, TModelResponse } from './types.js';
-import { jsonSchema, schema } from './schema.js';
+import { jsonSchema, schema } from '../schema/schema.js';
 
 let cachedClient: null | GoogleGenAI;
 function getClient() {
