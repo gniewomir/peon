@@ -37,7 +37,9 @@ export abstract class AbstractStage {
   public abstract name(): string;
   protected abstract inputFiles(): string[];
   protected abstract outputFile(): string;
-  protected abstract payload(event: StagingFileEvent): Promise<string | object>;
+  protected abstract payload(
+    event: StagingFileEvent,
+  ): Promise<string | Record<string, unknown> | unknown[]>;
   protected abstract guards(): AbstractGuard[];
 
   public async runIfPreconditionsMet(event: StagingFileEvent): Promise<void> {

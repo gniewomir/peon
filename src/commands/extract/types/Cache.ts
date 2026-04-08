@@ -5,7 +5,7 @@ export interface CacheOperations {
   cacheFilePath(key: string): string;
   hasCacheKey(key: string, logger: Logger): boolean;
   readCache(key: string, logger: Logger): Promise<string>;
-  writeCache(key: string, content: string, logger: Logger): Promise<number>;
+  writeCache(key: string, content: string, logger: Logger): Promise<boolean>;
   dailyCacheKey(str: string): string;
   weeklyCacheKey(str: string): string;
 }

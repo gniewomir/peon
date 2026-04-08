@@ -86,7 +86,9 @@ async function runStrategy(
 
                   await page.close();
 
-                  strategy.stats.cache_writes += await cache.writeCache(cacheKey, content, logger);
+                  if (await cache.writeCache(cacheKey, content, logger)) {
+                    strategy.stats.cache_writes += 1;
+                  }
                   strategy.stats.cache_miss += 1;
 
                   const wait = getRandomNumber(1000, 5000);
