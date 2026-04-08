@@ -1,6 +1,6 @@
 import { getRandomNumber } from './random.js';
 import { findProxies } from './proxy-scraper.js';
-import type { Logger } from '../types/index.js';
+import type { Logger } from '../../lib/logger.js';
 
 interface ProxyContext {
   withProxy<T>(payload: (proxy: string) => Promise<T>): Promise<T>;

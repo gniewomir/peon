@@ -3,7 +3,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import * as crypto from 'node:crypto';
 import { smartSave } from '../../lib/smart-save.js';
-import type { CacheContext, CacheOperations, Logger } from '../types/index.js';
+import type { CacheContext, CacheOperations } from '../types/index.js';
+import type { Logger } from '../../lib/logger.js';
 
 function getISOWeek(date: Date): number {
   const d = new Date(date);

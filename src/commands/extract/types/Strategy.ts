@@ -1,8 +1,8 @@
-import type { Logger } from '../../types/Logger.js';
 import type { StrategyStats } from './Stats.js';
-import type { JobJson } from '../../types/Job.js';
+import type { JobJson } from './Job.js';
 import type { Listing } from './Listing.js';
 import type { CacheOperations } from './Cache.js';
+import type { Logger } from '../../lib/logger.js';
 
 export interface StrategySaveOptions {
   outDir: string;

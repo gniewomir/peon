@@ -5,12 +5,12 @@ import type {
   Strategy,
   CacheOperations,
   Listing,
-  Logger,
   StrategySaveOptions,
   StrategyStats,
 } from '../types/index.js';
 import fs from 'node:fs/promises';
 import { metaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
+import type { Logger } from '../../lib/logger.js';
 
 function createBaseStats(): StrategyStats {
   return {

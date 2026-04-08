@@ -1,6 +1,5 @@
 import type { StagingFileEvent } from '../../types.js';
 import { AbstractStage } from '../lib.stage/AbstractStage.js';
-import type { Logger } from '../../../types/Logger.js';
 import {
   type ConcurrencyLimiter,
   createConcurrencyLimiter,
@@ -11,6 +10,7 @@ import { respond } from '../../../../schema/local-ollama.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
 import { qualityEstimator } from '../lib.stage/qualityEstimator.js';
+import type { Logger } from '../../../lib/logger.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimit: number;

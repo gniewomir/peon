@@ -1,9 +1,10 @@
 import assert from 'node:assert';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
-import type { JobJson, Strategy, CacheOperations, Logger, Listing } from '../../types/index.js';
+import type { JobJson, Strategy, CacheOperations, Listing } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
+import type { Logger } from '../../../lib/logger.js';
 
 export const BDJ_SLUG = 'bdj';
 

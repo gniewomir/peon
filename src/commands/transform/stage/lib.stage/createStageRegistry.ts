@@ -1,5 +1,4 @@
 import { CleanJsonStage } from '../stage-clean-json/CleanJsonStage.js';
-import type { Logger } from '../../../types/Logger.js';
 import { CleanerBdj } from '../stage-clean-json/CleanerBdj.js';
 import { CleanerJji } from '../stage-clean-json/CleanerJji.js';
 import { CleanerNfj } from '../stage-clean-json/CleanerNfj.js';
@@ -10,6 +9,7 @@ import { HtmlCleanerJji } from '../stage-clean-html/HtmlCleanerJji.js';
 import { HtmlCleanerNfj } from '../stage-clean-html/HtmlCleanerNfj.js';
 import { CleanHtmlStage } from '../stage-clean-html/CleanHtmlStage.js';
 import { StageRegistry } from './StageRegistry.js';
+import type { Logger } from '../../../lib/logger.js';
 
 export function createStageRegistry({
   logger,

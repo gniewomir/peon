@@ -2,7 +2,8 @@ import { promises as fs } from 'node:fs';
 import * as fsSync from 'node:fs';
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';
-import type { Logger } from '../types/Logger.js';
+
+import type { Logger } from './logger.js';
 
 export async function smartSave(
   filePath: string,

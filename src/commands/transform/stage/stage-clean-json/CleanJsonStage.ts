@@ -1,10 +1,10 @@
 import { AbstractStage } from '../lib.stage/AbstractStage.js';
 import type { StagingFileEvent } from '../../types.js';
 import { type AbstractCleaner } from './AbstractCleaner.js';
-import type { Logger } from '../../../types/Logger.js';
 import path, { dirname } from 'node:path';
 import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 import assert from 'node:assert';
+import type { Logger } from '../../../lib/logger.js';
 
 export class CleanJsonStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractCleaner>();

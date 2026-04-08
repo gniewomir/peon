@@ -1,11 +1,11 @@
 import path, { dirname } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import type { Logger } from '../../../types/Logger.js';
 import type { StagingFileEvent } from '../../types.js';
 import { AbstractStage } from '../lib.stage/AbstractStage.js';
 import type { AbstractHtmlCleaner } from './AbstractHtmlCleaner.js';
 import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 import assert from 'node:assert';
+import type { Logger } from '../../../lib/logger.js';
 
 export class CleanHtmlStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractHtmlCleaner>();

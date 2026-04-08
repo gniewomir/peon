@@ -1,9 +1,10 @@
 import assert from 'node:assert';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
-import type { CacheOperations, JobJson, Listing, Logger, Strategy } from '../../types/index.js';
+import type { CacheOperations, JobJson, Listing, Strategy } from '../../types/index.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
+import type { Logger } from '../../../lib/logger.js';
 
 export const JJI_SLUG = 'jji';
 

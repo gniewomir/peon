@@ -2,7 +2,7 @@ import { buildUserPrompt, fullSystemPrompt } from './prompt.js';
 import { jsonSchema, schema } from './schema.js';
 import type { TModelInput, TModelResponse } from './types.js';
 
-const defaultInterrogateConfig = {
+const defaultOllamaConfig = {
   host: 'http://127.0.0.1:11434',
   model: 'qwen2.5:7b',
   system: fullSystemPrompt,
@@ -13,19 +13,19 @@ const defaultInterrogateConfig = {
     num_predict: 2000,
   },
 } as const;
-type InterrogateConfig = typeof defaultInterrogateConfig;
+type OllamaConfig = typeof defaultOllamaConfig;
 
 export async function respond({
   input,
-  config = defaultInterrogateConfig,
+  config = defaultOllamaConfig,
   quality,
-}: TModelInput<InterrogateConfig, 'qwen2.5:7b'>): Promise<TModelResponse> {
+}: TModelInput<OllamaConfig, 'qwen2.5:7b'>): Promise<TModelResponse> {
   const payload = {
-    ...defaultInterrogateConfig,
+    ...defaultOllamaConfig,
     ...config,
     prompt: buildUserPrompt(input),
     options: {
-      ...defaultInterrogateConfig.options,
+      ...defaultOllamaConfig.options,
       ...config.options,
     },
   };
@@ -51,13 +51,12 @@ export async function respond({
   ) {
     throw new Error('Unexpected Ollama response shape (missing response string).');
   }
-
   const raw = (data as { response: string }).response.trim();
   const parsedJson: unknown = JSON.parse(raw);
   const output = schema.parse(parsedJson);
   return {
     model,
-    output: schema.parse(parsedJson),
+    output,
     quality: quality(output),
     response: data,
   };

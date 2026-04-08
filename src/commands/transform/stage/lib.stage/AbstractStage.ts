@@ -1,4 +1,3 @@
-import type { Logger } from '../../../types/Logger.js';
 import type { StagingFileEvent } from '../../types.js';
 import { readFile } from 'fs/promises';
 import path, { dirname } from 'node:path';
@@ -20,6 +19,7 @@ import { GuardDecisionQuarantine } from '../lib.guard/GuardDecisionQuarantine.js
 import type { TMetaSchema } from '../../../../schema/schema.meta.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import { GuardDecisionLoad } from '../lib.guard/GuardDecisionLoad.js';
+import type { Logger } from '../../../lib/logger.js';
 
 export abstract class AbstractStage {
   protected logger;

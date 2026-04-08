@@ -1,6 +1,7 @@
 import puppeteer, { type Browser } from 'puppeteer';
 import { proxyContext } from './proxy.js';
-import type { BrowserContext, Logger } from '../types/index.js';
+import type { BrowserContext } from '../types/index.js';
+import type { Logger } from '../../lib/logger.js';
 
 const baseLaunchArgs = [
   '--disable-dev-shm-usage',

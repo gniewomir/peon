@@ -1,7 +1,6 @@
 import chokidar from 'chokidar';
 import { Queue } from './lib/Queue.js';
-import { loggerContext } from '../lib/logger.js';
-import type { Logger } from '../types/Logger.js';
+import { type Logger, loggerContext } from '../lib/logger.js';
 import type { StagingFileEvent } from './types.js';
 import { createStageRegistry } from './stage/lib.stage/createStageRegistry.js';
 import { LinkedList } from './lib/LinkedList.js';

@@ -1,12 +1,12 @@
 import 'dotenv/config';
 
 import * as path from 'node:path';
-import { loggerContext } from '../lib/logger.js';
+import { type Logger, loggerContext } from '../lib/logger.js';
 import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
-import type { JobJson, Logger, Strategy } from './types/index.js';
+import type { JobJson, Strategy } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
 
 class HttpException extends Error {}
