@@ -1,6 +1,6 @@
 export class GuardDecisionTrash extends Error {
-  constructor(message: string, cause: unknown) {
-    super(message, { cause });
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'GuardDecisionTrash';
   }
 }

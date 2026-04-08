@@ -11,10 +11,10 @@ export class SchemaQualityGuard extends AbstractGuard {
       if (quality > 0.5) {
         return new GuardDecisionKeep('quality above 0.5');
       } else {
-        return new GuardDecisionQuarantine('quality bellow 0.5', undefined);
+        return new GuardDecisionQuarantine('quality bellow 0.5', { cause: quality });
       }
     } catch (error) {
-      return new GuardDecisionQuarantine('error while calculating quality', error);
+      return new GuardDecisionQuarantine('error while calculating quality', { cause: error });
     }
   }
 

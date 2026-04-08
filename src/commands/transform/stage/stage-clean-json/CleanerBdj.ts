@@ -84,6 +84,7 @@ export class CleanerBdj extends AbstractCleaner {
     }
     const experienceLevel = optionalValueByPath(this, listing, 'experienceLevel');
     const seniority_level = typeof experienceLevel === 'string' ? experienceLevel : '';
+
     const required_skills = normalizeStringArray(
       optionalValueByPath(this, listing, 'technologyTags'),
     );
@@ -94,7 +95,7 @@ export class CleanerBdj extends AbstractCleaner {
       },
       role: {
         title: this.stringValueByPath(listing, 'position'),
-        seniority: seniority_level,
+        seniority: this.normalizeSeniority(seniority_level),
       },
       workplace: {
         isRemote: bdjBoolFlag(optionalValueByPath(this, listing, 'remote')),

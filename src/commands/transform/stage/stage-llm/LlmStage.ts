@@ -76,7 +76,8 @@ export class LlmStage extends AbstractStage {
     }
     const result = await this.concurrencyLimiter.run(() =>
       this.minimumExecutionTimeLimiter(async () => {
-        const markdown = await readFile(event.payload, 'utf8');
+        const jobDir = dirname(event.payload);
+        const markdown = await readFile(path.join(jobDir, this.inputFiles()[0]), 'utf8');
         const { output, ...debug } = await llmStructuredResponse<TSchema>({
           fallback: false,
           input: markdown,

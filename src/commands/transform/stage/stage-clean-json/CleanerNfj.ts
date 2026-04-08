@@ -130,7 +130,7 @@ export class CleanerNfj extends AbstractCleaner {
       },
       role: {
         title: this.stringValueByPath(listing, 'title'),
-        seniority,
+        seniority: this.normalizeSeniority(seniority),
       },
       workplace: {
         isRemote,

@@ -6,6 +6,7 @@ import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 import assert from 'node:assert';
 import type { ILogger } from '../../../lib/logger.js';
 import { SchemaShapeGuard } from '../lib.guard/SchemaShapeGuard.js';
+import { NotEmptyGuard } from '../lib.guard/NotEmptyGuard.js';
 
 export class CleanJsonStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractCleaner>();
@@ -40,20 +41,17 @@ export class CleanJsonStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [new SchemaShapeGuard()];
+    return [new NotEmptyGuard(), new SchemaShapeGuard()];
   }
 
   protected async payload(event: StagingFileEvent) {
     const jobDir = dirname(event.payload);
+    const raw = await this.readJson(path.join(jobDir, this.inputFiles()[0]));
     const meta = await this.readMetadata(jobDir);
-
     const source = meta.offer.source;
     assert(source !== null, 'unknown offer source');
     const cleaner = this.cleaners.get(source);
     assert(cleaner, `no cleaner registered for source "${source}"`);
-
-    const input = path.join(jobDir, this.inputFiles()[0]);
-    const raw = await this.readJson(input);
     return cleaner.clean(raw);
   }
 }

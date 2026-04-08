@@ -73,6 +73,7 @@ export class StageOrchestrator {
           });
           this.directoryMutex.delete(jobDir);
           this.trash(jobDir);
+          break;
         }
         if (decision instanceof GuardDecisionQuarantine) {
           this.saveErrorChain({
@@ -83,10 +84,12 @@ export class StageOrchestrator {
           });
           this.directoryMutex.delete(jobDir);
           this.quarantine(jobDir);
+          break;
         }
         if (decision instanceof GuardDecisionLoad) {
           this.directoryMutex.delete(jobDir);
           this.load(jobDir);
+          break;
         }
       }
     };
@@ -147,24 +150,6 @@ export class StageOrchestrator {
     }
   }
 
-  private parseErrorChain(error: unknown, event: StagingFileEvent, stage: string) {
-    if (!error) {
-      return [];
-    }
-    if (!(error instanceof Error)) {
-      return [this.parseError(error, event, stage)];
-    }
-    const chain = this.parseError(error, event, stage);
-    while (Array.isArray(chain) && chain[chain.length - 1] instanceof Error) {
-      const last = chain[chain.length - 1];
-      if (!last.cause) {
-        break;
-      }
-      chain.push(last.cause);
-    }
-    return chain;
-  }
-
   private saveErrorChain({
     jobErrorPath,
     error,
@@ -178,7 +163,7 @@ export class StageOrchestrator {
   }) {
     writeFileSync(
       jobErrorPath,
-      JSON.stringify(this.parseErrorChain(error, event, stage), null, 2),
+      JSON.stringify(this.parseError(error, event, stage), null, 2),
       'utf8',
     );
   }
@@ -187,24 +172,27 @@ export class StageOrchestrator {
     error: unknown,
     event: StagingFileEvent,
     stage: string,
-  ): Record<string, unknown> {
+  ): Record<string, unknown> | undefined {
+    if (error === undefined) {
+      return undefined;
+    }
     const timestamp = new Date().toISOString();
-    if (!(error instanceof Error)) {
+    if (error !== null && typeof error === 'object') {
       return {
-        stage,
-        message: 'Not an error instance',
+        stage: stage,
+        name: 'name' in error ? error.name : 'no name',
+        message: 'message' in error ? error.message : 'no message',
         event,
         timestamp,
-        cause: undefined,
+        stack: 'stack' in error ? error.stack : 'no stack',
+        cause: 'cause' in error ? this.parseError(error.cause, event, stage) : undefined,
       };
     }
     return {
-      stage: stage,
-      message: error.message,
+      stage,
+      error,
       event,
       timestamp,
-      stack: error.stack,
-      cause: error.cause,
     };
   }
 }

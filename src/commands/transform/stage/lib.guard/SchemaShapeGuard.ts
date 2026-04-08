@@ -10,7 +10,7 @@ export class SchemaShapeGuard extends AbstractGuard {
       schema.parse(result);
       return new GuardDecisionKeep('valid shape');
     } catch (error) {
-      return new GuardDecisionQuarantine('invalid shape', error);
+      return new GuardDecisionQuarantine('invalid shape', { cause: error });
     }
   }
 

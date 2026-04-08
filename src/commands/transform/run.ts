@@ -44,19 +44,18 @@ export async function runTransform(options: {
       }
       logger.log('gracefully shutting down...');
       shuttingDown = true;
-      new Promise<void>((resolve) => {
-        setTimeout(() => {
-          logger.warn('shutdown timeout (30s) forcing exit...');
-          process.exit(1);
-        }, 1000 * 30);
-        watcher
-          .close()
-          .then(() => orchestrator.shutdown())
-          .then(() => {
-            logger.log('cleanup complete');
-            resolve();
-          });
-      });
+      const timeout = setTimeout(() => {
+        logger.warn('shutdown timeout (30s) forcing exit...');
+        process.exit(1);
+      }, 1000 * 30);
+      watcher
+        .close()
+        .then(() => orchestrator.shutdown())
+        .then(() => {
+          clearTimeout(timeout);
+          logger.log('cleanup complete');
+          process.exit(0);
+        });
     };
 
     process.once('SIGINT', shutdown);

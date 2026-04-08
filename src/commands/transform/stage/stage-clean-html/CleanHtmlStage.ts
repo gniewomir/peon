@@ -6,6 +6,7 @@ import type { AbstractHtmlCleaner } from './AbstractHtmlCleaner.js';
 import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 import assert from 'node:assert';
 import type { ILogger } from '../../../lib/logger.js';
+import { NotEmptyGuard } from '../lib.guard/NotEmptyGuard.js';
 
 export class CleanHtmlStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractHtmlCleaner>();
@@ -38,18 +39,17 @@ export class CleanHtmlStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [];
+    return [new NotEmptyGuard()];
   }
 
   protected async payload(event: StagingFileEvent) {
     const jobDir = dirname(event.payload);
+    const input = await readFile(path.join(jobDir, this.inputFiles()[0]), 'utf8');
     const meta = await this.readMetadata(jobDir);
     const source = meta.offer.source;
     assert(source !== null, 'unknown offer source');
     const cleaner = this.cleaners.get(source);
     assert(cleaner, `no html cleaner registered for source "${source}"`);
-
-    const input = await readFile(path.join(jobDir, 'raw.job.html'), 'utf8');
     return cleaner.clean(input);
   }
 }

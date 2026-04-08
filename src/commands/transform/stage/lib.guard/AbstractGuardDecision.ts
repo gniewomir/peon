@@ -1,6 +1,6 @@
 export abstract class AbstractGuardDecision extends Error {
-  constructor(message: string, cause: unknown) {
-    super(message, { cause });
+  protected constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'AbstractGuardDecision';
   }
 }

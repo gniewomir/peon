@@ -38,7 +38,7 @@ export abstract class AbstractStage {
       this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] processed`);
       return guardDecisions;
     } catch (error) {
-      return [new GuardDecisionQuarantine('quarantined because unhanded error', error)];
+      return [new GuardDecisionQuarantine('quarantined because unhanded error', { cause: error })];
     }
   }
 
