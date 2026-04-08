@@ -1,15 +1,16 @@
-import type { TSchema } from '../schema/schema.js';
-
-export type TModelResponse = {
+export type TLlmResponse<OutputType> = {
   model: string;
-  quality: number;
-  output: TSchema;
+  output: OutputType;
   response: unknown;
 };
 
-export type TModelInput<T, M> = {
+export type TLlmInput = {
+  fallback: boolean;
   input: string;
-  model: M;
-  config?: T;
-  quality: (output: TSchema) => number;
+};
+
+export type TModelInput<ConfigType> = {
+  input: string;
+  model: string;
+  config: ConfigType;
 };

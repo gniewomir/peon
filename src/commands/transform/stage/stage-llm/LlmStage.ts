@@ -6,12 +6,14 @@ import {
 } from '../../lib/createConcurrencyLimiter.js';
 import { readFile } from 'fs/promises';
 import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
-import { respond } from '../../../../llm/local-ollama.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
-import { qualityEstimator } from '../lib.stage/qualityEstimator.js';
-import type { Logger } from '../../../lib/logger.js';
+import type { ILogger } from '../../../lib/logger.js';
 import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecutionTimeLimiter.js';
+import { llmStructuredResponse } from '../../../../llm/llmStructuredResponse.js';
+import { type TSchema } from '../../../../schema/schema.js';
+import { SchemaShapeGuard } from '../lib.guard/SchemaShapeGuard.js';
+import { SchemaQualityGuard } from '../lib.guard/SchemaQualityQuard.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimit: number;
@@ -32,7 +34,7 @@ export class LlmStage extends AbstractStage {
     concurrencyLimit = 1,
     minimumExecutionTimeMs = 1000 * 60 * 2,
   }: {
-    logger: Logger;
+    logger: ILogger;
     stagingDir: string;
     concurrencyLimit?: number;
     minimumExecutionTimeMs?: number;
@@ -59,7 +61,7 @@ export class LlmStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [];
+    return [new SchemaShapeGuard(), new SchemaQualityGuard()];
   }
 
   /**
@@ -78,10 +80,9 @@ export class LlmStage extends AbstractStage {
     const result = await this.concurrencyLimiter.run(() =>
       this.minimumExecutionTimeLimiter(async () => {
         const markdown = await readFile(event.payload, 'utf8');
-        const { output, ...debug } = await respond({
+        const { output, ...debug } = await llmStructuredResponse<TSchema>({
+          fallback: false,
           input: markdown,
-          quality: qualityEstimator,
-          model: 'qwen2.5:7b',
         });
 
         await smartSave(

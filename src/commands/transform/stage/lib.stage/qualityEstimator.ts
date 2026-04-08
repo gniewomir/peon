@@ -1,7 +1,6 @@
-import type { TSchema } from '../../../../schema/schema.js';
 import { deepVisitor } from '../../lib/deepVisitor.js';
 
-export const qualityEstimator = (output: TSchema) => {
+export const qualityEstimator = (output: unknown) => {
   let valid = 0;
   let total = 0;
 

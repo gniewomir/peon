@@ -10,7 +10,7 @@ import type {
 } from '../types/index.js';
 import fs from 'node:fs/promises';
 import { metaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
-import type { Logger } from '../../lib/logger.js';
+import type { ILogger } from '../../lib/logger.js';
 
 function createBaseStats(): StrategyStats {
   return {
@@ -40,7 +40,7 @@ export abstract class AbstractStrategy implements Strategy {
 
   abstract jobGenerator(
     listing: Listing,
-    logger: Logger,
+    logger: ILogger,
     cache: CacheOperations,
   ): AsyncGenerator<JobJson>;
 

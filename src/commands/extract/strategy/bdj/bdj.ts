@@ -4,7 +4,7 @@ import type { JobJson, Strategy, CacheOperations, Listing } from '../../types/in
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
-import type { Logger } from '../../../lib/logger.js';
+import type { ILogger } from '../../../lib/logger.js';
 
 export const BDJ_SLUG = 'bdj';
 
@@ -30,7 +30,7 @@ export class BdjStrategy extends AbstractStrategy {
 
   async *jobGenerator(
     listing: Listing,
-    logger: Logger,
+    logger: ILogger,
     cache: CacheOperations,
   ): AsyncGenerator<JobJson> {
     let page = 1;

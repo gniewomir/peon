@@ -4,7 +4,8 @@ import { type AbstractCleaner } from './AbstractCleaner.js';
 import path, { dirname } from 'node:path';
 import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
 import assert from 'node:assert';
-import type { Logger } from '../../../lib/logger.js';
+import type { ILogger } from '../../../lib/logger.js';
+import { SchemaShapeGuard } from '../lib.guard/SchemaShapeGuard.js';
 
 export class CleanJsonStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractCleaner>();
@@ -14,7 +15,7 @@ export class CleanJsonStage extends AbstractStage {
     cleaners,
     stagingDir,
   }: {
-    logger: Logger;
+    logger: ILogger;
     stagingDir: string;
     cleaners: AbstractCleaner[];
   }) {
@@ -39,7 +40,7 @@ export class CleanJsonStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [];
+    return [new SchemaShapeGuard()];
   }
 
   protected async payload(event: StagingFileEvent) {

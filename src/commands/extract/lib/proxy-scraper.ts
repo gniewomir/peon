@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import type { Logger } from '../../lib/logger.js';
+import type { ILogger } from '../../lib/logger.js';
 
 interface ProxyData {
   ip_address: string;
@@ -8,7 +8,7 @@ interface ProxyData {
   https?: string;
 }
 
-function parseProxyTable(html: string, logger: Logger): ProxyData[] {
+function parseProxyTable(html: string, logger: ILogger): ProxyData[] {
   try {
     const tableMatch = html.match(/<table[^>]*>[\s\S]*?<\/table>/gi);
 
@@ -79,7 +79,7 @@ function parseProxyTable(html: string, logger: Logger): ProxyData[] {
   }
 }
 
-export async function findProxies(logger: Logger): Promise<string[]> {
+export async function findProxies(logger: ILogger): Promise<string[]> {
   const proxies = new Set<string>([]);
   for (const url of [
     'https://free-proxy-list.net/pl/',

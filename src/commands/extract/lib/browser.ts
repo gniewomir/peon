@@ -1,7 +1,7 @@
 import puppeteer, { type Browser } from 'puppeteer';
 import { proxyContext } from './proxy.js';
 import type { BrowserContext } from '../types/index.js';
-import type { Logger } from '../../lib/logger.js';
+import type { ILogger } from '../../lib/logger.js';
 
 const baseLaunchArgs = [
   '--disable-dev-shm-usage',
@@ -64,7 +64,7 @@ export function assertLaunchArgsSafe(args: string[]): void {
 /** Lets CDP finish tearing down pages before browser.close() to reduce TargetCloseError races. */
 const BROWSER_CLOSE_SETTLE_MS = 150;
 
-export async function browserContext(logger: Logger): Promise<BrowserContext> {
+export async function browserContext(logger: ILogger): Promise<BrowserContext> {
   const { withProxy } = await proxyContext(logger);
   const proxiedBrowsers: Record<string, Browser> = {};
 

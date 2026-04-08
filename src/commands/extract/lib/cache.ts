@@ -4,7 +4,7 @@ import path from 'node:path';
 import * as crypto from 'node:crypto';
 import { smartSave } from '../../lib/smart-save.js';
 import type { CacheContext, CacheOperations } from '../types/index.js';
-import type { Logger } from '../../lib/logger.js';
+import type { ILogger } from '../../lib/logger.js';
 
 function getISOWeek(date: Date): number {
   const d = new Date(date);
@@ -45,7 +45,7 @@ export function createCacheOperations(root: string): CacheOperations {
       return path.resolve(cacheKeyToPath(key, basePath));
     },
 
-    hasCacheKey(key: string, logger: Logger): boolean {
+    hasCacheKey(key: string, logger: ILogger): boolean {
       const cachePath = cacheKeyToPath(key, basePath);
       if (fsSync.existsSync(cachePath)) {
         logger.log(` 🎯 Cache hit! ${relativeCachePath(cachePath, basePath)}`);
@@ -55,11 +55,11 @@ export function createCacheOperations(root: string): CacheOperations {
       return false;
     },
 
-    async writeCache(key: string, content: string, logger: Logger): Promise<boolean> {
+    async writeCache(key: string, content: string, logger: ILogger): Promise<boolean> {
       return smartSave(cacheKeyToPath(key, basePath), content, false, logger);
     },
 
-    readCache(key: string, logger: Logger): Promise<string> {
+    readCache(key: string, logger: ILogger): Promise<string> {
       const cachePath = cacheKeyToPath(key, basePath);
       logger.log(` 📖 reading cache ${relativeCachePath(cachePath, basePath)}`);
       return fs.readFile(cachePath, { encoding: 'utf8' });

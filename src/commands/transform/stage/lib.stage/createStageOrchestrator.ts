@@ -8,17 +8,17 @@ import { HtmlCleanerBdj } from '../stage-clean-html/HtmlCleanerBdj.js';
 import { HtmlCleanerJji } from '../stage-clean-html/HtmlCleanerJji.js';
 import { HtmlCleanerNfj } from '../stage-clean-html/HtmlCleanerNfj.js';
 import { CleanHtmlStage } from '../stage-clean-html/CleanHtmlStage.js';
-import { StageRegistry } from './StageRegistry.js';
-import type { Logger } from '../../../lib/logger.js';
+import { StageOrchestrator } from './StageOrchestrator.js';
+import type { ILogger } from '../../../lib/logger.js';
 
-export function createStageRegistry({
+export function createStageOrchestrator({
   logger,
   stagingDir,
 }: {
-  logger: Logger;
+  logger: ILogger;
   stagingDir: string;
-}): StageRegistry {
-  const registry = new StageRegistry();
+}): StageOrchestrator {
+  const registry = new StageOrchestrator({ logger, stagingDir });
   registry.register(
     new CleanJsonStage({
       logger,

@@ -2,7 +2,7 @@ import type { StrategyStats } from './Stats.js';
 import type { JobJson } from './Job.js';
 import type { Listing } from './Listing.js';
 import type { CacheOperations } from './Cache.js';
-import type { Logger } from '../../lib/logger.js';
+import type { ILogger } from '../../lib/logger.js';
 
 export interface StrategySaveOptions {
   outDir: string;
@@ -10,7 +10,7 @@ export interface StrategySaveOptions {
   job: JobJson;
   url: string;
   content: string;
-  logger: Logger;
+  logger: ILogger;
 }
 
 export interface Strategy {
@@ -18,7 +18,7 @@ export interface Strategy {
   stats: StrategyStats;
   ids: Set<string>;
   jobListingsGenerator(): AsyncGenerator<Listing>;
-  jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<JobJson>;
+  jobGenerator(listing: Listing, logger: ILogger, cache: CacheOperations): AsyncGenerator<JobJson>;
   jobToUrl(job: JobJson): string;
   jobToId(job: JobJson): string;
   save(options: StrategySaveOptions): Promise<void>;

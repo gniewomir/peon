@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import * as path from 'node:path';
-import { type Logger, loggerContext } from '../lib/logger.js';
+import { type ILogger, loggerContext } from '../lib/logger.js';
 import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
@@ -25,7 +25,7 @@ async function runStrategy(
   verbose: boolean,
 ): Promise<void> {
   const { withLogger } = loggerContext({ prefix: strategy.slug, verbose });
-  await withLogger(async (logger: Logger) => {
+  await withLogger(async (logger: ILogger) => {
     await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
       const { withBrowser, closeBrowser } = await browserContext(logger);
       try {
@@ -137,7 +137,7 @@ async function runStrategy(
 
 export async function runScrape(options: RunScrapeOptions): Promise<void> {
   const { withLogger } = loggerContext({ prefix: 'scr', verbose: options.verbose });
-  await withLogger(async (logger: Logger) => {
+  await withLogger(async (logger: ILogger) => {
     const strategies = options.strategies;
     try {
       await Promise.all(

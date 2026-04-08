@@ -8,7 +8,7 @@ export class SchemaShapeGuard extends AbstractGuard {
   async guard(result: unknown): Promise<AbstractGuardDecision> {
     try {
       schema.parse(result);
-      return new GuardDecisionKeep('invalid shape');
+      return new GuardDecisionKeep('valid shape');
     } catch (error) {
       return new GuardDecisionQuarantine('invalid shape', error);
     }
