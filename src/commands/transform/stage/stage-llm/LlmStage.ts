@@ -16,6 +16,7 @@ import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecut
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimit: number;
   private readonly concurrencyLimiter: ConcurrencyLimiter;
+  private readonly minimumExecutionTimeLimit: number;
   private readonly minimumExecutionTimeLimiter: ReturnType<
     typeof createMinimumExecutionTimeLimiter
   >;
@@ -39,7 +40,10 @@ export class LlmStage extends AbstractStage {
     super({ logger, stagingDir });
     this.concurrencyLimit = concurrencyLimit;
     this.concurrencyLimiter = createConcurrencyLimiter(this.concurrencyLimit);
-    this.minimumExecutionTimeLimiter = createMinimumExecutionTimeLimiter(minimumExecutionTimeMs);
+    this.minimumExecutionTimeLimit = minimumExecutionTimeMs;
+    this.minimumExecutionTimeLimiter = createMinimumExecutionTimeLimiter(
+      this.minimumExecutionTimeLimit,
+    );
   }
 
   public name(): string {
@@ -67,6 +71,8 @@ export class LlmStage extends AbstractStage {
       this.logger.warn(`LLM:`, {
         pending: this.concurrencyLimiter.pendingCount(),
         active: this.concurrencyLimiter.activeCount(),
+        minExecutionTimeMs: this.minimumExecutionTimeLimit,
+        concurrencyLimit: this.concurrencyLimit,
       });
     }
     const result = await this.concurrencyLimiter.run(() =>
@@ -92,6 +98,8 @@ export class LlmStage extends AbstractStage {
       this.logger.warn(`LLM:`, {
         pending: this.concurrencyLimiter.pendingCount(),
         active: this.concurrencyLimiter.activeCount(),
+        minExecutionTimeMs: this.minimumExecutionTimeLimit,
+        concurrencyLimit: this.concurrencyLimit,
       });
     }
     return result;
