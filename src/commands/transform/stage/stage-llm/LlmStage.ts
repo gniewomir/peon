@@ -11,23 +11,35 @@ import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
 import { qualityEstimator } from '../lib.stage/qualityEstimator.js';
 import type { Logger } from '../../../lib/logger.js';
+import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecutionTimeLimiter.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimit: number;
   private readonly concurrencyLimiter: ConcurrencyLimiter;
+  private readonly minimumExecutionTimeLimiter: ReturnType<
+    typeof createMinimumExecutionTimeLimiter
+  >;
 
+  /**
+   * NOTE: concurrency and minimum execution time limit,
+   *       to keep laptop from running fans at 100% and throttling anyway
+   *       when running local LLM
+   */
   constructor({
     logger,
     stagingDir,
     concurrencyLimit = 1,
+    minimumExecutionTimeMs = 1000 * 60 * 2,
   }: {
     logger: Logger;
     stagingDir: string;
     concurrencyLimit?: number;
+    minimumExecutionTimeMs?: number;
   }) {
     super({ logger, stagingDir });
     this.concurrencyLimit = concurrencyLimit;
     this.concurrencyLimiter = createConcurrencyLimiter(this.concurrencyLimit);
+    this.minimumExecutionTimeLimiter = createMinimumExecutionTimeLimiter(minimumExecutionTimeMs);
   }
 
   public name(): string {
@@ -57,22 +69,31 @@ export class LlmStage extends AbstractStage {
         active: this.concurrencyLimiter.activeCount(),
       });
     }
-    return await this.concurrencyLimiter.run(async () => {
-      const markdown = await readFile(event.payload, 'utf8');
-      const { output, ...debug } = await respond({
-        input: markdown,
-        quality: qualityEstimator,
-        model: 'qwen2.5:7b',
+    const result = await this.concurrencyLimiter.run(() =>
+      this.minimumExecutionTimeLimiter(async () => {
+        const markdown = await readFile(event.payload, 'utf8');
+        const { output, ...debug } = await respond({
+          input: markdown,
+          quality: qualityEstimator,
+          model: 'qwen2.5:7b',
+        });
+
+        await smartSave(
+          path.join(dirname(event.payload), 'debug.llm.json'),
+          debug,
+          true,
+          this.logger,
+        );
+
+        return output;
+      }),
+    );
+    if (this.concurrencyLimiter.pendingCount()) {
+      this.logger.warn(`LLM:`, {
+        pending: this.concurrencyLimiter.pendingCount(),
+        active: this.concurrencyLimiter.activeCount(),
       });
-
-      await smartSave(
-        path.join(dirname(event.payload), 'debug.llm.json'),
-        debug,
-        true,
-        this.logger,
-      );
-
-      return output;
-    });
+    }
+    return result;
   }
 }
