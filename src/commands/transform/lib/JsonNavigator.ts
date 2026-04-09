@@ -59,6 +59,16 @@ export class JsonNavigator {
     throw new Error(this.errorPrefix(`Expected boolean, got ${typeof this.haystack}`));
   }
 
+  toNullableBool(): boolean | null {
+    if (typeof this.haystack === 'boolean') {
+      return this.haystack;
+    }
+    if (this.haystack === null) {
+      return null;
+    }
+    throw new Error(this.errorPrefix(`Expected boolean or null, got ${typeof this.haystack}`));
+  }
+
   toDateFromString(): Date {
     if (typeof this.haystack === 'string') {
       return new Date(this.haystack);

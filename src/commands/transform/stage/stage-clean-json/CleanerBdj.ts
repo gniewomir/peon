@@ -2,8 +2,28 @@ import { AbstractCleaner } from './AbstractCleaner.js';
 import { nullSchema, type TSchema } from '../../../../schema/schema.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
 import { JsonNavigator } from '../../lib/JsonNavigator.js';
+import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
 
 export class CleanerBdj extends AbstractCleaner {
+  private normalizeSalary(nav: JsonNavigator): TSchema['salaryCoE'] {
+    const money = nav.getPath('denominatedSalaryLong.money').toString();
+    let from: string | null = null;
+    let to: string | null = null;
+    if (money.toLowerCase().startsWith('from')) {
+      from = money.slice('from'.length);
+    }
+    if (money.includes('-')) {
+      from = money.split('-')[0].trim();
+      to = money.split('-')[1].trim();
+    }
+    return {
+      from,
+      to,
+      unit: 'month',
+      currency: nav.getPath('denominatedSalaryLong.currency').toString(),
+    };
+  }
+
   clean(listing: Record<string, unknown>) {
     const nav = new JsonNavigator(listing);
 
@@ -21,31 +41,24 @@ export class CleanerBdj extends AbstractCleaner {
         cities: [nav.getPath('city').toString()],
       },
       contract: {
-        type: [
-          nav.getPath('contractB2b').toBool() ? 'b2b/contractor' : null,
-          nav.getPath('contractEmployment').toBool() ? 'employment' : null,
-        ],
+        type: normalizeStringArray([
+          nav.getPath('contractB2b').toNullableBool() ? 'b2b/contractor' : null,
+          nav.getPath('contractEmployment').toNullableBool() ? 'employment' : null,
+          nav.getPath('contractOther').toNullableBool() ? 'other' : null,
+        ]),
       },
-      salaryCoE: nav.getPath('contractB2b').toBool()
-        ? {
-            from: nav.getPath('denominatedSalaryLong.money').toString().split('-')[0].trim(),
-            to: nav.getPath('denominatedSalaryLong.money').toString().split('-')[1].trim(),
-            unit: 'month',
-            currency: nav.getPath('denominatedSalaryLong.currency').toString(),
-          }
+      salaryCoE: nav.getPath('contractB2b').toNullableBool()
+        ? this.normalizeSalary(nav)
         : nullSchema().salaryCoE,
-      salaryB2B: nav.getPath('contractEmployment').toBool()
-        ? {
-            from: nav.getPath('denominatedSalaryLong.money').toString().split('-')[0].trim(),
-            to: nav.getPath('denominatedSalaryLong.money').toString().split('-')[1].trim(),
-            unit: 'month',
-            currency: nav.getPath('denominatedSalaryLong.currency').toString(),
-          }
+      salaryB2B: nav.getPath('contractEmployment').toNullableBool()
+        ? this.normalizeSalary(nav)
         : nullSchema().salaryB2B,
-      hardTechnologyRequirements: nav
-        .getPath('technologyTags')
-        .toArray()
-        .map((t) => t.toString()),
+      hardTechnologyRequirements: normalizeStringArray(
+        nav
+          .getPath('technologyTags')
+          .toArray()
+          .map((t) => t.toString()),
+      ),
     } satisfies DeepPartial<TSchema>);
   }
 
