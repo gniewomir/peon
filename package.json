@@ -25,7 +25,8 @@
     "transform": "npm run peon -- transform",
     "stage:clear": "node scripts/clear-stage.mjs",
     "cache:clear": "node scripts/clear-cache.mjs",
-    "all:clear": "node scripts/clear-all.mjs"
+    "all:clear": "node scripts/clear-all.mjs",
+    "clean-run": "node scripts/clean-run.mjs"
   },
   "engines": {
     "node": ">=22.0.0"
