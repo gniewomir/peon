@@ -1,6 +1,18 @@
 # Peon
 
-CLI ETL pipeline for extracting IT-related jobs from Polish IT job boards, transforming them into a common data format, and loading them into a chosen data store.
+A CLI-based ETL pipeline for extracting IT-related jobs from Polish IT job boards, transforming them into a common data format, and loading them into a chosen data store.
+
+## Vocabulary
+
+- **Step** — one of the three top-level ETL scripts: extract, transform, or load.
+- **Stage** — a single transformation within the transform step (e.g., structured data extraction, LLM extraction).
+- **Guard** — an object attached to a stage that verifies its output and decides the fate of the entire job offer directory (advance, quarantine, or trash).
+- **Data provider** — a job board or API that the extract step scrapes (e.g., NoFluffJobs, JustJoinIT).
+- **Strategy** — a data-provider-specific implementation that encapsulates scraping or transformation quirks.
+- **Job offer directory** — the per-offer directory under staging that accumulates all artifacts (outputs, errors, guard rationales) across extraction and transformation.
+- **Artifact** — any file produced by a stage or guard: stage output, error log, or guard rationale.
+- **Quarantine** — where guards move offers that fail quality checks but may be recoverable or worth investigating.
+- **Trash** — where guards move offers that are irrelevant or unsalvageable.
 
 ## Architecture
 
@@ -8,25 +20,25 @@ Each ETL step (extract, transform, load) runs as a separate CLI script. Scripts 
 
 ### Extract
 
-The extract script scrapes registered data providers (job boards) in parallel. Each data provider has a dedicated scraping strategy that encapsulates its quirks. The scraper's only concern is fetching pages over HTTP — it does not validate or interpret the content it retrieves.
+The extract script scrapes registered data providers in parallel. Each data provider has a dedicated scraping strategy that encapsulates its quirks. The scraper's only concern is fetching pages over HTTP — it does not validate or interpret the content it retrieves.
 
-After scraping, each job offer has two sources of signal:
+After scraping, each job offer provides two sources of data:
 
 - **Structured data** — whatever the scraping strategy could extract directly from the listing page or API call (e.g., title, salary, location).
 - **Raw HTML** — the full page content, which may contain additional structured data embedded as JSON-LD, microdata, or SPA hydration payloads.
 
-Both are written to a staging directory for the transform step to consume.
+Both are written to a job offer directory under the staging directory for the transform step to consume.
 
 ### Transform
 
-The transform script watches the staging directory and queues transformation steps for each job offer. Each step has zero or more file inputs and one file output. All extracted information — structured data, data parsed from raw HTML, and LLM-derived fields — is parsed, cleaned, normalized, and combined to fit a common schema guarded by Zod. Steps run in sequence:
+The transform script watches the staging directory and queues transformation stages for each job offer. Each stage has zero or more file inputs and one file output. All extracted information — structured data, data parsed from raw HTML, and LLM-derived fields — is parsed, cleaned, normalized, and combined to fit a common schema guarded by Zod. The exact ordering and granularity of stages are still in flux, but the known transformation concerns are:
 
-1. **Structured data extraction** — parse additional structured data from raw HTML (JSON-LD, hydration data) and merge it with structured data already extracted during scraping. Treat all structured data as authoritative.
-2. **LLM extraction** — for fields that cannot be extracted in structured form, convert HTML to Markdown (stripping as much noise as possible) and use an LLM to supplement missing fields.
-3. **Disambiguation** — normalize terms (e.g., technology names, seniority levels) using a shared dictionary.
-4. **Deduplication** — aggregate offers from the same source that refer to one position, then across sources.
+- **Structured data extraction** — parse additional structured data from raw HTML (JSON-LD, hydration data) and merge it with structured data already extracted during scraping. Treat all structured data as authoritative.
+- **LLM extraction** — for fields that cannot be extracted in structured form, convert HTML to Markdown (stripping as much noise as possible) and use an LLM to supplement missing fields.
+- **Disambiguation** — normalize terms (e.g., technology names, seniority levels) using a shared dictionary.
+- **Deduplication** — aggregate offers from the same source that refer to one position, then across sources.
 
-Every transformation step has one or more guards attached. Guards run in sequence, inspecting the output to decide whether to advance the data to the next step, quarantine it, or trash it. Each guard decision is saved with its rationale before the data is moved.
+All artifacts from each transformation stage — both outputs and errors — are saved in the job offer directory. Every stage has one or more guards attached. After a stage completes, its guards run in sequence, evaluating the job offer directory as a whole. A guard may decide to advance the data to the next stage, or move the entire job offer directory (with all of its artifacts) to quarantine or trash. When transformation is complete and all guards pass, the directory is moved to the load directory.
 
 ### Load
 
@@ -43,19 +55,19 @@ Load is a future concern. The load script will watch the load directory and pers
 
 ## Implementation details
 
-### Extraction
+### Extract
 
-- Scraping from headless Chrome with a proxy using Puppeteer.
-- Unhandled error during scraping recreates the browser with a new proxy.
-  - Proxied browsers are cached and reused until an error.
-  - The proxy gets removed from the pool after an error.
-  - When the proxy pool is exhausted, a new proxy list is scraped from the web.
-- Listings are cached for one day (subject to change).
-- Job offer pages are cached for a week (subject to change).
+- Scrape using headless Chrome and Puppeteer, utilizing proxies.
+- Handle scraping errors by automatically recreating the browser with a new proxy.
+  - Cache and reuse proxied browsers until an error occurs.
+  - Remove failing proxies from the active pool immediately.
+  - Scrape a new proxy list from the web automatically when the pool is exhausted.
+- Cache listings for one day (subject to change).
+- Cache job offer pages for one week (subject to change).
 
 ### General
 
-- Ability to run locally or be deployed to an external server.
-- Ability to freely switch between local and cloud LLMs.
-- Pluggable data-scraping and transformation strategies.
-- Parallelization with limits (i.e., no more than X LLM requests running concurrently when using a local LLM).
+- Can be run locally or deployed to an external server.
+- Supports seamless switching between local and cloud LLMs.
+- Features pluggable scraping and transformation strategies.
+- Provides configurable parallelization limits (e.g., restricting the maximum number of concurrent LLM requests when using a local model).
