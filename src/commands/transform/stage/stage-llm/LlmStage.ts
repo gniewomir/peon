@@ -13,7 +13,7 @@ import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecut
 import { llmStructuredResponse } from '../../../../llm/llmStructuredResponse.js';
 import { type TSchema } from '../../../../schema/schema.js';
 import { SchemaShapeGuard } from '../lib.guard/SchemaShapeGuard.js';
-import { SchemaQualityGuard } from '../lib.guard/SchemaQualityQuard.js';
+import { SchemaQualityGuard } from '../lib.guard/SchemaQualityGuard.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimit: number;

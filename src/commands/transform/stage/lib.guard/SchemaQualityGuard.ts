@@ -1,7 +1,7 @@
 import { AbstractGuard } from './AbstractGuard.js';
 import type { AbstractGuardDecision } from './AbstractGuardDecision.js';
 import { GuardDecisionQuarantine } from './GuardDecisionQuarantine.js';
-import { GuardDecisionKeep } from './GuardDecisionKeep.js';
+import { GuardDecisionAdvance } from './GuardDecisionAdvance.js';
 import { qualityEstimator } from '../lib.stage/qualityEstimator.js';
 
 export class SchemaQualityGuard extends AbstractGuard {
@@ -9,7 +9,7 @@ export class SchemaQualityGuard extends AbstractGuard {
     try {
       const quality = qualityEstimator(result);
       if (quality > 0.5) {
-        return new GuardDecisionKeep('quality above 0.5');
+        return new GuardDecisionAdvance('quality above 0.5');
       } else {
         return new GuardDecisionQuarantine('quality bellow 0.5', { cause: quality });
       }
@@ -19,6 +19,6 @@ export class SchemaQualityGuard extends AbstractGuard {
   }
 
   name(): string {
-    return 'shape-guard';
+    return 'quality-guard';
   }
 }

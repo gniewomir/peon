@@ -1,7 +1,7 @@
 import { AbstractGuard } from './AbstractGuard.js';
 import type { AbstractGuardDecision } from './AbstractGuardDecision.js';
 import { GuardDecisionQuarantine } from './GuardDecisionQuarantine.js';
-import { GuardDecisionKeep } from './GuardDecisionKeep.js';
+import { GuardDecisionAdvance } from './GuardDecisionAdvance.js';
 
 export class NotEmptyGuard extends AbstractGuard {
   constructor(private readonly minLength: number = 100) {
@@ -16,12 +16,12 @@ export class NotEmptyGuard extends AbstractGuard {
       return new GuardDecisionQuarantine(`Result empty or shorter than ${this.minLength}`);
     }
     if (typeof result === 'string' || typeof result === 'object') {
-      return new GuardDecisionKeep('Expected type and non empty');
+      return new GuardDecisionAdvance('Expected type and non empty');
     }
     return new GuardDecisionQuarantine('Unexpected type', { cause: typeof result });
   }
 
   name(): string {
-    return 'shape-guard';
+    return 'not-empty-guard';
   }
 }

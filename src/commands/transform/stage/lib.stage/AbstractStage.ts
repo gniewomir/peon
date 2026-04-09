@@ -9,7 +9,7 @@ import type { TMetaSchema } from '../../../../schema/schema.meta.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import type { ILogger } from '../../../lib/logger.js';
 import type { AbstractGuardDecision } from '../lib.guard/AbstractGuardDecision.js';
-import { GuardDecisionKeep } from '../lib.guard/GuardDecisionKeep.js';
+import { GuardDecisionAdvance } from '../lib.guard/GuardDecisionAdvance.js';
 
 export abstract class AbstractStage {
   protected logger;
@@ -34,7 +34,7 @@ export abstract class AbstractStage {
     const jobDir = dirname(event.payload);
     try {
       if (!this.preconditionsMeet(event))
-        return [new GuardDecisionKeep('keep until preconditions met')];
+        return [new GuardDecisionAdvance('keep until preconditions met')];
       const result = await this.payload(event);
       const guardDecisions = await Promise.all(this.guards().map((guard) => guard.guard(result)));
       await smartSave(path.join(jobDir, this.outputFile()), result, false, this.logger);

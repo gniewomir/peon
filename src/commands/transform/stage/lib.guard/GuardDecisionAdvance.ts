@@ -1,8 +1,8 @@
 import { AbstractGuardDecision } from './AbstractGuardDecision.js';
 
-export class GuardDecisionKeep extends AbstractGuardDecision {
+export class GuardDecisionAdvance extends AbstractGuardDecision {
   constructor(message: string) {
     super(message);
-    this.name = 'GuardDecisionKeep';
+    this.name = 'GuardDecisionAdvance';
   }
 }
