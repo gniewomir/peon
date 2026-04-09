@@ -42,15 +42,15 @@ export class CleanerBdj extends AbstractCleaner {
       },
       contract: {
         type: normalizeStringArray([
-          nav.getPath('contractB2b').toNullableBool() ? 'b2b/contractor' : null,
-          nav.getPath('contractEmployment').toNullableBool() ? 'employment' : null,
-          nav.getPath('contractOther').toNullableBool() ? 'other' : null,
+          nav.getPath('contractB2b').toOptionalBool() ? 'b2b/contractor' : null,
+          nav.getPath('contractEmployment').toOptionalBool() ? 'employment' : null,
+          nav.getPath('contractOther').toOptionalBool() ? 'other' : null,
         ]),
       },
-      salaryCoE: nav.getPath('contractB2b').toNullableBool()
+      salaryCoE: nav.getPath('contractB2b').toOptionalBool()
         ? this.normalizeSalary(nav)
         : nullSchema().salaryCoE,
-      salaryB2B: nav.getPath('contractEmployment').toNullableBool()
+      salaryB2B: nav.getPath('contractEmployment').toOptionalBool()
         ? this.normalizeSalary(nav)
         : nullSchema().salaryB2B,
       hardTechnologyRequirements: normalizeStringArray(

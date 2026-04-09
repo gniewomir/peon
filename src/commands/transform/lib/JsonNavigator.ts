@@ -52,6 +52,14 @@ export class JsonNavigator {
     throw new Error(this.errorPrefix(`Expected array, got ${typeof this.haystack}`));
   }
 
+  toOptionalArray(): JsonNavigator[] | [] {
+    if (Array.isArray(this.haystack)) {
+      return this.haystack.map((item, i) => new JsonNavigator(item, this.childPath(String(i))));
+    } else {
+      return [];
+    }
+  }
+
   toBool(): boolean {
     if (typeof this.haystack === 'boolean') {
       return this.haystack;
@@ -59,14 +67,12 @@ export class JsonNavigator {
     throw new Error(this.errorPrefix(`Expected boolean, got ${typeof this.haystack}`));
   }
 
-  toNullableBool(): boolean | null {
+  toOptionalBool(): boolean | null {
     if (typeof this.haystack === 'boolean') {
       return this.haystack;
-    }
-    if (this.haystack === null) {
+    } else {
       return null;
     }
-    throw new Error(this.errorPrefix(`Expected boolean or null, got ${typeof this.haystack}`));
   }
 
   toDateFromString(): Date {
