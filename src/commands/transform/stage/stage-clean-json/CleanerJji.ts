@@ -48,7 +48,7 @@ export class CleanerJji extends AbstractCleaner {
       return t === 'permanent' || t === 'employment' || t === 'uop';
     });
 
-    return merge(structuredClone(nullSchema), {
+    return merge(nullSchema(), {
       employer: {
         name: nav.getPath('companyName').toString(),
       },

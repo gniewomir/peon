@@ -125,7 +125,7 @@ export class CleanerNfj extends AbstractCleaner {
       }
     }
 
-    return merge(structuredClone(nullSchema), {
+    return merge(nullSchema(), {
       employer: {
         name: nav.getPath('name').toString(),
       },

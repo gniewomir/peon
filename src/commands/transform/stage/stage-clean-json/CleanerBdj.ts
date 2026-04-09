@@ -78,7 +78,7 @@ export class CleanerBdj extends AbstractCleaner {
 
     const required_skills = normalizeStringArray(nav.getOptionalPath('technologyTags')?.value());
 
-    return merge(structuredClone(nullSchema), {
+    return merge(nullSchema(), {
       employer: {
         name: nav.getPath('company.name').toString(),
       },
@@ -103,7 +103,7 @@ export class CleanerBdj extends AbstractCleaner {
             unit: 'month',
             currency,
           }
-        : nullSchema.salaryCoE,
+        : nullSchema().salaryCoE,
       salaryB2B: bdjBoolFlag(nav.getOptionalPath('contractB2b')?.value())
         ? {
             from,
@@ -111,7 +111,7 @@ export class CleanerBdj extends AbstractCleaner {
             unit: 'month',
             currency,
           }
-        : nullSchema.salaryB2B,
+        : nullSchema().salaryB2B,
       hardTechnologyRequirements: required_skills,
     } satisfies DeepPartial<TSchema>);
   }

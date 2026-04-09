@@ -18,7 +18,7 @@ export const metaObject = {
 };
 export const metaSchema = sNamespace(metaObject, 'Job offer metadata');
 export type TMetaSchema = z.infer<typeof metaSchema>;
-export const nullMetaSchema: TMetaSchema = {
+export const nullMetaSchema = (): TMetaSchema => ({
   offer: {
     id: null,
     url: null,
@@ -29,4 +29,4 @@ export const nullMetaSchema: TMetaSchema = {
     stagingPath: null,
     cachePath: null,
   },
-};
+});

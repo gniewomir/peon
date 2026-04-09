@@ -11,7 +11,7 @@ export const combined = sNamespace(
   'Combined schema',
 );
 export type TCombinedSchema = z.infer<typeof combined>;
-export const nullCombinedSchema: TCombinedSchema = {
-  ...nullMetaSchema,
-  ...nullSchema,
-};
+export const nullCombinedSchema = (): TCombinedSchema => ({
+  ...nullMetaSchema(),
+  ...nullSchema(),
+});

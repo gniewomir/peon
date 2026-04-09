@@ -132,7 +132,7 @@ Rules:
 );
 export type TSchema = z.infer<typeof schema>;
 export const jsonSchema = toJSONSchema(schema, { target: 'draft-07' });
-export const nullSchema: TSchema = {
+export const nullSchema = (): TSchema => ({
   employer: { name: null, type: null },
   role: {
     title: null,
@@ -183,4 +183,4 @@ export const nullSchema: TSchema = {
     architecture: null,
     stage: null,
   },
-};
+});
