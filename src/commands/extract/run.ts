@@ -2,8 +2,7 @@ import 'dotenv/config';
 
 import * as path from 'node:path';
 import { type Logger, loggerContext } from '../lib/logger.js';
-import { browserContext } from './lib/browser.js';
-import { getRandomUserAgent } from './lib/user-agent.js';
+import { browserContext, pageContext } from './lib/browser.js';
 import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
 import { cacheContext } from './lib/cache.js';
@@ -47,46 +46,29 @@ async function runStrategy(
                 strategy.stats.cache_hit += 1;
               } else {
                 logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
-                const page = await browser.newPage();
-                try {
-                  await page.setRequestInterception(true);
-                  page.on('request', async (request) => {
-                    if (
-                      ['image', 'stylesheet', 'font', 'fetch', 'media'].includes(
-                        request.resourceType(),
-                      )
-                    ) {
-                      await request.abort();
-                    } else {
-                      await request.continue();
-                    }
-                  });
-                  await page.setUserAgent(getRandomUserAgent());
-                  const res = await page.goto(url, {
-                    waitUntil: 'load',
-                    timeout: SCRAPE_REQUEST_TIMEOUT_MS,
-                  });
+                await using ctx = await pageContext(browser);
+                const res = await ctx.page.goto(url, {
+                  waitUntil: 'load',
+                  timeout: SCRAPE_REQUEST_TIMEOUT_MS,
+                });
 
-                  if (!res) {
-                    logger.warn(' ⚠️  No response received from puppeteer.');
-                  }
-                  if (res && res.status() < 400) {
-                    logger.log(`✅ Response status ${res.status()} for ${url}.`);
-                  }
-                  if (res && res.status() >= 400) {
-                    throw new HttpException(` ⚠️  Response status: ${res.status()} for ${url}`);
-                  }
+                if (!res) {
+                  logger.warn(' ⚠️  No response received from puppeteer.');
+                }
+                if (res && res.status() < 400) {
+                  logger.log(`✅ Response status ${res.status()} for ${url}.`);
+                }
+                if (res && res.status() >= 400) {
+                  throw new HttpException(` ⚠️  Response status: ${res.status()} for ${url}`);
+                }
 
-                  const bodyHandle = await page.$('body');
+                const bodyHandle = await ctx.page.$('body');
 
-                  if (bodyHandle) {
-                    content = await page.evaluate((body) => body.innerHTML, bodyHandle);
-                    await bodyHandle.dispose();
-                  } else {
-                    throw new HttpException(` ⚠️  No <body> for ${url};`);
-                  }
-                } finally {
-                  await page.close().catch(() => {});
+                if (bodyHandle) {
+                  content = await ctx.page.evaluate((body) => body.innerHTML, bodyHandle);
+                  await bodyHandle.dispose();
+                } else {
+                  throw new HttpException(` ⚠️  No <body> for ${url};`);
                 }
 
                 if (await cache.writeCache(cacheKey, content, logger)) {

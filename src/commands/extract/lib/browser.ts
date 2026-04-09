@@ -1,5 +1,6 @@
-import puppeteer, { type Browser } from 'puppeteer';
+import puppeteer, { type Browser, type Page } from 'puppeteer';
 import { proxyContext } from './proxy.js';
+import { getRandomUserAgent } from './user-agent.js';
 import type { Logger } from '../../lib/logger.js';
 import type { ShutdownRegistry } from './shutdown.js';
 
@@ -66,6 +67,32 @@ const BROWSER_CLOSE_SETTLE_MS = 150;
 
 export interface BrowserContext extends AsyncDisposable {
   withBrowser<T>(payload: (browser: Browser) => Promise<T>): Promise<T>;
+}
+
+const blockedResourceTypes = new Set(['image', 'stylesheet', 'font', 'fetch', 'media']);
+
+export interface PageContext extends AsyncDisposable {
+  page: Page;
+}
+
+export async function pageContext(browser: Browser): Promise<PageContext> {
+  const page = await browser.newPage();
+  await page.setRequestInterception(true);
+  page.on('request', async (request) => {
+    if (blockedResourceTypes.has(request.resourceType())) {
+      await request.abort();
+    } else {
+      await request.continue();
+    }
+  });
+  await page.setUserAgent(getRandomUserAgent());
+
+  return {
+    page,
+    async [Symbol.asyncDispose]() {
+      await page.close().catch(() => {});
+    },
+  };
 }
 
 export async function browserContext(
