@@ -8,6 +8,7 @@ import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
 import type { JobJson, Strategy } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
+import { createShutdownRegistry, type ShutdownRegistry } from './lib/shutdown.js';
 
 class HttpException extends Error {}
 
@@ -23,11 +24,12 @@ async function runStrategy(
   outDir: string,
   cacheDir: string,
   verbose: boolean,
+  registry: ShutdownRegistry,
 ): Promise<void> {
   const { withLogger } = loggerContext({ prefix: strategy.slug, verbose });
   await withLogger(async (logger: ILogger) => {
     await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
-      const { withBrowser, closeBrowser } = await browserContext(logger);
+      const { withBrowser, closeBrowser } = await browserContext(logger, registry);
       try {
         for await (const listing of strategy.jobListingsGenerator()) {
           logger.log(
@@ -139,10 +141,11 @@ export async function runExtract(options: RunExtractOptions): Promise<void> {
   const { withLogger } = loggerContext({ prefix: 'scr', verbose: options.verbose });
   await withLogger(async (logger: ILogger) => {
     const strategies = options.strategies;
+    const registry = createShutdownRegistry(logger);
     try {
       await Promise.all(
         strategies.map(async (strategy) =>
-          runStrategy(strategy, options.outDir, options.cacheDir, options.verbose),
+          runStrategy(strategy, options.outDir, options.cacheDir, options.verbose, registry),
         ),
       );
       logger.log(' ✅ All strategies finished successfully. Done');

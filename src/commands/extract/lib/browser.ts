@@ -2,6 +2,7 @@ import puppeteer, { type Browser } from 'puppeteer';
 import { proxyContext } from './proxy.js';
 import type { BrowserContext } from '../types/index.js';
 import type { ILogger } from '../../lib/logger.js';
+import type { ShutdownRegistry } from './shutdown.js';
 
 const baseLaunchArgs = [
   '--disable-dev-shm-usage',
@@ -64,22 +65,29 @@ export function assertLaunchArgsSafe(args: string[]): void {
 /** Lets CDP finish tearing down pages before browser.close() to reduce TargetCloseError races. */
 const BROWSER_CLOSE_SETTLE_MS = 150;
 
-export async function browserContext(logger: ILogger): Promise<BrowserContext> {
+export async function browserContext(
+  logger: ILogger,
+  registry?: ShutdownRegistry,
+): Promise<BrowserContext> {
   const { withProxy } = await proxyContext(logger);
   const proxiedBrowsers: Record<string, Browser> = {};
 
   const cleanup = async (): Promise<void> => {
     for (const [proxyUrl, proxiedBrowser] of Object.entries(proxiedBrowsers)) {
       logger.log(` ⚠️  Closing headless browser for proxy server ${proxyUrl}`);
+      const pid = proxiedBrowser.process()?.pid;
       const pages = await proxiedBrowser.pages();
       await Promise.allSettled(pages.map((p) => p.close().catch(() => {})));
       await new Promise<void>((resolve) => {
         setTimeout(resolve, BROWSER_CLOSE_SETTLE_MS);
       });
       await proxiedBrowser.close();
+      if (pid) registry?.deregisterPid(pid);
       delete proxiedBrowsers[proxyUrl];
     }
   };
+
+  registry?.registerCleanup(cleanup);
 
   return {
     withBrowser: async <T>(payload: (browser: Browser) => Promise<T>): Promise<T> => {
@@ -94,6 +102,8 @@ export async function browserContext(logger: ILogger): Promise<BrowserContext> {
               headless: true,
               args: launchArgs,
             });
+            const pid = proxiedBrowsers[proxy].process()?.pid;
+            if (pid) registry?.registerPid(pid);
           }
           return await payload(proxiedBrowsers[proxy]);
         } catch (error) {
@@ -105,6 +115,7 @@ export async function browserContext(logger: ILogger): Promise<BrowserContext> {
     },
     closeBrowser: async (): Promise<void> => {
       await cleanup();
+      registry?.deregisterCleanup(cleanup);
     },
   };
 }

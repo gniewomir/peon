@@ -34,16 +34,17 @@ export async function runTransform(options: {
     });
 
     watcher.on('error', (error) => {
-      shutdown(error);
+      shutdown(undefined, error);
     });
 
-    const shutdown = (cause?: unknown) => {
+    const shutdown = (signal?: 'SIGINT' | 'SIGTERM', cause?: unknown) => {
       if (shuttingDown) return;
       if (cause) {
         logger.error('shutting down because of error', cause);
       }
       logger.log('gracefully shutting down...');
       shuttingDown = true;
+      const exitCode = signal === 'SIGINT' ? 130 : signal === 'SIGTERM' ? 143 : 0;
       const timeout = setTimeout(() => {
         logger.warn('shutdown timeout (30s) forcing exit...');
         process.exit(1);
@@ -54,12 +55,12 @@ export async function runTransform(options: {
         .then(() => {
           clearTimeout(timeout);
           logger.log('cleanup complete');
-          process.exit(0);
+          process.exit(exitCode);
         });
     };
 
-    process.once('SIGINT', shutdown);
-    process.once('SIGTERM', shutdown);
+    process.once('SIGINT', () => shutdown('SIGINT'));
+    process.once('SIGTERM', () => shutdown('SIGTERM'));
 
     logger.log(`Watching for changes in: ${stripRootPath(stagingDir)}`);
   });
