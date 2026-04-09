@@ -44,6 +44,18 @@ export async function ollamaResponse<OutputType>({
     throw new Error('Unexpected Ollama response shape (missing response string).');
   }
   const output = JSON.parse((data as { response: string }).response.trim() || '{}');
+  if ('response' in data) {
+    /**
+     * Drop, already present as output
+     */
+    delete data.response;
+  }
+  if ('context' in data) {
+    /**
+     * Drop, atm it is just noise
+     */
+    delete data.context;
+  }
   return {
     model,
     output,
