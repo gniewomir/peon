@@ -23,7 +23,7 @@
     "overkill": "npm run lint && npm run format && npm run test && npm run build",
     "extract": "npm run peon -- extract",
     "transform": "npm run peon -- transform",
-    "stage:clear": "node scripts/clear-data.mjs",
+    "stage:clear": "node scripts/clear-stage.mjs",
     "cache:clear": "node scripts/clear-cache.mjs",
     "all:clear": "node scripts/clear-all.mjs"
   },
