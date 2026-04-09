@@ -6,6 +6,9 @@ import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
 
 export class CleanerBdj extends AbstractCleaner {
   private normalizeSalary(nav: JsonNavigator): TSchema['salaryCoE'] {
+    if (!nav.getOptionalPath('denominatedSalaryLong.money')) {
+      return nullSchema().salaryCoE;
+    }
     const money = nav.getPath('denominatedSalaryLong.money').toString();
     let from: string | null = null;
     let to: string | null = null;
