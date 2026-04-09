@@ -8,7 +8,7 @@ import { readFile } from 'fs/promises';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
-import type { ILogger } from '../../../lib/logger.js';
+import type { Logger } from '../../../lib/logger.js';
 import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecutionTimeLimiter.js';
 import { llmStructuredResponse } from '../../../../llm/llmStructuredResponse.js';
 import { type TSchema } from '../../../../schema/schema.js';
@@ -34,7 +34,7 @@ export class LlmStage extends AbstractStage {
     concurrencyLimit = 1,
     minimumExecutionTimeMs = 1000 * 60 * 2,
   }: {
-    logger: ILogger;
+    logger: Logger;
     stagingDir: string;
     concurrencyLimit?: number;
     minimumExecutionTimeMs?: number;

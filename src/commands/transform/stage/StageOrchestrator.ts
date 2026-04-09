@@ -2,7 +2,7 @@ import type { AbstractStage } from './AbstractStage.js';
 import type { StagingFileEvent } from '../types.js';
 import { HashMap } from '../lib/HashMap.js';
 import path, { dirname } from 'node:path';
-import type { ILogger } from '../../lib/logger.js';
+import type { Logger } from '../../lib/logger.js';
 import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
 import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
 import { GuardDecisionTrash } from './guards/decisions/GuardDecisionTrash.js';
@@ -25,7 +25,7 @@ export class StageOrchestrator {
   private readonly trashDir;
   private readonly logger;
 
-  constructor({ logger, stagingDir }: { logger: ILogger; stagingDir: string }) {
+  constructor({ logger, stagingDir }: { logger: Logger; stagingDir: string }) {
     this.logger = logger.withSuffix('orchestrator');
     this.loadDir = path.join(dirname(stagingDir), 'load');
     this.quarantineDir = path.join(dirname(stagingDir), 'quarantine');

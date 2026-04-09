@@ -1,11 +1,11 @@
-import type { ILogger } from '../../lib/logger.js';
+import type { Logger } from '../../lib/logger.js';
 
 export interface CacheOperations {
   /** Absolute filesystem path for the cache file for this key. */
   cacheFilePath(key: string): string;
-  hasCacheKey(key: string, logger: ILogger): boolean;
-  readCache(key: string, logger: ILogger): Promise<string>;
-  writeCache(key: string, content: string, logger: ILogger): Promise<boolean>;
+  hasCacheKey(key: string, logger: Logger): boolean;
+  readCache(key: string, logger: Logger): Promise<string>;
+  writeCache(key: string, content: string, logger: Logger): Promise<boolean>;
   dailyCacheKey(str: string): string;
   weeklyCacheKey(str: string): string;
 }

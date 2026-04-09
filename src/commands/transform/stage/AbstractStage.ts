@@ -7,7 +7,7 @@ import type { AbstractGuard } from './guards/AbstractGuard.js';
 import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
 import type { TMetaSchema } from '../../../schema/schema.meta.js';
 import { smartSave } from '../../lib/smart-save.js';
-import type { ILogger } from '../../lib/logger.js';
+import type { Logger } from '../../lib/logger.js';
 import type { AbstractGuardDecision } from './guards/decisions/AbstractGuardDecision.js';
 import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js';
 
@@ -15,7 +15,7 @@ export abstract class AbstractStage {
   protected logger;
   protected stagingDir;
 
-  public constructor({ logger, stagingDir }: { logger: ILogger; stagingDir: string }) {
+  public constructor({ logger, stagingDir }: { logger: Logger; stagingDir: string }) {
     this.logger = logger.withSuffix(this.name());
     this.stagingDir = stagingDir;
   }

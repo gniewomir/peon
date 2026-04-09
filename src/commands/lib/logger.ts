@@ -1,5 +1,5 @@
-export interface ILogger {
-  withSuffix(suffix: string): ILogger;
+export interface Logger {
+  withSuffix(suffix: string): Logger;
   debug(message: string, ...args: unknown[]): void;
   log(message: string, ...args: unknown[]): void;
   warn(message: string, ...args: unknown[]): void;
@@ -7,7 +7,7 @@ export interface ILogger {
 }
 
 export interface LoggerContext {
-  withLogger<T>(payload: (logger: ILogger) => Promise<T>): Promise<T>;
+  withLogger<T>(payload: (logger: Logger) => Promise<T>): Promise<T>;
 }
 
 export function loggerContext({
@@ -17,9 +17,9 @@ export function loggerContext({
   prefix: string;
   verbose?: boolean;
 }): LoggerContext {
-  const createLogger = (currentPrefix: string): ILogger => {
+  const createLogger = (currentPrefix: string): Logger => {
     return {
-      withSuffix: (suffix: string): ILogger => {
+      withSuffix: (suffix: string): Logger => {
         const trimmedSuffix = suffix.trim().replace(/(^-+)|(-+$)/g, '');
 
         if (trimmedSuffix.length === 0) {
@@ -47,7 +47,7 @@ export function loggerContext({
   };
 
   return {
-    withLogger: async <T>(payload: (logger: ILogger) => Promise<T>): Promise<T> => {
+    withLogger: async <T>(payload: (logger: Logger) => Promise<T>): Promise<T> => {
       return await payload(createLogger(prefix));
     },
   };

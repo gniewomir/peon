@@ -3,7 +3,7 @@ import type { Command } from 'commander';
 import { rootPath } from '../root.js';
 import { runExtract } from './extract/run.js';
 import { allStrategies, strategyFactoryBySlug } from './extract/strategy/index.js';
-import type { Strategy } from './extract/types/index.js';
+import type { Strategy } from './extract/strategy/types.js';
 
 function parseOnlySlugs(only: string | undefined): Set<string> | null {
   if (only === undefined || only.trim() === '') {

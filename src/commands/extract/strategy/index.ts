@@ -1,7 +1,7 @@
 import { BDJ_SLUG, bdjStrategy } from './bdj/bdj.js';
 import { JJI_SLUG, jjiStrategy } from './jji/jji.js';
 import { NFJ_SLUG, nfjStrategy } from './nfj/nfj.js';
-import type { Strategy } from '../types/index.js';
+import type { Strategy } from './types.js';
 
 const STRATEGY_REGISTRY = [
   { slug: JJI_SLUG, create: jjiStrategy },

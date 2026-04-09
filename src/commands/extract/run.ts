@@ -1,14 +1,15 @@
 import 'dotenv/config';
 
 import * as path from 'node:path';
-import { type ILogger, loggerContext } from '../lib/logger.js';
+import { type Logger, loggerContext } from '../lib/logger.js';
 import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
-import type { JobJson, Strategy } from './types/index.js';
+import type { JobJson } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
 import { createShutdownRegistry, type ShutdownRegistry } from './lib/shutdown.js';
+import type { Strategy } from './strategy/types.js';
 
 class HttpException extends Error {}
 
@@ -24,17 +25,17 @@ async function runStrategy(
   outDir: string,
   cacheDir: string,
   registry: ShutdownRegistry,
-  logger: ILogger,
+  logger: Logger,
 ): Promise<void> {
   await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
-    const { withBrowser, closeBrowser } = await browserContext(logger, registry);
+    await using ctx = await browserContext(logger, registry);
     try {
       for await (const listing of strategy.jobListingsGenerator()) {
         logger.log(
           ` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`,
         );
         for await (const job of strategy.jobGenerator(listing, logger, cache)) {
-          await withBrowser(async (browser) => {
+          await ctx.withBrowser(async (browser) => {
             try {
               const url = strategy.jobToUrl(job as JobJson);
               const cacheKey = cache.weeklyCacheKey(url);
@@ -130,7 +131,6 @@ async function runStrategy(
       logger.error(` ⚠️  Strategy ${strategy.slug} error:`, error);
       throw error;
     } finally {
-      await closeBrowser();
       logger.log(` ℹ️  Stats for ${strategy.slug} ${JSON.stringify(strategy.stats)}`);
     }
   });
@@ -138,7 +138,7 @@ async function runStrategy(
 
 export async function runExtract(options: RunExtractOptions): Promise<void> {
   const { withLogger } = loggerContext({ prefix: 'extract', verbose: options.verbose });
-  await withLogger(async (logger: ILogger) => {
+  await withLogger(async (logger: Logger) => {
     const strategies = options.strategies;
     const registry = createShutdownRegistry(logger);
     try {

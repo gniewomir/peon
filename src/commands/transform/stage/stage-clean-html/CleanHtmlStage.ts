@@ -5,7 +5,7 @@ import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractHtmlCleaner } from './AbstractHtmlCleaner.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import assert from 'node:assert';
-import type { ILogger } from '../../../lib/logger.js';
+import type { Logger } from '../../../lib/logger.js';
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 
 export class CleanHtmlStage extends AbstractStage {
@@ -16,7 +16,7 @@ export class CleanHtmlStage extends AbstractStage {
     stagingDir,
     cleaners,
   }: {
-    logger: ILogger;
+    logger: Logger;
     stagingDir: string;
     cleaners: AbstractHtmlCleaner[];
   }) {

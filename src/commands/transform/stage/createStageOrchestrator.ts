@@ -9,7 +9,7 @@ import { HtmlCleanerJji } from './stage-clean-html/HtmlCleanerJji.js';
 import { HtmlCleanerNfj } from './stage-clean-html/HtmlCleanerNfj.js';
 import { CleanHtmlStage } from './stage-clean-html/CleanHtmlStage.js';
 import { StageOrchestrator } from './StageOrchestrator.js';
-import type { ILogger } from '../../lib/logger.js';
+import type { Logger } from '../../lib/logger.js';
 import { HtmlToJsonStage } from './stage-json-from-html/HtmlToJsonStage.js';
 import { HtmlToJsonExtractorNfj } from './stage-json-from-html/HtmlToJsonExtractorNfj.js';
 import { HtmlToJsonExtractorBdj } from './stage-json-from-html/HtmlToJsonExtractorBdj.js';
@@ -19,7 +19,7 @@ export function createStageOrchestrator({
   logger,
   stagingDir,
 }: {
-  logger: ILogger;
+  logger: Logger;
   stagingDir: string;
 }): StageOrchestrator {
   const registry = new StageOrchestrator({ logger, stagingDir });

@@ -4,7 +4,7 @@ import { type AbstractCleaner } from './AbstractCleaner.js';
 import path, { dirname } from 'node:path';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import assert from 'node:assert';
-import type { ILogger } from '../../../lib/logger.js';
+import type { Logger } from '../../../lib/logger.js';
 import { SchemaShapeGuard } from '../guards/SchemaShapeGuard.js';
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 
@@ -16,7 +16,7 @@ export class CleanJsonStage extends AbstractStage {
     cleaners,
     stagingDir,
   }: {
-    logger: ILogger;
+    logger: Logger;
     stagingDir: string;
     cleaners: AbstractCleaner[];
   }) {

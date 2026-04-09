@@ -1,13 +1,13 @@
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 
-import type { ILogger } from './logger.js';
+import type { Logger } from './logger.js';
 
 export async function smartSave(
   filePath: string,
   content: Record<string, unknown> | unknown[] | string,
   force: boolean,
-  logger: ILogger,
+  logger: Logger,
 ): Promise<boolean> {
   const newContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
 

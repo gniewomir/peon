@@ -1,16 +1,10 @@
 import * as path from 'node:path';
 import { smartSave } from '../../lib/smart-save.js';
-import type {
-  JobJson,
-  Strategy,
-  CacheOperations,
-  Listing,
-  StrategySaveOptions,
-  StrategyStats,
-} from '../types/index.js';
+import type { JobJson, CacheOperations, Listing } from '../types/index.js';
 import fs from 'node:fs/promises';
 import { metaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
-import type { ILogger } from '../../lib/logger.js';
+import type { Logger } from '../../lib/logger.js';
+import type { Strategy, StrategySaveOptions, StrategyStats } from './types.js';
 
 function createBaseStats(): StrategyStats {
   return {
@@ -40,7 +34,7 @@ export abstract class AbstractStrategy implements Strategy {
 
   abstract jobGenerator(
     listing: Listing,
-    logger: ILogger,
+    logger: Logger,
     cache: CacheOperations,
   ): AsyncGenerator<JobJson>;
 

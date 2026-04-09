@@ -1,7 +1,7 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import type { StagingFileEvent } from '../../types.js';
-import type { ILogger } from '../../../lib/logger.js';
+import type { Logger } from '../../../lib/logger.js';
 import type { AbstractHtmlToJsonExtractor } from './AbstractHtmlToJsonExtractor.js';
 import path, { dirname } from 'node:path';
 import assert from 'node:assert';
@@ -16,7 +16,7 @@ export class HtmlToJsonStage extends AbstractStage {
     stagingDir,
     extractors,
   }: {
-    logger: ILogger;
+    logger: Logger;
     stagingDir: string;
     extractors: AbstractHtmlToJsonExtractor[];
   }) {

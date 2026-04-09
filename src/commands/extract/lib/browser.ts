@@ -1,7 +1,6 @@
 import puppeteer, { type Browser } from 'puppeteer';
 import { proxyContext } from './proxy.js';
-import type { BrowserContext } from '../types/index.js';
-import type { ILogger } from '../../lib/logger.js';
+import type { Logger } from '../../lib/logger.js';
 import type { ShutdownRegistry } from './shutdown.js';
 
 const baseLaunchArgs = [
@@ -65,8 +64,12 @@ export function assertLaunchArgsSafe(args: string[]): void {
 /** Lets CDP finish tearing down pages before browser.close() to reduce TargetCloseError races. */
 const BROWSER_CLOSE_SETTLE_MS = 150;
 
+export interface BrowserContext extends AsyncDisposable {
+  withBrowser<T>(payload: (browser: Browser) => Promise<T>): Promise<T>;
+}
+
 export async function browserContext(
-  logger: ILogger,
+  logger: Logger,
   registry?: ShutdownRegistry,
 ): Promise<BrowserContext> {
   const { withProxy } = await proxyContext(logger);
@@ -113,7 +116,7 @@ export async function browserContext(
         }
       });
     },
-    closeBrowser: async (): Promise<void> => {
+    async [Symbol.asyncDispose](): Promise<void> {
       await cleanup();
       registry?.deregisterCleanup(cleanup);
     },

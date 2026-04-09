@@ -1,12 +1,12 @@
 import { getRandomNumber } from './random.js';
 import { findProxies } from './proxy-scraper.js';
-import type { ILogger } from '../../lib/logger.js';
+import type { Logger } from '../../lib/logger.js';
 
 interface ProxyContext {
   withProxy<T>(payload: (proxy: string) => Promise<T>): Promise<T>;
 }
 
-async function* proxyGenerator(logger: ILogger): AsyncGenerator<string> {
+async function* proxyGenerator(logger: Logger): AsyncGenerator<string> {
   while (true) {
     const proxyList = [...(await findProxies(logger))].reverse();
     while (proxyList.length > 0) {
@@ -18,7 +18,7 @@ async function* proxyGenerator(logger: ILogger): AsyncGenerator<string> {
   }
 }
 
-export async function proxyContext(logger: ILogger): Promise<ProxyContext> {
+export async function proxyContext(logger: Logger): Promise<ProxyContext> {
   const maxConsecutiveFailures = 20;
   let consecutiveFailures = 0;
   let proxyGen = proxyGenerator(logger);

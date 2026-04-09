@@ -1,4 +1,4 @@
-import type { ILogger } from '../../lib/logger.js';
+import type { Logger } from '../../lib/logger.js';
 
 export interface ShutdownRegistry {
   registerCleanup(cb: () => Promise<void>): void;
@@ -9,7 +9,7 @@ export interface ShutdownRegistry {
 
 const SHUTDOWN_TIMEOUT_MS = 30_000;
 
-export function createShutdownRegistry(logger: ILogger): ShutdownRegistry {
+export function createShutdownRegistry(logger: Logger): ShutdownRegistry {
   const cleanups = new Set<() => Promise<void>>();
   const pids = new Set<number>();
   let shuttingDown = false;
