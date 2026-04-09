@@ -6,6 +6,10 @@ Target architecture:
 
 - each ETL step (extract, transform, load) runs as a separate CLI script
   - each CLI script can run concurrently with its peers or completely independently
+  - as scripts operate on files and listen to file changes:
+    - save only if content changed
+      - if content didn't change; no save; no file system event; following steps are not triggered
+      - it will limit SSD wear
   - extraction (scraping) is parallelized at the data-provider (job-board) level
     - there is no need for near real-time scraping
     - data-provider quirks are abstracted to a data-provider strategy
