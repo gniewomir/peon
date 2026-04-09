@@ -1,7 +1,7 @@
-import { CleanJsonStage } from '../stage-clean-json/CleanJsonStage.js';
-import { CleanerBdj } from '../stage-clean-json/CleanerBdj.js';
-import { CleanerJji } from '../stage-clean-json/CleanerJji.js';
-import { CleanerNfj } from '../stage-clean-json/CleanerNfj.js';
+import { CleanJsonStage } from '../stage-clean-job-json/CleanJsonStage.js';
+import { CleanerBdj } from '../stage-clean-job-json/CleanerBdj.js';
+import { CleanerJji } from '../stage-clean-job-json/CleanerJji.js';
+import { CleanerNfj } from '../stage-clean-job-json/CleanerNfj.js';
 import { HtmlToMdStage } from '../stage-html-to-md/HtmlToMdStage.js';
 import { LlmStage } from '../stage-llm/LlmStage.js';
 import { HtmlCleanerBdj } from '../stage-clean-html/HtmlCleanerBdj.js';

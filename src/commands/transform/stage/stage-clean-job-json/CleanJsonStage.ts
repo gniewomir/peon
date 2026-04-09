@@ -28,10 +28,6 @@ export class CleanJsonStage extends AbstractStage {
     this.cleaners = map;
   }
 
-  name(): string {
-    return 'clean-json';
-  }
-
   protected inputFiles(): string[] {
     return ['raw.job.json'];
   }
@@ -47,7 +43,7 @@ export class CleanJsonStage extends AbstractStage {
   protected async payload(event: StagingFileEvent) {
     const jobDir = dirname(event.payload);
     const raw = await this.readJson(path.join(jobDir, this.inputFiles()[0]));
-    const meta = await this.readMetadata(jobDir);
+    const meta = await this.readRawMetadata(jobDir);
     const source = meta.offer.source;
     assert(source !== null, 'unknown offer source');
     const cleaner = this.cleaners.get(source);

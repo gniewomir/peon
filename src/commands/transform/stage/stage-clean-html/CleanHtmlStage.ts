@@ -26,10 +26,6 @@ export class CleanHtmlStage extends AbstractStage {
     }
   }
 
-  public name(): string {
-    return 'clean-html';
-  }
-
   protected inputFiles(): string[] {
     return ['raw.job.html'];
   }
@@ -45,7 +41,7 @@ export class CleanHtmlStage extends AbstractStage {
   protected async payload(event: StagingFileEvent) {
     const jobDir = dirname(event.payload);
     const input = await readFile(path.join(jobDir, this.inputFiles()[0]), 'utf8');
-    const meta = await this.readMetadata(jobDir);
+    const meta = await this.readRawMetadata(jobDir);
     const source = meta.offer.source;
     assert(source !== null, 'unknown offer source');
     const cleaner = this.cleaners.get(source);

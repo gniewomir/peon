@@ -26,10 +26,6 @@ export class HtmlToJsonStage extends AbstractStage {
     }
   }
 
-  name(): string {
-    return 'html-to-json';
-  }
-
   protected inputFiles(): string[] {
     return ['raw.job.html'];
   }
@@ -47,7 +43,7 @@ export class HtmlToJsonStage extends AbstractStage {
   ): Promise<string | Record<string, unknown> | unknown[]> {
     const jobDir = dirname(event.payload);
     const input = await readFile(path.join(jobDir, this.inputFiles()[0]), 'utf8');
-    const meta = await this.readMetadata(jobDir);
+    const meta = await this.readRawMetadata(jobDir);
     const source = meta.offer.source;
     assert(source !== null, 'unknown offer source');
     const extractor = this.extractors.get(source);

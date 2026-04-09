@@ -20,7 +20,9 @@ export abstract class AbstractStage {
     this.stagingDir = stagingDir;
   }
 
-  public abstract name(): string;
+  public name(): string {
+    return this.outputFile().replace('.', '-');
+  }
   protected abstract inputFiles(): string[];
   protected abstract outputFile(): string;
   protected abstract payload(
@@ -31,14 +33,15 @@ export abstract class AbstractStage {
   public async run(event: StagingFileEvent): Promise<AbstractGuardDecision[]> {
     const jobDir = dirname(event.payload);
     try {
-      if (!this.preconditionsMeet(event)) return [new GuardDecisionKeep('Preconditions not met')];
+      if (!this.preconditionsMeet(event))
+        return [new GuardDecisionKeep('keep until preconditions met')];
       const result = await this.payload(event);
       const guardDecisions = await Promise.all(this.guards().map((guard) => guard.guard(result)));
       await smartSave(path.join(jobDir, this.outputFile()), result, false, this.logger);
       this.logger.log(`[${event.type}:${stripRootPath(event.payload)}] processed`);
       return guardDecisions;
     } catch (error) {
-      return [new GuardDecisionQuarantine('quarantined because unhanded error', { cause: error })];
+      return [new GuardDecisionQuarantine('quarantine because unhanded error', { cause: error })];
     }
   }
 
@@ -62,7 +65,7 @@ export abstract class AbstractStage {
     return JSON.parse(raw) as T;
   }
 
-  async readMetadata(jobDir: string): Promise<TMetaSchema> {
+  async readRawMetadata(jobDir: string): Promise<TMetaSchema> {
     return await this.readJson<TMetaSchema>(`${jobDir}/raw.meta.json`);
   }
 }

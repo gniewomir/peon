@@ -48,10 +48,6 @@ export class LlmStage extends AbstractStage {
     );
   }
 
-  public name(): string {
-    return 'llm';
-  }
-
   protected inputFiles(): string[] {
     return ['job.md'];
   }

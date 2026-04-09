@@ -7,10 +7,6 @@ import path, { dirname } from 'path';
 import { NotEmptyGuard } from '../lib.guard/NotEmptyGuard.js';
 
 export class HtmlToMdStage extends AbstractStage {
-  name(): string {
-    return 'html-to-md';
-  }
-
   protected inputFiles(): string[] {
     return ['clean.job.html'];
   }
