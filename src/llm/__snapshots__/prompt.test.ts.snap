@@ -19,6 +19,7 @@ Field guidance:
 employer:
 - name (string, nullable): Employer name
 - type (string, nullable): Employer company type
+- logo (string, nullable): Employer logo URL
 
 role:
 - title (string, nullable): Role title

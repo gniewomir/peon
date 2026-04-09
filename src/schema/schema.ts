@@ -9,6 +9,7 @@ export const schemaObject = {
         ['startup', 'scaleup', 'corporation', 'outsourcing agency', 'software house'],
         'Employer company type',
       ),
+      logo: sString('Employer logo URL'),
     },
     'Employer details',
   ),
@@ -133,7 +134,7 @@ Rules:
 export type TSchema = z.infer<typeof schema>;
 export const jsonSchema = toJSONSchema(schema, { target: 'draft-07' });
 export const nullSchema = (): TSchema => ({
-  employer: { name: null, type: null },
+  employer: { name: null, logo: null, type: null },
   role: {
     title: null,
     seniority: null,
