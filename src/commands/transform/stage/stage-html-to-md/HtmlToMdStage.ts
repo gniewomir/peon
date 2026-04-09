@@ -1,10 +1,10 @@
-import { AbstractStage } from '../lib.stage/AbstractStage.js';
+import { AbstractStage } from '../AbstractStage.js';
 import type { StagingFileEvent } from '../../types.js';
 import { readFile } from 'fs/promises';
 import { convert } from '@kreuzberg/html-to-markdown-node';
-import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
+import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import path, { dirname } from 'path';
-import { NotEmptyGuard } from '../lib.guard/NotEmptyGuard.js';
+import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 
 export class HtmlToMdStage extends AbstractStage {
   protected inputFiles(): string[] {

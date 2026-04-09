@@ -1,12 +1,12 @@
-import { AbstractStage } from '../lib.stage/AbstractStage.js';
+import { AbstractStage } from '../AbstractStage.js';
 import type { StagingFileEvent } from '../../types.js';
 import { type AbstractCleaner } from './AbstractCleaner.js';
 import path, { dirname } from 'node:path';
-import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
+import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import assert from 'node:assert';
 import type { ILogger } from '../../../lib/logger.js';
-import { SchemaShapeGuard } from '../lib.guard/SchemaShapeGuard.js';
-import { NotEmptyGuard } from '../lib.guard/NotEmptyGuard.js';
+import { SchemaShapeGuard } from '../guards/SchemaShapeGuard.js';
+import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 
 export class CleanJsonStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractCleaner>();

@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import chokidar from 'chokidar';
 import { loggerContext } from '../lib/logger.js';
-import { createStageOrchestrator } from './stage/lib.stage/createStageOrchestrator.js';
+import { createStageOrchestrator } from './stage/createStageOrchestrator.js';
 import { stripRootPath } from '../../root.js';
 
 export async function runTransform(options: {

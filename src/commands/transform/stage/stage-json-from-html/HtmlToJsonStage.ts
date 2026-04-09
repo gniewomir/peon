@@ -1,12 +1,12 @@
-import { AbstractStage } from '../lib.stage/AbstractStage.js';
-import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
+import { AbstractStage } from '../AbstractStage.js';
+import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import type { StagingFileEvent } from '../../types.js';
 import type { ILogger } from '../../../lib/logger.js';
 import type { AbstractHtmlToJsonExtractor } from './AbstractHtmlToJsonExtractor.js';
 import path, { dirname } from 'node:path';
 import assert from 'node:assert';
 import { readFile } from 'node:fs/promises';
-import { NotEmptyGuard } from '../lib.guard/NotEmptyGuard.js';
+import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 
 export class HtmlToJsonStage extends AbstractStage {
   private readonly extractors = new Map<string, AbstractHtmlToJsonExtractor>();

@@ -1,4 +1,4 @@
-import type { AbstractGuardDecision } from './AbstractGuardDecision.js';
+import type { AbstractGuardDecision } from './decisions/AbstractGuardDecision.js';
 
 export abstract class AbstractGuard {
   abstract name(): string;

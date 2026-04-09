@@ -1,15 +1,15 @@
-import type { StagingFileEvent } from '../../types.js';
+import type { StagingFileEvent } from '../types.js';
 import { readFile } from 'fs/promises';
 import path, { dirname } from 'node:path';
 import { existsSync } from 'node:fs';
-import { stripRootPath } from '../../../../root.js';
-import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
-import { GuardDecisionQuarantine } from '../lib.guard/GuardDecisionQuarantine.js';
-import type { TMetaSchema } from '../../../../schema/schema.meta.js';
-import { smartSave } from '../../../lib/smart-save.js';
-import type { ILogger } from '../../../lib/logger.js';
-import type { AbstractGuardDecision } from '../lib.guard/AbstractGuardDecision.js';
-import { GuardDecisionAdvance } from '../lib.guard/GuardDecisionAdvance.js';
+import { stripRootPath } from '../../../root.js';
+import type { AbstractGuard } from './guards/AbstractGuard.js';
+import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
+import type { TMetaSchema } from '../../../schema/schema.meta.js';
+import { smartSave } from '../../lib/smart-save.js';
+import type { ILogger } from '../../lib/logger.js';
+import type { AbstractGuardDecision } from './guards/decisions/AbstractGuardDecision.js';
+import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js';
 
 export abstract class AbstractStage {
   protected logger;

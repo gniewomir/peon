@@ -1,4 +1,4 @@
-import { deepVisitor } from '../../lib/deepVisitor.js';
+import { deepVisitor } from '../transform/lib/deepVisitor.js';
 
 export const qualityEstimator = (output: unknown) => {
   let valid = 0;

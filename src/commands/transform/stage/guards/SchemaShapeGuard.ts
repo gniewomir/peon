@@ -1,8 +1,8 @@
 import { AbstractGuard } from './AbstractGuard.js';
-import type { AbstractGuardDecision } from './AbstractGuardDecision.js';
+import type { AbstractGuardDecision } from './decisions/AbstractGuardDecision.js';
 import { schema } from '../../../../schema/schema.js';
-import { GuardDecisionQuarantine } from './GuardDecisionQuarantine.js';
-import { GuardDecisionAdvance } from './GuardDecisionAdvance.js';
+import { GuardDecisionQuarantine } from './decisions/GuardDecisionQuarantine.js';
+import { GuardDecisionAdvance } from './decisions/GuardDecisionAdvance.js';
 
 export class SchemaShapeGuard extends AbstractGuard {
   async guard(result: unknown): Promise<AbstractGuardDecision> {

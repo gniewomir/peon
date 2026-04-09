@@ -1,19 +1,19 @@
 import type { StagingFileEvent } from '../../types.js';
-import { AbstractStage } from '../lib.stage/AbstractStage.js';
+import { AbstractStage } from '../AbstractStage.js';
 import {
   type ConcurrencyLimiter,
   createConcurrencyLimiter,
 } from '../../lib/createConcurrencyLimiter.js';
 import { readFile } from 'fs/promises';
-import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
+import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import { smartSave } from '../../../lib/smart-save.js';
 import path, { dirname } from 'node:path';
 import type { ILogger } from '../../../lib/logger.js';
 import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecutionTimeLimiter.js';
 import { llmStructuredResponse } from '../../../../llm/llmStructuredResponse.js';
 import { type TSchema } from '../../../../schema/schema.js';
-import { SchemaShapeGuard } from '../lib.guard/SchemaShapeGuard.js';
-import { SchemaQualityGuard } from '../lib.guard/SchemaQualityGuard.js';
+import { SchemaShapeGuard } from '../guards/SchemaShapeGuard.js';
+import { SchemaQualityGuard } from '../guards/SchemaQualityGuard.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimit: number;

@@ -1,12 +1,12 @@
 import path, { dirname } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { StagingFileEvent } from '../../types.js';
-import { AbstractStage } from '../lib.stage/AbstractStage.js';
+import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractHtmlCleaner } from './AbstractHtmlCleaner.js';
-import type { AbstractGuard } from '../lib.guard/AbstractGuard.js';
+import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import assert from 'node:assert';
 import type { ILogger } from '../../../lib/logger.js';
-import { NotEmptyGuard } from '../lib.guard/NotEmptyGuard.js';
+import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 
 export class CleanHtmlStage extends AbstractStage {
   private readonly cleaners = new Map<string, AbstractHtmlCleaner>();

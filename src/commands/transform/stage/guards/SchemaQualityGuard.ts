@@ -1,8 +1,8 @@
 import { AbstractGuard } from './AbstractGuard.js';
-import type { AbstractGuardDecision } from './AbstractGuardDecision.js';
-import { GuardDecisionQuarantine } from './GuardDecisionQuarantine.js';
-import { GuardDecisionAdvance } from './GuardDecisionAdvance.js';
-import { qualityEstimator } from '../lib.stage/qualityEstimator.js';
+import type { AbstractGuardDecision } from './decisions/AbstractGuardDecision.js';
+import { GuardDecisionQuarantine } from './decisions/GuardDecisionQuarantine.js';
+import { GuardDecisionAdvance } from './decisions/GuardDecisionAdvance.js';
+import { qualityEstimator } from '../../../lib/qualityEstimator.js';
 
 export class SchemaQualityGuard extends AbstractGuard {
   async guard(result: unknown): Promise<AbstractGuardDecision> {

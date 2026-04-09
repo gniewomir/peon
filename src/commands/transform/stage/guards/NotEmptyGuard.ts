@@ -1,7 +1,7 @@
 import { AbstractGuard } from './AbstractGuard.js';
-import type { AbstractGuardDecision } from './AbstractGuardDecision.js';
-import { GuardDecisionQuarantine } from './GuardDecisionQuarantine.js';
-import { GuardDecisionAdvance } from './GuardDecisionAdvance.js';
+import type { AbstractGuardDecision } from './decisions/AbstractGuardDecision.js';
+import { GuardDecisionQuarantine } from './decisions/GuardDecisionQuarantine.js';
+import { GuardDecisionAdvance } from './decisions/GuardDecisionAdvance.js';
 
 export class NotEmptyGuard extends AbstractGuard {
   constructor(private readonly minLength: number = 100) {

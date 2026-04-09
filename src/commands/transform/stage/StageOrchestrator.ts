@@ -1,11 +1,11 @@
 import type { AbstractStage } from './AbstractStage.js';
-import type { StagingFileEvent } from '../../types.js';
-import { HashMap } from '../../lib/HashMap.js';
+import type { StagingFileEvent } from '../types.js';
+import { HashMap } from '../lib/HashMap.js';
 import path, { dirname } from 'node:path';
-import type { ILogger } from '../../../lib/logger.js';
-import { GuardDecisionLoad } from '../lib.guard/GuardDecisionLoad.js';
-import { GuardDecisionQuarantine } from '../lib.guard/GuardDecisionQuarantine.js';
-import { GuardDecisionTrash } from '../lib.guard/GuardDecisionTrash.js';
+import type { ILogger } from '../../lib/logger.js';
+import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
+import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
+import { GuardDecisionTrash } from './guards/decisions/GuardDecisionTrash.js';
 import {
   cpSync,
   existsSync,
