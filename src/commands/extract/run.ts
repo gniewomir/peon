@@ -23,132 +23,134 @@ async function runStrategy(
   strategy: Strategy,
   outDir: string,
   cacheDir: string,
-  verbose: boolean,
   registry: ShutdownRegistry,
+  logger: ILogger,
 ): Promise<void> {
-  const { withLogger } = loggerContext({ prefix: 'extract', verbose });
-  await withLogger(async (logger: ILogger) => {
-    logger = logger.withSuffix(strategy.slug);
-    await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
-      const { withBrowser, closeBrowser } = await browserContext(logger, registry);
-      try {
-        for await (const listing of strategy.jobListingsGenerator()) {
-          logger.log(
-            ` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`,
-          );
-          for await (const job of strategy.jobGenerator(listing, logger, cache)) {
-            await withBrowser(async (browser) => {
-              try {
-                const url = strategy.jobToUrl(job as JobJson);
-                const cacheKey = cache.weeklyCacheKey(url);
+  await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
+    const { withBrowser, closeBrowser } = await browserContext(logger, registry);
+    try {
+      for await (const listing of strategy.jobListingsGenerator()) {
+        logger.log(
+          ` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`,
+        );
+        for await (const job of strategy.jobGenerator(listing, logger, cache)) {
+          await withBrowser(async (browser) => {
+            try {
+              const url = strategy.jobToUrl(job as JobJson);
+              const cacheKey = cache.weeklyCacheKey(url);
 
-                let content: string;
+              let content: string;
 
-                if (cache.hasCacheKey(cacheKey, logger)) {
-                  content = await cache.readCache(cacheKey, logger);
-                  strategy.stats.cache_hit += 1;
-                } else {
-                  logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
-                  const page = await browser.newPage();
-                  try {
-                    await page.setRequestInterception(true);
-                    page.on('request', async (request) => {
-                      if (
-                        ['image', 'stylesheet', 'font', 'fetch', 'media'].includes(
-                          request.resourceType(),
-                        )
-                      ) {
-                        await request.abort();
-                      } else {
-                        await request.continue();
-                      }
-                    });
-                    await page.setUserAgent(getRandomUserAgent());
-                    const res = await page.goto(url, {
-                      waitUntil: 'load',
-                      timeout: SCRAPE_REQUEST_TIMEOUT_MS,
-                    });
-
-                    if (!res) {
-                      logger.warn(' ⚠️  No response received from puppeteer.');
-                    }
-                    if (res && res.status() < 400) {
-                      logger.log(`✅ Response status ${res.status()} for ${url}.`);
-                    }
-                    if (res && res.status() >= 400) {
-                      throw new HttpException(` ⚠️  Response status: ${res.status()} for ${url}`);
-                    }
-
-                    const bodyHandle = await page.$('body');
-
-                    if (bodyHandle) {
-                      content = await page.evaluate((body) => body.innerHTML, bodyHandle);
-                      await bodyHandle.dispose();
+              if (cache.hasCacheKey(cacheKey, logger)) {
+                content = await cache.readCache(cacheKey, logger);
+                strategy.stats.cache_hit += 1;
+              } else {
+                logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
+                const page = await browser.newPage();
+                try {
+                  await page.setRequestInterception(true);
+                  page.on('request', async (request) => {
+                    if (
+                      ['image', 'stylesheet', 'font', 'fetch', 'media'].includes(
+                        request.resourceType(),
+                      )
+                    ) {
+                      await request.abort();
                     } else {
-                      throw new HttpException(` ⚠️  No <body> for ${url};`);
+                      await request.continue();
                     }
-                  } finally {
-                    await page.close().catch(() => {});
+                  });
+                  await page.setUserAgent(getRandomUserAgent());
+                  const res = await page.goto(url, {
+                    waitUntil: 'load',
+                    timeout: SCRAPE_REQUEST_TIMEOUT_MS,
+                  });
+
+                  if (!res) {
+                    logger.warn(' ⚠️  No response received from puppeteer.');
+                  }
+                  if (res && res.status() < 400) {
+                    logger.log(`✅ Response status ${res.status()} for ${url}.`);
+                  }
+                  if (res && res.status() >= 400) {
+                    throw new HttpException(` ⚠️  Response status: ${res.status()} for ${url}`);
                   }
 
-                  if (await cache.writeCache(cacheKey, content, logger)) {
-                    strategy.stats.cache_writes += 1;
+                  const bodyHandle = await page.$('body');
+
+                  if (bodyHandle) {
+                    content = await page.evaluate((body) => body.innerHTML, bodyHandle);
+                    await bodyHandle.dispose();
+                  } else {
+                    throw new HttpException(` ⚠️  No <body> for ${url};`);
                   }
-                  strategy.stats.cache_miss += 1;
-
-                  const wait = getRandomNumber(1000, 5000);
-                  logger.log(` 🕒 Waiting for ${Math.round(wait / 1000)}s`);
-                  await new Promise((resolve) => setTimeout(resolve, wait));
+                } finally {
+                  await page.close().catch(() => {});
                 }
 
-                await strategy.save({
-                  outDir,
-                  cached: cache.cacheFilePath(cacheKey),
-                  job: job as JobJson,
-                  url,
-                  content,
-                  logger,
-                });
-
-                strategy.stats.writes += 1;
-              } catch (error) {
-                strategy.stats.errors += 1;
-                if (error instanceof HttpException) {
-                  console.error(` ⚠️  Skipping because of error ${error.message}`);
-                  return;
+                if (await cache.writeCache(cacheKey, content, logger)) {
+                  strategy.stats.cache_writes += 1;
                 }
+                strategy.stats.cache_miss += 1;
 
-                throw error;
+                const wait = getRandomNumber(1000, 5000);
+                logger.log(` 🕒 Waiting for ${Math.round(wait / 1000)}s`);
+                await new Promise((resolve) => setTimeout(resolve, wait));
               }
-            });
 
-            strategy.stats.job_processed += 1;
-          }
+              await strategy.save({
+                outDir,
+                cached: cache.cacheFilePath(cacheKey),
+                job: job as JobJson,
+                url,
+                content,
+                logger,
+              });
 
-          strategy.stats.unique = strategy.ids.size;
-          strategy.stats.listings_processed += 1;
+              strategy.stats.writes += 1;
+            } catch (error) {
+              strategy.stats.errors += 1;
+              if (error instanceof HttpException) {
+                console.error(` ⚠️  Skipping because of error ${error.message}`);
+                return;
+              }
+
+              throw error;
+            }
+          });
+
+          strategy.stats.job_processed += 1;
         }
-        logger.log(` ✅ Strategy ${strategy.slug} completed successfully. Done`);
-      } catch (error) {
-        logger.error(` ⚠️  Strategy ${strategy.slug} error:`, error);
-        throw error;
-      } finally {
-        await closeBrowser();
-        logger.log(` ℹ️  Stats for ${strategy.slug} ${JSON.stringify(strategy.stats)}`);
+
+        strategy.stats.unique = strategy.ids.size;
+        strategy.stats.listings_processed += 1;
       }
-    });
+      logger.log(` ✅ Strategy ${strategy.slug} completed successfully. Done`);
+    } catch (error) {
+      logger.error(` ⚠️  Strategy ${strategy.slug} error:`, error);
+      throw error;
+    } finally {
+      await closeBrowser();
+      logger.log(` ℹ️  Stats for ${strategy.slug} ${JSON.stringify(strategy.stats)}`);
+    }
   });
 }
 
 export async function runExtract(options: RunExtractOptions): Promise<void> {
-  const { withLogger } = loggerContext({ prefix: 'scr', verbose: options.verbose });
+  const { withLogger } = loggerContext({ prefix: 'extract', verbose: options.verbose });
   await withLogger(async (logger: ILogger) => {
     const strategies = options.strategies;
     const registry = createShutdownRegistry(logger);
     try {
       await Promise.all(
         strategies.map(async (strategy) =>
-          runStrategy(strategy, options.outDir, options.cacheDir, options.verbose, registry),
+          runStrategy(
+            strategy,
+            options.outDir,
+            options.cacheDir,
+            registry,
+            logger.withSuffix(strategy.slug),
+          ),
         ),
       );
       logger.log(' ✅ All strategies finished successfully. Done');
