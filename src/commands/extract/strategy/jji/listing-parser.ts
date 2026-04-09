@@ -1,4 +1,4 @@
-import type { JobJson, ListingParseResult } from '../../types/index.js';
+import type { JobJson, ListingParseResult } from '../../types.js';
 
 interface JJIApiResponse {
   data: JobJson[];

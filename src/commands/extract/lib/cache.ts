@@ -3,7 +3,6 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import * as crypto from 'node:crypto';
 import { smartSave } from '../../lib/smart-save.js';
-import type { CacheContext, CacheOperations } from '../types/index.js';
 import type { Logger } from '../../lib/logger.js';
 
 function getISOWeek(date: Date): number {
@@ -76,4 +75,17 @@ export function cacheContext(root: string): CacheContext {
       return await payload(cache);
     },
   };
+}
+export interface CacheOperations {
+  /** Absolute filesystem path for the cache file for this key. */
+  cacheFilePath(key: string): string;
+  hasCacheKey(key: string, logger: Logger): boolean;
+  readCache(key: string, logger: Logger): Promise<string>;
+  writeCache(key: string, content: string, logger: Logger): Promise<boolean>;
+  dailyCacheKey(str: string): string;
+  weeklyCacheKey(str: string): string;
+}
+
+export interface CacheContext {
+  withCache<T>(payload: (cache: CacheOperations) => Promise<T>): Promise<T>;
 }

@@ -1,7 +1,6 @@
-import type { JobJson } from '../types/Job.js';
-import type { Listing } from '../types/Listing.js';
-import type { CacheOperations } from '../types/Cache.js';
 import type { Logger } from '../../lib/logger.js';
+import type { CacheOperations } from '../lib/cache.js';
+import type { JobJson, Listing } from '../types.js';
 
 export interface StrategySaveOptions {
   outDir: string;

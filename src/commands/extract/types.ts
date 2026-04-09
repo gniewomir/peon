@@ -1,4 +1,11 @@
-import type { JobJson } from './Job.js';
+export interface JobJson {
+  [key: string]: unknown;
+}
+export interface Listing {
+  url: string;
+  description: string;
+  [key: string]: unknown;
+}
 
 export interface ListingParseResult {
   jobs: JobJson[];

@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import type { JobJson, ListingParseResult } from '../../types/index.js';
+import type { JobJson, ListingParseResult } from '../../types.js';
 
 /** Next.js listing SSR payload (`<script id="__NEXT_DATA__">`). */
 interface BdjListingNextData {

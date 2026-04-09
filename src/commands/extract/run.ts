@@ -6,10 +6,10 @@ import { browserContext } from './lib/browser.js';
 import { getRandomUserAgent } from './lib/user-agent.js';
 import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
-import type { JobJson } from './types/index.js';
 import { cacheContext } from './lib/cache.js';
 import { createShutdownRegistry, type ShutdownRegistry } from './lib/shutdown.js';
 import type { Strategy } from './strategy/types.js';
+import type { JobJson } from './types.js';
 
 class HttpException extends Error {}
 
