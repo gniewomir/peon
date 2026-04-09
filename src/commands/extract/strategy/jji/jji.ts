@@ -90,7 +90,12 @@ export class JjiStrategy extends AbstractStrategy {
         }
       }
 
-      if (nextCursor === null || nextCursor === undefined) {
+      if (
+        nextCursor === null ||
+        nextCursor === undefined ||
+        nextCursor === currentCursor ||
+        parsed.jobs.length === 0
+      ) {
         logger.log(' 👌 Reached last page. API scraping complete.');
         break;
       }
