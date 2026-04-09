@@ -1,21 +1,86 @@
 export class JsonNavigator {
-  public hasPath(haystack: unknown, path: string): boolean {
+  private readonly haystack: unknown;
+  private readonly rootPath: string;
+
+  constructor(haystack: unknown, rootPath?: string) {
+    this.haystack = haystack;
+    this.rootPath = rootPath ?? '';
+  }
+
+  getPath(path: string): JsonNavigator {
+    if (path === '') {
+      throw new Error(this.errorPrefix('getPath requires a non-empty path'));
+    }
+    const resolved = this.resolve(this.haystack, path);
+    return new JsonNavigator(resolved, this.childPath(path));
+  }
+
+  getOptionalPath(path: string): JsonNavigator | undefined {
+    if (path === '') {
+      throw new Error(this.errorPrefix('getOptionalPath requires a non-empty path'));
+    }
     try {
-      this.valueByPath(haystack, path);
-      return true;
+      const resolved = this.resolve(this.haystack, path);
+      return new JsonNavigator(resolved, this.childPath(path));
     } catch {
-      return false;
+      return undefined;
     }
   }
 
-  public valueByPath(haystack: unknown, path: string): unknown {
+  value(): unknown {
+    return this.haystack;
+  }
+
+  toString(): string {
+    if (typeof this.haystack === 'string') {
+      return this.haystack;
+    }
+    throw new Error(this.errorPrefix(`Expected string, got ${typeof this.haystack}`));
+  }
+
+  toNumber(): number {
+    if (typeof this.haystack === 'number') {
+      return this.haystack;
+    }
+    throw new Error(this.errorPrefix(`Expected number, got ${typeof this.haystack}`));
+  }
+
+  toArray(): JsonNavigator[] {
+    if (Array.isArray(this.haystack)) {
+      return this.haystack.map((item, i) => new JsonNavigator(item, this.childPath(String(i))));
+    }
+    throw new Error(this.errorPrefix(`Expected array, got ${typeof this.haystack}`));
+  }
+
+  toBool(): boolean {
+    if (typeof this.haystack === 'boolean') {
+      return this.haystack;
+    }
+    throw new Error(this.errorPrefix(`Expected boolean, got ${typeof this.haystack}`));
+  }
+
+  toDateFromString(): Date {
+    if (typeof this.haystack === 'string') {
+      return new Date(this.haystack);
+    }
+    throw new Error(this.errorPrefix(`Expected date string, got ${typeof this.haystack}`));
+  }
+
+  toDateFromTimestamp(): Date {
+    if (typeof this.haystack === 'number') {
+      return new Date(this.haystack);
+    }
+    throw new Error(this.errorPrefix(`Expected numeric timestamp, got ${typeof this.haystack}`));
+  }
+
+  private resolve(haystack: unknown, path: string): unknown {
     if (path === '') {
       return haystack;
     }
     const parts = path.split('.');
     const needle = parts.shift();
     if (Array.isArray(haystack) && needle && !isNaN(parseInt(needle, 10))) {
-      return this.valueByPath(haystack[parseInt(needle, 10)], parts.join('.'));
+      return this.resolve(haystack[parseInt(needle, 10)], parts.join('.'));
     }
     if (
       typeof haystack === 'object' &&
@@ -23,69 +88,22 @@ export class JsonNavigator {
       needle &&
       Object.hasOwn(haystack, needle)
     ) {
-      return this.valueByPath(haystack[needle as keyof typeof haystack], parts.join('.'));
+      return this.resolve(haystack[needle as keyof typeof haystack], parts.join('.'));
     }
     if (needle === undefined) {
       return haystack;
     }
-    throw new Error(`No entry with path "${path}" found.`);
+    throw new Error(this.errorPrefix(`No entry at path "${this.childPath(path)}"`));
   }
 
-  public stringValueByPath(haystack: unknown, path: string): string {
-    const value = this.valueByPath(haystack, path);
-    if (typeof value === 'string') {
-      return value;
-    }
-    throw new Error(
-      `Unexpected value type for path "${path}" found. String expected, got ${typeof value}`,
-    );
+  private childPath(segment: string): string {
+    return this.rootPath ? `${this.rootPath}.${segment}` : segment;
   }
 
-  public numberValueByPath(haystack: unknown, path: string): number {
-    const value = this.valueByPath(haystack, path);
-    if (typeof value === 'number') {
-      return value;
+  private errorPrefix(message: string): string {
+    if (this.rootPath) {
+      return `[JsonNavigator at "${this.rootPath}"] ${message}`;
     }
-    throw new Error(
-      `Unexpected value type for path "${path}" found. Number expected, got ${typeof value}`,
-    );
-  }
-
-  public arrayValueByPath(haystack: unknown, path: string): unknown[] {
-    const value = this.valueByPath(haystack, path);
-    if (Array.isArray(value)) {
-      return value;
-    }
-    throw new Error(
-      `Unexpected value type for path "${path}" found. Array expected, got ${typeof value}`,
-    );
-  }
-
-  public dateValueByPath(haystack: unknown, path: string): Date {
-    const value = this.valueByPath(haystack, path);
-    if (typeof value === 'string') {
-      return new Date(value);
-    }
-    throw new Error(
-      `Unexpected value type for path "${path}" found. Number expected, got ${typeof value}`,
-    );
-  }
-
-  public boolValueByPath(haystack: unknown, path: string): boolean {
-    const value = this.valueByPath(haystack, path);
-    if (typeof value === 'boolean') {
-      return value;
-    }
-    throw new Error(
-      `Unexpected value type for path "${path}" found. Bool expected, got ${typeof value}`,
-    );
-  }
-
-  public optionalValueByPath(haystack: unknown, path: string): unknown {
-    try {
-      return this.valueByPath(haystack, path);
-    } catch {
-      return undefined;
-    }
+    return `[JsonNavigator] ${message}`;
   }
 }

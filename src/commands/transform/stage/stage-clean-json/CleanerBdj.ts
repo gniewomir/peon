@@ -61,47 +61,42 @@ function bdjCurrency(currency: unknown): string {
 
 export class CleanerBdj extends AbstractCleaner {
   clean(listing: Record<string, unknown>) {
-    const nav = new JsonNavigator();
+    const nav = new JsonNavigator(listing);
 
     let from = '';
     let to = '';
     let currency = '';
-    if (nav.hasPath(listing, 'denominatedSalaryLong')) {
-      const ds = nav.valueByPath(listing, 'denominatedSalaryLong');
-      if (ds && typeof ds === 'object') {
-        const d = ds as Record<string, unknown>;
-        const range = parseBdjMoneyRange(d.money);
-        from = range.from;
-        to = range.to;
-        currency = bdjCurrency(d.currency);
-      }
+    const ds = nav.getOptionalPath('denominatedSalaryLong');
+    if (ds) {
+      const range = parseBdjMoneyRange(ds.getOptionalPath('money')?.value());
+      from = range.from;
+      to = range.to;
+      currency = bdjCurrency(ds.getOptionalPath('currency')?.value());
     }
-    const experienceLevel = nav.optionalValueByPath(listing, 'experienceLevel');
+    const experienceLevel = nav.getOptionalPath('experienceLevel')?.value();
     const seniority_level = typeof experienceLevel === 'string' ? experienceLevel : '';
 
-    const required_skills = normalizeStringArray(
-      nav.optionalValueByPath(listing, 'technologyTags'),
-    );
+    const required_skills = normalizeStringArray(nav.getOptionalPath('technologyTags')?.value());
 
     return merge(structuredClone(nullSchema), {
       employer: {
-        name: nav.stringValueByPath(listing, 'company.name'),
+        name: nav.getPath('company.name').toString(),
       },
       role: {
-        title: nav.stringValueByPath(listing, 'position'),
+        title: nav.getPath('position').toString(),
         seniority: this.normalizeSeniority(seniority_level),
       },
       workplace: {
-        isRemote: bdjBoolFlag(nav.optionalValueByPath(listing, 'remote')),
-        cities: [nav.stringValueByPath(listing, 'city')],
+        isRemote: bdjBoolFlag(nav.getOptionalPath('remote')?.value()),
+        cities: [nav.getPath('city').toString()],
       },
       contract: {
         type: [
-          bdjBoolFlag(nav.optionalValueByPath(listing, 'contractB2b')) ? 'b2b/contractor' : null,
-          bdjBoolFlag(nav.optionalValueByPath(listing, 'contractEmployment')) ? 'employment' : null,
+          bdjBoolFlag(nav.getOptionalPath('contractB2b')?.value()) ? 'b2b/contractor' : null,
+          bdjBoolFlag(nav.getOptionalPath('contractEmployment')?.value()) ? 'employment' : null,
         ],
       },
-      salaryCoE: bdjBoolFlag(nav.optionalValueByPath(listing, 'contractB2b'))
+      salaryCoE: bdjBoolFlag(nav.getOptionalPath('contractB2b')?.value())
         ? {
             from,
             to,
@@ -109,7 +104,7 @@ export class CleanerBdj extends AbstractCleaner {
             currency,
           }
         : nullSchema.salaryCoE,
-      salaryB2B: bdjBoolFlag(nav.optionalValueByPath(listing, 'contractB2b'))
+      salaryB2B: bdjBoolFlag(nav.getOptionalPath('contractB2b')?.value())
         ? {
             from,
             to,

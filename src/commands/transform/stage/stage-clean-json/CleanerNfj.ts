@@ -4,8 +4,8 @@ import { AbstractCleaner } from './AbstractCleaner.js';
 import { nullSchema, type TSchema } from '../../../../schema/schema.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
 
-function nfjLocations(finder: JsonNavigator, listing: Record<string, unknown>): string[] {
-  const placesRaw = finder.optionalValueByPath(listing, 'location.places');
+function nfjLocations(nav: JsonNavigator): string[] {
+  const placesRaw = nav.getOptionalPath('location.places')?.value();
   const places = Array.isArray(placesRaw) ? placesRaw : [];
   const seen = new Set<string>();
   const out: string[] = [];
@@ -24,15 +24,15 @@ function nfjLocations(finder: JsonNavigator, listing: Record<string, unknown>): 
   return out;
 }
 
-function nfjIsRemote(finder: JsonNavigator, listing: Record<string, unknown>): boolean {
+function nfjIsRemote(nav: JsonNavigator): boolean {
   return (
-    finder.optionalValueByPath(listing, 'location.fullyRemote') === true ||
-    finder.optionalValueByPath(listing, 'fullyRemote') === true
+    nav.getOptionalPath('location.fullyRemote')?.value() === true ||
+    nav.getOptionalPath('fullyRemote')?.value() === true
   );
 }
 
-function nfjSalaryUnit(salary: Record<string, unknown>): string {
-  const period = salary.period;
+function nfjSalaryUnit(salary: JsonNavigator): string {
+  const period = salary.getOptionalPath('period')?.value();
   if (period === 'm' || period === 'month') return 'month';
   if (period === 'h' || period === 'hour') return 'hour';
   if (period === 'y' || period === 'year') return 'year';
@@ -40,18 +40,20 @@ function nfjSalaryUnit(salary: Record<string, unknown>): string {
   return 'month';
 }
 
-function nfjSeniorityLevel(finder: JsonNavigator, listing: Record<string, unknown>): string {
-  if (!finder.hasPath(listing, 'seniority')) return '';
-  const parts = finder
-    .arrayValueByPath(listing, 'seniority')
+function nfjSeniorityLevel(nav: JsonNavigator): string {
+  const seniorityNav = nav.getOptionalPath('seniority');
+  if (!seniorityNav) return '';
+  const parts = seniorityNav
+    .toArray()
+    .map((item) => item.value())
     .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
     .map((s) => s.trim());
   return parts.join(', ');
 }
 
-function nfjRequiredSkills(finder: JsonNavigator, listing: Record<string, unknown>): string[] {
+function nfjRequiredSkills(nav: JsonNavigator): string[] {
   const ordered: string[] = [];
-  const tilesRaw = finder.optionalValueByPath(listing, 'tiles.values');
+  const tilesRaw = nav.getOptionalPath('tiles.values')?.value();
   if (Array.isArray(tilesRaw)) {
     for (const item of tilesRaw) {
       if (!item || typeof item !== 'object') continue;
@@ -62,15 +64,16 @@ function nfjRequiredSkills(finder: JsonNavigator, listing: Record<string, unknow
       }
     }
   }
-  const tech = finder.optionalValueByPath(listing, 'technology');
+  const tech = nav.getOptionalPath('technology')?.value();
   if (typeof tech === 'string' && tech.trim()) {
     ordered.push(tech.trim());
   }
   return normalizeStringArray(ordered);
 }
 
-function nfjContractType(salary: Record<string, unknown>): string | null {
-  const t = typeof salary.type === 'string' ? salary.type.toLowerCase() : '';
+function nfjContractType(salary: JsonNavigator): string | null {
+  const typeVal = salary.getOptionalPath('type')?.value();
+  const t = typeof typeVal === 'string' ? typeVal.toLowerCase() : '';
   if (t === 'b2b' || t === 'b2b/contractor') return 'b2b/contractor';
   if (t === 'permanent' || t === 'employment' || t === 'uop') return 'employment';
   if (t) return 'other';
@@ -79,31 +82,35 @@ function nfjContractType(salary: Record<string, unknown>): string | null {
 
 export class CleanerNfj extends AbstractCleaner {
   clean(listing: Record<string, unknown>): TSchema {
-    const nav = new JsonNavigator();
+    const nav = new JsonNavigator(listing);
 
-    const cities = nfjLocations(nav, listing);
-    const isRemote = nfjIsRemote(nav, listing);
-    const seniority = nfjSeniorityLevel(nav, listing);
-    const required_skills = nfjRequiredSkills(nav, listing);
+    const cities = nfjLocations(nav);
+    const isRemote = nfjIsRemote(nav);
+    const seniority = nfjSeniorityLevel(nav);
+    const required_skills = nfjRequiredSkills(nav);
 
     const salaryCoE: DeepPartial<TSchema['salaryCoE']> = {};
     const salaryB2B: DeepPartial<TSchema['salaryB2B']> = {};
     const contractTypes: string[] = [];
 
-    const salaryRaw = nav.optionalValueByPath(listing, 'salary');
-    if (salaryRaw && typeof salaryRaw === 'object') {
-      const s = salaryRaw as Record<string, unknown>;
+    const salaryNav = nav.getOptionalPath('salary');
+    if (salaryNav && typeof salaryNav.value() === 'object' && salaryNav.value() !== null) {
       let from = '';
       let to = '';
-      if (typeof s.min === 'number' && !Number.isNaN(s.min)) from = String(s.min);
-      if (typeof s.max === 'number' && !Number.isNaN(s.max)) to = String(s.max);
-      if (typeof s.from === 'number' && !Number.isNaN(s.from)) from = String(s.from);
-      if (typeof s.to === 'number' && !Number.isNaN(s.to)) to = String(s.to);
+      const min = salaryNav.getOptionalPath('min')?.value();
+      const max = salaryNav.getOptionalPath('max')?.value();
+      const fromVal = salaryNav.getOptionalPath('from')?.value();
+      const toVal = salaryNav.getOptionalPath('to')?.value();
+      if (typeof min === 'number' && !Number.isNaN(min)) from = String(min);
+      if (typeof max === 'number' && !Number.isNaN(max)) to = String(max);
+      if (typeof fromVal === 'number' && !Number.isNaN(fromVal)) from = String(fromVal);
+      if (typeof toVal === 'number' && !Number.isNaN(toVal)) to = String(toVal);
       if (to === '' && from !== '') to = from;
 
-      const unit = nfjSalaryUnit(s);
-      const currency = typeof s.currency === 'string' ? s.currency : '';
-      const ct = nfjContractType(s);
+      const unit = nfjSalaryUnit(salaryNav);
+      const currencyVal = salaryNav.getOptionalPath('currency')?.value();
+      const currency = typeof currencyVal === 'string' ? currencyVal : '';
+      const ct = nfjContractType(salaryNav);
       if (ct) contractTypes.push(ct);
 
       const salaryData = { from, to, currency, unit };
@@ -120,10 +127,10 @@ export class CleanerNfj extends AbstractCleaner {
 
     return merge(structuredClone(nullSchema), {
       employer: {
-        name: nav.stringValueByPath(listing, 'name'),
+        name: nav.getPath('name').toString(),
       },
       role: {
-        title: nav.stringValueByPath(listing, 'title'),
+        title: nav.getPath('title').toString(),
         seniority: this.normalizeSeniority(seniority),
       },
       workplace: {
