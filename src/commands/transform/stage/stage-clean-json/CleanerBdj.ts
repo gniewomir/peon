@@ -2,7 +2,7 @@ import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
 import { AbstractCleaner } from './AbstractCleaner.js';
 import { nullSchema, type TSchema } from '../../../../schema/schema.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
-import type { Finder } from '../../lib/Finder.js';
+import { JsonNavigator } from '../../lib/JsonNavigator.js';
 
 function bdjBoolFlag(value: unknown): boolean {
   if (typeof value === 'boolean') {
@@ -27,14 +27,6 @@ function bdjBoolFlag(value: unknown): boolean {
     return Object.keys(o).length > 0;
   }
   return false;
-}
-
-function optionalValueByPath(finder: Finder, haystack: unknown, path: string): unknown {
-  try {
-    return finder.valueByPath(haystack, path);
-  } catch {
-    return undefined;
-  }
 }
 
 function parseBdjMoneyRange(money: unknown): { from: string; to: string } {
@@ -69,11 +61,13 @@ function bdjCurrency(currency: unknown): string {
 
 export class CleanerBdj extends AbstractCleaner {
   clean(listing: Record<string, unknown>) {
+    const nav = new JsonNavigator();
+
     let from = '';
     let to = '';
     let currency = '';
-    if (this.hasPath(listing, 'denominatedSalaryLong')) {
-      const ds = this.valueByPath(listing, 'denominatedSalaryLong');
+    if (nav.hasPath(listing, 'denominatedSalaryLong')) {
+      const ds = nav.valueByPath(listing, 'denominatedSalaryLong');
       if (ds && typeof ds === 'object') {
         const d = ds as Record<string, unknown>;
         const range = parseBdjMoneyRange(d.money);
@@ -82,34 +76,32 @@ export class CleanerBdj extends AbstractCleaner {
         currency = bdjCurrency(d.currency);
       }
     }
-    const experienceLevel = optionalValueByPath(this, listing, 'experienceLevel');
+    const experienceLevel = nav.optionalValueByPath(listing, 'experienceLevel');
     const seniority_level = typeof experienceLevel === 'string' ? experienceLevel : '';
 
     const required_skills = normalizeStringArray(
-      optionalValueByPath(this, listing, 'technologyTags'),
+      nav.optionalValueByPath(listing, 'technologyTags'),
     );
 
     return merge(structuredClone(nullSchema), {
       employer: {
-        name: this.stringValueByPath(listing, 'company.name'),
+        name: nav.stringValueByPath(listing, 'company.name'),
       },
       role: {
-        title: this.stringValueByPath(listing, 'position'),
+        title: nav.stringValueByPath(listing, 'position'),
         seniority: this.normalizeSeniority(seniority_level),
       },
       workplace: {
-        isRemote: bdjBoolFlag(optionalValueByPath(this, listing, 'remote')),
-        cities: [this.stringValueByPath(listing, 'city')],
+        isRemote: bdjBoolFlag(nav.optionalValueByPath(listing, 'remote')),
+        cities: [nav.stringValueByPath(listing, 'city')],
       },
       contract: {
         type: [
-          bdjBoolFlag(optionalValueByPath(this, listing, 'contractB2b')) ? 'b2b/contractor' : null,
-          bdjBoolFlag(optionalValueByPath(this, listing, 'contractEmployment'))
-            ? 'employment'
-            : null,
+          bdjBoolFlag(nav.optionalValueByPath(listing, 'contractB2b')) ? 'b2b/contractor' : null,
+          bdjBoolFlag(nav.optionalValueByPath(listing, 'contractEmployment')) ? 'employment' : null,
         ],
       },
-      salaryCoE: bdjBoolFlag(optionalValueByPath(this, listing, 'contractB2b'))
+      salaryCoE: bdjBoolFlag(nav.optionalValueByPath(listing, 'contractB2b'))
         ? {
             from,
             to,
@@ -117,7 +109,7 @@ export class CleanerBdj extends AbstractCleaner {
             currency,
           }
         : nullSchema.salaryCoE,
-      salaryB2B: bdjBoolFlag(optionalValueByPath(this, listing, 'contractB2b'))
+      salaryB2B: bdjBoolFlag(nav.optionalValueByPath(listing, 'contractB2b'))
         ? {
             from,
             to,

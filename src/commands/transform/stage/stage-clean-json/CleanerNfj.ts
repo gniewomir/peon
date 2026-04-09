@@ -1,19 +1,11 @@
 import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
-import type { Finder } from '../../lib/Finder.js';
+import { JsonNavigator } from '../../lib/JsonNavigator.js';
 import { AbstractCleaner } from './AbstractCleaner.js';
 import { nullSchema, type TSchema } from '../../../../schema/schema.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
 
-function optionalValueByPath(finder: Finder, haystack: unknown, path: string): unknown {
-  try {
-    return finder.valueByPath(haystack, path);
-  } catch {
-    return undefined;
-  }
-}
-
-function nfjLocations(finder: Finder, listing: Record<string, unknown>): string[] {
-  const placesRaw = optionalValueByPath(finder, listing, 'location.places');
+function nfjLocations(finder: JsonNavigator, listing: Record<string, unknown>): string[] {
+  const placesRaw = finder.optionalValueByPath(listing, 'location.places');
   const places = Array.isArray(placesRaw) ? placesRaw : [];
   const seen = new Set<string>();
   const out: string[] = [];
@@ -32,10 +24,10 @@ function nfjLocations(finder: Finder, listing: Record<string, unknown>): string[
   return out;
 }
 
-function nfjIsRemote(finder: Finder, listing: Record<string, unknown>): boolean {
+function nfjIsRemote(finder: JsonNavigator, listing: Record<string, unknown>): boolean {
   return (
-    optionalValueByPath(finder, listing, 'location.fullyRemote') === true ||
-    optionalValueByPath(finder, listing, 'fullyRemote') === true
+    finder.optionalValueByPath(listing, 'location.fullyRemote') === true ||
+    finder.optionalValueByPath(listing, 'fullyRemote') === true
   );
 }
 
@@ -48,7 +40,7 @@ function nfjSalaryUnit(salary: Record<string, unknown>): string {
   return 'month';
 }
 
-function nfjSeniorityLevel(finder: Finder, listing: Record<string, unknown>): string {
+function nfjSeniorityLevel(finder: JsonNavigator, listing: Record<string, unknown>): string {
   if (!finder.hasPath(listing, 'seniority')) return '';
   const parts = finder
     .arrayValueByPath(listing, 'seniority')
@@ -57,9 +49,9 @@ function nfjSeniorityLevel(finder: Finder, listing: Record<string, unknown>): st
   return parts.join(', ');
 }
 
-function nfjRequiredSkills(finder: Finder, listing: Record<string, unknown>): string[] {
+function nfjRequiredSkills(finder: JsonNavigator, listing: Record<string, unknown>): string[] {
   const ordered: string[] = [];
-  const tilesRaw = optionalValueByPath(finder, listing, 'tiles.values');
+  const tilesRaw = finder.optionalValueByPath(listing, 'tiles.values');
   if (Array.isArray(tilesRaw)) {
     for (const item of tilesRaw) {
       if (!item || typeof item !== 'object') continue;
@@ -70,7 +62,7 @@ function nfjRequiredSkills(finder: Finder, listing: Record<string, unknown>): st
       }
     }
   }
-  const tech = optionalValueByPath(finder, listing, 'technology');
+  const tech = finder.optionalValueByPath(listing, 'technology');
   if (typeof tech === 'string' && tech.trim()) {
     ordered.push(tech.trim());
   }
@@ -87,16 +79,18 @@ function nfjContractType(salary: Record<string, unknown>): string | null {
 
 export class CleanerNfj extends AbstractCleaner {
   clean(listing: Record<string, unknown>): TSchema {
-    const cities = nfjLocations(this, listing);
-    const isRemote = nfjIsRemote(this, listing);
-    const seniority = nfjSeniorityLevel(this, listing);
-    const required_skills = nfjRequiredSkills(this, listing);
+    const nav = new JsonNavigator();
+
+    const cities = nfjLocations(nav, listing);
+    const isRemote = nfjIsRemote(nav, listing);
+    const seniority = nfjSeniorityLevel(nav, listing);
+    const required_skills = nfjRequiredSkills(nav, listing);
 
     const salaryCoE: DeepPartial<TSchema['salaryCoE']> = {};
     const salaryB2B: DeepPartial<TSchema['salaryB2B']> = {};
     const contractTypes: string[] = [];
 
-    const salaryRaw = optionalValueByPath(this, listing, 'salary');
+    const salaryRaw = nav.optionalValueByPath(listing, 'salary');
     if (salaryRaw && typeof salaryRaw === 'object') {
       const s = salaryRaw as Record<string, unknown>;
       let from = '';
@@ -126,10 +120,10 @@ export class CleanerNfj extends AbstractCleaner {
 
     return merge(structuredClone(nullSchema), {
       employer: {
-        name: this.stringValueByPath(listing, 'name'),
+        name: nav.stringValueByPath(listing, 'name'),
       },
       role: {
-        title: this.stringValueByPath(listing, 'title'),
+        title: nav.stringValueByPath(listing, 'title'),
         seniority: this.normalizeSeniority(seniority),
       },
       workplace: {

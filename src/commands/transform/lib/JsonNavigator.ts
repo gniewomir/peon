@@ -1,4 +1,4 @@
-export class Finder {
+export class JsonNavigator {
   public hasPath(haystack: unknown, path: string): boolean {
     try {
       this.valueByPath(haystack, path);
@@ -79,5 +79,13 @@ export class Finder {
     throw new Error(
       `Unexpected value type for path "${path}" found. Bool expected, got ${typeof value}`,
     );
+  }
+
+  public optionalValueByPath(haystack: unknown, path: string): unknown {
+    try {
+      return this.valueByPath(haystack, path);
+    } catch {
+      return undefined;
+    }
   }
 }
