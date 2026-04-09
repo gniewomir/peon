@@ -16,7 +16,7 @@ A CLI-based ETL pipeline for extracting IT-related jobs from Polish IT job board
 
 ## Architecture
 
-Each ETL step (extract, transform, load) runs as a separate CLI script. Scripts coordinate through the file system: each step watches a directory for changes and writes its output to the next step's directory. A file is saved only when its content has changed — no change means no file system event and no downstream work. This makes the scripts independent: they can run concurrently, sequentially, or in isolation.
+Each ETL step (extract, transform, load) runs as a separate CLI script. Scripts coordinate through the file system events. Adding or changing file in staging directory triggers transformation stage which create/update artifact in job directory, which triggers another stage - at any point stage might decide to move data to load, quarantine or trash directory. Load script will use the same approach to find job to be done. A file is saved only when its content has changed — no change means no file system event and no downstream work. This makes the scripts independent: they can run concurrently, sequentially, or in isolation.
 
 ### Extract
 
