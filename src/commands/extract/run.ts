@@ -11,7 +11,7 @@ import { cacheContext } from './lib/cache.js';
 
 class HttpException extends Error {}
 
-export interface RunScrapeOptions {
+export interface RunExtractOptions {
   outDir: string;
   cacheDir: string;
   strategies: Strategy[];
@@ -135,7 +135,7 @@ async function runStrategy(
   });
 }
 
-export async function runScrape(options: RunScrapeOptions): Promise<void> {
+export async function runExtract(options: RunExtractOptions): Promise<void> {
   const { withLogger } = loggerContext({ prefix: 'scr', verbose: options.verbose });
   await withLogger(async (logger: ILogger) => {
     const strategies = options.strategies;

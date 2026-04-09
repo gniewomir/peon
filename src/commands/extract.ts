@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { Command } from 'commander';
 import { rootPath } from '../root.js';
-import { runScrape } from './extract/run.js';
+import { runExtract } from './extract/run.js';
 import { allStrategies, strategyFactoryBySlug } from './extract/strategy/index.js';
 import type { Strategy } from './extract/types/index.js';
 
@@ -54,6 +54,6 @@ export function registerExtractCommand(program: Command): void {
       const outDir = path.resolve(opts.out ?? path.join(root, 'data', defaultDir));
       const cacheDir = path.resolve(opts.cache ?? path.join(root, 'data', 'cache'));
       const strategies = selectStrategies(opts.only);
-      await runScrape({ outDir, cacheDir, strategies, verbose: Boolean(opts.verbose) });
+      await runExtract({ outDir, cacheDir, strategies, verbose: Boolean(opts.verbose) });
     });
 }
