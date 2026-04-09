@@ -26,8 +26,9 @@ async function runStrategy(
   verbose: boolean,
   registry: ShutdownRegistry,
 ): Promise<void> {
-  const { withLogger } = loggerContext({ prefix: strategy.slug, verbose });
+  const { withLogger } = loggerContext({ prefix: 'extract', verbose });
   await withLogger(async (logger: ILogger) => {
+    logger = logger.withSuffix(strategy.slug);
     await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
       const { withBrowser, closeBrowser } = await browserContext(logger, registry);
       try {
