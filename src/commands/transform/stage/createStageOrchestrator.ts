@@ -14,6 +14,7 @@ import { HtmlToJsonStage } from './stage-json-from-html/HtmlToJsonStage.js';
 import { HtmlToJsonExtractorNfj } from './stage-json-from-html/HtmlToJsonExtractorNfj.js';
 import { HtmlToJsonExtractorBdj } from './stage-json-from-html/HtmlToJsonExtractorBdj.js';
 import { HtmlToJsonExtractorJji } from './stage-json-from-html/HtmlToJsonExtractorJji.js';
+import { CleanMetaStage } from './stage-clean-meta/CleanMetaStage.js';
 
 export function createStageOrchestrator({
   logger,
@@ -32,6 +33,13 @@ export function createStageOrchestrator({
         new HtmlToJsonExtractorBdj(),
         new HtmlToJsonExtractorNfj(),
       ],
+    }),
+  );
+  registry.register(
+    new CleanMetaStage({
+      logger,
+      stagingDir,
+      cleaners: CleanMetaStage.cleaners(),
     }),
   );
   registry.register(
