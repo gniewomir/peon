@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import { smartSave } from '../../lib/smart-save.js';
 import fs from 'node:fs/promises';
-import { metaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
+import { metaSchema, nullMetaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
 import type { Logger } from '../../lib/logger.js';
 import type { Strategy, StrategySaveOptions, StrategyStats } from './types.js';
 import type { JobJson, Listing } from '../types.js';
@@ -21,12 +21,13 @@ function createBaseStats(): StrategyStats {
 }
 
 export abstract class AbstractStrategy implements Strategy {
-  readonly slug: string;
+  public abstract readonly slug: string;
+  private readonly logger: Logger;
   stats: StrategyStats;
   ids: Set<string>;
 
-  protected constructor(slug: string) {
-    this.slug = slug;
+  protected constructor({ logger }: { logger: Logger }) {
+    this.logger = logger;
     this.stats = createBaseStats();
     this.ids = new Set<string>();
   }
@@ -49,20 +50,18 @@ export abstract class AbstractStrategy implements Strategy {
     const jobDir = path.join(outDir, `${this.slug}-${jobId}`);
 
     const meta = metaSchema.parse({
+      ...nullMetaSchema(),
       offer: {
+        ...nullMetaSchema().offer,
         id: this.jobToId(job),
         url,
         source: this.slug,
-        publishedAt: null,
-        updatedAt: null,
-        expiresAt: null,
         cachePath: cached,
         stagingPath: jobDir,
       },
     } satisfies TMetaSchema);
 
     await fs.mkdir(jobDir, { recursive: true });
-
     await Promise.all([
       smartSave(path.join(jobDir, `raw.meta.json`), meta, false, logger),
       smartSave(path.join(jobDir, `raw.job.json`), job, false, logger),

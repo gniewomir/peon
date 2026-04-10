@@ -1,4 +1,4 @@
-import { sDateTime, sNamespace, sString } from './schema.utils.js';
+import { sDateTime, sNamespace, sString, sStringArray } from './schema.utils.js';
 import { z } from 'zod';
 
 export const metaObject = {
@@ -6,6 +6,8 @@ export const metaObject = {
     {
       id: sString('Job offer ID'),
       url: sString('Job offer URL'),
+      canonicalUrl: sString('Job canonical URL'),
+      alternateUrls: sStringArray('Job alternate URLs'),
       source: sString('Job offer source'),
       publishedAt: sDateTime('Offer publication date and time'),
       expiresAt: sDateTime('Offer expiration date and time'),
@@ -22,6 +24,8 @@ export const nullMetaSchema = (): TMetaSchema => ({
   offer: {
     id: null,
     url: null,
+    canonicalUrl: null,
+    alternateUrls: [],
     source: null,
     publishedAt: null,
     expiresAt: null,
