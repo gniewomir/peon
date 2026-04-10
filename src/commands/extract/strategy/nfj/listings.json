@@ -1,6 +1,13 @@
 [
   {
     "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
+    "description": "Testing",
+    "meta": {
+      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"hybrid\",\"fieldwork\"],\"more\":[],\"employment\":[],\"requirement\":[],\"salary\":[{\"period\":\"m\",\"currency\":\"pln\",\"greaterThan\":\"14000\"}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
+    }
+  },
+  {
+    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
     "description": "NFJ, Remote, b2b/UOP, Mid/Senior/Expert, TS, 20k+",
     "meta": {
       "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"remote\",\"remote\"],\"more\":[],\"employment\":[\"b2b\",\"permanent\"],\"requirement\":[\"TypeScript\"],\"salary\":[{\"period\":\"m\",\"currency\":\"pln\",\"greaterThan\":2000}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
