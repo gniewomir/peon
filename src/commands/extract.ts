@@ -2,12 +2,13 @@ import path from 'node:path';
 import type { Command } from 'commander';
 import { rootPath } from '../root.js';
 import { runExtract } from './extract/run.js';
-import { allStrategies, strategyFactoryBySlug } from './extract/strategy/index.js';
-import type { Strategy } from './extract/strategy/types.js';
+import { selectStrategies } from './extract/strategy/index.js';
+import { loggerContext } from './lib/logger.js';
+import { createShutdownRegistry } from './extract/lib/shutdown.js';
 
-function parseOnlySlugs(only: string | undefined): Set<string> | null {
-  if (only === undefined || only.trim() === '') {
-    return null;
+function parseOnlySlugs(only: string | undefined): Set<string> | 'all' {
+  if (only === undefined || only.trim() === '' || only === 'all') {
+    return 'all';
   }
   return new Set(
     only
@@ -17,27 +18,7 @@ function parseOnlySlugs(only: string | undefined): Set<string> | null {
   );
 }
 
-function selectStrategies(only: string | undefined): Strategy[] {
-  const wanted = parseOnlySlugs(only);
-  const all = allStrategies();
-  if (!wanted) {
-    return all;
-  }
-  const bySlug = strategyFactoryBySlug();
-  const allowedSlugs = [...bySlug.keys()].join(', ');
-  const selected: Strategy[] = [];
-  for (const slug of wanted) {
-    const factory = bySlug.get(slug);
-    if (!factory) {
-      throw new Error(`Unknown strategy "${slug}". Use: ${allowedSlugs}`);
-    }
-    selected.push(factory());
-  }
-  return selected;
-}
-
 export function registerExtractCommand(program: Command): void {
-  const allowedOnly = [...strategyFactoryBySlug().keys()].join(', ');
   const defaultDir = 'staging';
   program
     .command('extract')
@@ -48,12 +29,18 @@ export function registerExtractCommand(program: Command): void {
       '--cache <dir>',
       'Cache base directory; each strategy uses <dir>/<slug>/ (default: <repo>/data/cache)',
     )
-    .option('--only <slugs>', `Comma-separated strategies to run (${allowedOnly})`)
+    .option('--only <slugs>', `Comma-separated strategies to run`)
     .action(async (opts: { out?: string; cache?: string; only?: string; verbose?: boolean }) => {
       const root = rootPath();
-      const outDir = path.resolve(opts.out ?? path.join(root, 'data', defaultDir));
-      const cacheDir = path.resolve(opts.cache ?? path.join(root, 'data', 'cache'));
-      const strategies = selectStrategies(opts.only);
-      await runExtract({ outDir, cacheDir, strategies, verbose: Boolean(opts.verbose) });
+      const { withLogger } = loggerContext({ prefix: 'extract', verbose: Boolean(opts.verbose) });
+      return withLogger((logger) => {
+        return runExtract({
+          outDir: path.resolve(opts.out ?? path.join(root, 'data', defaultDir)),
+          cacheDir: path.resolve(opts.cache ?? path.join(root, 'data', 'cache')),
+          strategies: selectStrategies(parseOnlySlugs(opts.only), logger),
+          logger,
+          registry: createShutdownRegistry(logger),
+        });
+      });
     });
 }

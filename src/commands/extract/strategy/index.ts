@@ -1,21 +1,35 @@
-import { BDJ_SLUG, bdjStrategy } from './bdj/bdj.js';
-import { JJI_SLUG, jjiStrategy } from './jji/jji.js';
-import { NFJ_SLUG, nfjStrategy } from './nfj/nfj.js';
 import type { Strategy } from './types.js';
+import { type Logger } from '../../lib/logger.js';
+import { JjiStrategy } from './jji/JjiStrategy.js';
+import { BdjStrategy } from './bdj/BdjStrategy.js';
+import { NfjStrategy } from './nfj/NfjStrategy.js';
+import type { AbstractStrategy } from './AbstractStrategy.js';
 
 const STRATEGY_REGISTRY = [
-  { slug: JJI_SLUG, create: jjiStrategy },
-  { slug: NFJ_SLUG, create: nfjStrategy },
-  { slug: BDJ_SLUG, create: bdjStrategy },
+  (logger: Logger) => new BdjStrategy(logger),
+  (logger: Logger) => new JjiStrategy(logger),
+  (logger: Logger) => new NfjStrategy(logger),
 ] as const;
 
-export function strategyFactoryBySlug(): Map<string, () => Strategy> {
-  return new Map(STRATEGY_REGISTRY.map((e) => [e.slug, e.create]));
-}
+let instantiated: null | AbstractStrategy[] = null;
 
-export function allStrategies(): Strategy[] {
-  return STRATEGY_REGISTRY.map((e) => e.create());
+export function selectStrategies(chosen: Set<string> | 'all', logger: Logger): Strategy[] {
+  if (instantiated === null) {
+    instantiated = STRATEGY_REGISTRY.map((e) => e(logger));
+  }
+  const all = instantiated;
+  if (chosen === 'all') {
+    return all;
+  }
+  const unknownStrategies = all
+    .filter((strat) => !chosen.has(strat.slug))
+    .map((strat) => strat.slug);
+  if (unknownStrategies.length > 0) {
+    const knownStrategies = all.map((strat) => strat.slug);
+    throw new Error(
+      `Strategies ${unknownStrategies.join(', ')} do not exist.` +
+        `Use ${knownStrategies.join(' ')}`,
+    );
+  }
+  return all.filter((strat) => chosen.has(strat.slug));
 }
-
-export { jjiStrategy, nfjStrategy, bdjStrategy };
-export { JJI_SLUG, NFJ_SLUG, BDJ_SLUG };

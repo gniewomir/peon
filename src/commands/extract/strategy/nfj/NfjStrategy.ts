@@ -4,7 +4,6 @@ import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
 import type { Logger } from '../../../lib/logger.js';
-import type { Strategy } from '../types.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 
@@ -14,11 +13,13 @@ interface NFJListing extends Listing {
   };
 }
 
-export const NFJ_SLUG = 'nfj';
-
 export class NfjStrategy extends AbstractStrategy {
-  constructor() {
-    super(NFJ_SLUG);
+  public readonly slug: string = 'nfj';
+
+  constructor(logger: Logger) {
+    super({
+      logger,
+    });
   }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
@@ -142,8 +143,4 @@ export class NfjStrategy extends AbstractStrategy {
     assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
     return job.id;
   }
-}
-
-export function nfjStrategy(): Strategy {
-  return new NfjStrategy();
 }

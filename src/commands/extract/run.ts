@@ -1,23 +1,16 @@
 import 'dotenv/config';
 
 import * as path from 'node:path';
-import { type Logger, loggerContext } from '../lib/logger.js';
+import { type Logger } from '../lib/logger.js';
 import { browserContext, pageContext } from './lib/browser.js';
 import { getRandomNumber } from './lib/random.js';
 import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
 import { cacheContext } from './lib/cache.js';
-import { createShutdownRegistry, type ShutdownRegistry } from './lib/shutdown.js';
+import { type ShutdownRegistry } from './lib/shutdown.js';
 import type { Strategy } from './strategy/types.js';
 import type { JobJson } from './types.js';
 
 class HttpException extends Error {}
-
-export interface RunExtractOptions {
-  outDir: string;
-  cacheDir: string;
-  strategies: Strategy[];
-  verbose: boolean;
-}
 
 async function runStrategy(
   strategy: Strategy,
@@ -118,31 +111,32 @@ async function runStrategy(
   });
 }
 
-export async function runExtract(options: RunExtractOptions): Promise<void> {
-  const { withLogger } = loggerContext({ prefix: 'extract', verbose: options.verbose });
-  await withLogger(async (logger: Logger) => {
-    const strategies = options.strategies;
-    const registry = createShutdownRegistry(logger);
-    try {
-      await Promise.all(
-        strategies.map(async (strategy) =>
-          runStrategy(
-            strategy,
-            options.outDir,
-            options.cacheDir,
-            registry,
-            logger.withSuffix(strategy.slug),
-          ),
-        ),
-      );
-      logger.log(' ✅ All strategies finished successfully. Done');
-    } catch (error) {
-      logger.error(' ⚠️  Strategy error forced process termination.', error);
-      throw error;
-    } finally {
-      strategies.forEach((strategy) => {
-        logger.log(` 🔧 stats for ${strategy.slug} ${JSON.stringify(strategy.stats)}`);
-      });
-    }
-  });
+export async function runExtract({
+  outDir,
+  cacheDir,
+  strategies,
+  logger,
+  registry,
+}: {
+  outDir: string;
+  cacheDir: string;
+  strategies: Strategy[];
+  logger: Logger;
+  registry: ShutdownRegistry;
+}): Promise<void> {
+  try {
+    await Promise.all(
+      strategies.map(async (strategy) =>
+        runStrategy(strategy, outDir, cacheDir, registry, logger.withSuffix(strategy.slug)),
+      ),
+    );
+    logger.log(' ✅ All strategies finished successfully. Done');
+  } catch (error) {
+    logger.error(' ⚠️  Strategy error forced process termination.', error);
+    throw error;
+  } finally {
+    strategies.forEach((strategy) => {
+      logger.log(` 🔧 stats for ${strategy.slug} ${JSON.stringify(strategy.stats)}`);
+    });
+  }
 }

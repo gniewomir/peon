@@ -4,15 +4,16 @@ import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
 import type { Logger } from '../../../lib/logger.js';
-import type { Strategy } from '../types.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 
-export const JJI_SLUG = 'jji';
-
 export class JjiStrategy extends AbstractStrategy {
-  constructor() {
-    super(JJI_SLUG);
+  public readonly slug: string = 'jji';
+
+  constructor(logger: Logger) {
+    super({
+      logger,
+    });
   }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
@@ -115,8 +116,4 @@ export class JjiStrategy extends AbstractStrategy {
     assert('guid' in job && typeof job.guid === 'string', ' ⚠️  No guid in JJI job');
     return job.guid;
   }
-}
-
-export function jjiStrategy(): Strategy {
-  return new JjiStrategy();
 }

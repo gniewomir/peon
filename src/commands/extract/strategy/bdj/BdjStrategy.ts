@@ -4,15 +4,16 @@ import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
 import type { Logger } from '../../../lib/logger.js';
-import type { Strategy } from '../types.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 
-export const BDJ_SLUG = 'bdj';
-
 export class BdjStrategy extends AbstractStrategy {
-  constructor() {
-    super(BDJ_SLUG);
+  public slug: string = 'bdj';
+
+  constructor(logger: Logger) {
+    super({
+      logger,
+    });
   }
 
   private static listingPageUrl(baseListingUrl: string, page: number): string {
@@ -39,7 +40,7 @@ export class BdjStrategy extends AbstractStrategy {
 
     while (true) {
       const url = BdjStrategy.listingPageUrl(listing.url, page);
-      logger.log(` 📖 Fetching Bulldogjob listing page ${page}: ${url}`);
+      logger.log(` 📖 Fetching Bulldog job listing page ${page}: ${url}`);
 
       const cacheKey = cache.dailyCacheKey(url);
       let html: string;
@@ -62,7 +63,7 @@ export class BdjStrategy extends AbstractStrategy {
 
       const { jobs } = parseListingResponse(html);
       if (jobs.length === 0) {
-        logger.log(' 👌 No job links on listing page; Bulldogjob listing complete.');
+        logger.log(' 👌 No job links on listing page; Bulldog job listing complete.');
         break;
       }
 
@@ -79,7 +80,7 @@ export class BdjStrategy extends AbstractStrategy {
 
       if (yielded === 0) {
         logger.log(
-          ' 👌 Listing page contained only jobs already seen; Bulldogjob listing complete.',
+          ' 👌 Listing page contained only jobs already seen; Bulldog job listing complete.',
         );
         break;
       }
@@ -97,8 +98,4 @@ export class BdjStrategy extends AbstractStrategy {
     assert('id' in job && typeof job.id === 'string');
     return job.id;
   }
-}
-
-export function bdjStrategy(): Strategy {
-  return new BdjStrategy();
 }
