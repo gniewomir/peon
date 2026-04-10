@@ -20,8 +20,9 @@ function parseOnlySlugs(only: string | undefined): Set<string> | 'all' {
 
 export function registerExtractCommand(program: Command): void {
   const defaultDir = 'staging';
+  const command = 'extract';
   program
-    .command('extract')
+    .command(command)
     .description('Scrape job boards')
     .option('-v, --verbose', 'Enable debug logs')
     .option('--out <dir>', 'Output directory (default: <repo>/data/${defaultDir})')
@@ -32,7 +33,7 @@ export function registerExtractCommand(program: Command): void {
     .option('--only <slugs>', `Comma-separated strategies to run`)
     .action(async (opts: { out?: string; cache?: string; only?: string; verbose?: boolean }) => {
       const root = rootPath();
-      const { withLogger } = loggerContext({ prefix: 'extract', verbose: Boolean(opts.verbose) });
+      const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
       return withLogger((logger) => {
         return runExtract({
           outDir: path.resolve(opts.out ?? path.join(root, 'data', defaultDir)),
