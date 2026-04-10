@@ -31,6 +31,37 @@ export class JsonNavigator {
     return this.haystack;
   }
 
+  isNull(): boolean {
+    return this.haystack === null;
+  }
+
+  isUndefined(): boolean {
+    return this.haystack === undefined;
+  }
+
+  isString(): boolean {
+    return typeof this.haystack === 'string';
+  }
+
+  isEmptyString(): boolean {
+    if (typeof this.haystack === 'string') {
+      return this.haystack.trim() === '';
+    }
+    return false;
+  }
+
+  isEmptyArray(): boolean {
+    return Array.isArray(this.haystack) && this.haystack.length === 0;
+  }
+
+  isEmpty(): boolean {
+    if (this.isNull()) return true;
+    if (this.isUndefined()) return true;
+    if (this.isEmptyString()) return true;
+    if (this.isEmptyArray()) return true;
+    return false;
+  }
+
   toString(): string {
     if (typeof this.haystack === 'string') {
       return this.haystack;
