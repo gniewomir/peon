@@ -2,6 +2,7 @@ import type { Logger } from '../../lib/logger.js';
 import type { CacheOperations } from '../lib/cache.js';
 import type { JobJson, Listing } from '../types.js';
 import type { KnownStrategy } from '../../lib/types.js';
+import type { GoToOptions } from 'puppeteer-core';
 
 export interface StrategySaveOptions {
   outDir: string;
@@ -27,6 +28,7 @@ export interface Strategy {
   slug: KnownStrategy;
   stats: StrategyStats;
   ids: Set<string>;
+  pageOpenOptions(): GoToOptions;
   jobListingsGenerator(): AsyncGenerator<Listing>;
   jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<JobJson>;
   jobToUrl(job: JobJson): string;

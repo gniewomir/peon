@@ -1,5 +1,4 @@
 import assert from 'node:assert';
-import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
@@ -7,6 +6,7 @@ import type { Logger } from '../../../lib/logger.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../lib/types.js';
+import type { GoToOptions } from 'puppeteer';
 
 export class BdjStrategy extends AbstractStrategy {
   public slug: KnownStrategy = 'bdj';
@@ -15,6 +15,13 @@ export class BdjStrategy extends AbstractStrategy {
     super({
       logger,
     });
+  }
+
+  pageOpenOptions(): GoToOptions {
+    return {
+      waitUntil: 'load',
+      timeout: 30000,
+    };
   }
 
   private static listingPageUrl(baseListingUrl: string, page: number): string {
@@ -49,7 +56,7 @@ export class BdjStrategy extends AbstractStrategy {
         html = await cache.readCache(cacheKey, logger);
       } else {
         const response = await fetch(url, {
-          signal: AbortSignal.timeout(SCRAPE_REQUEST_TIMEOUT_MS),
+          signal: AbortSignal.timeout(60_000),
           headers: {
             accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'accept-language': 'pl,en;q=0.9',

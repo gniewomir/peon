@@ -1,5 +1,4 @@
 import assert from 'node:assert';
-import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
@@ -7,6 +6,7 @@ import type { Logger } from '../../../lib/logger.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../lib/types.js';
+import type { GoToOptions } from 'puppeteer';
 
 export class JjiStrategy extends AbstractStrategy {
   public readonly slug: KnownStrategy = 'jji';
@@ -15,6 +15,13 @@ export class JjiStrategy extends AbstractStrategy {
     super({
       logger,
     });
+  }
+
+  pageOpenOptions(): GoToOptions {
+    return {
+      waitUntil: 'networkidle0',
+      timeout: 60000,
+    };
   }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
@@ -46,7 +53,7 @@ export class JjiStrategy extends AbstractStrategy {
         jsonText = await cache.readCache(cacheKey, logger);
       } else {
         const response = await fetch(url, {
-          signal: AbortSignal.timeout(SCRAPE_REQUEST_TIMEOUT_MS),
+          signal: AbortSignal.timeout(60_000),
           headers: {
             accept: 'application/json, text/plain, */*',
             'accept-language': 'en, en-gb;q=0.9, en-us;q=0.8, en;q=0.7',

@@ -1,5 +1,4 @@
 import assert from 'node:assert';
-import { SCRAPE_REQUEST_TIMEOUT_MS } from '../../constants.js';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listing-parser.js';
@@ -8,6 +7,7 @@ import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../lib/types.js';
 import { slugifyWtPolishTransliteration } from '../../../lib/slugifyWtPolishTransliteration.js';
+import type { GoToOptions } from 'puppeteer';
 
 interface NFJListing extends Listing {
   meta: {
@@ -22,6 +22,13 @@ export class NfjStrategy extends AbstractStrategy {
     super({
       logger,
     });
+  }
+
+  pageOpenOptions(): GoToOptions {
+    return {
+      waitUntil: 'load',
+      timeout: 30000,
+    };
   }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
@@ -63,7 +70,7 @@ export class NfjStrategy extends AbstractStrategy {
       } else {
         const response = await fetch(url, {
           method: 'POST',
-          signal: AbortSignal.timeout(SCRAPE_REQUEST_TIMEOUT_MS),
+          signal: AbortSignal.timeout(60_000),
           headers: {
             accept: 'application/json, text/plain, */*',
             'accept-language': 'en, en-gb;q=0.9, en-us;q=0.8, en;q=0.7',

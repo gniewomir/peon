@@ -4,7 +4,6 @@ import * as path from 'node:path';
 import { type Logger } from '../lib/logger.js';
 import { browserContext, pageContext } from './lib/browser.js';
 import { getRandomNumber } from './lib/random.js';
-import { SCRAPE_REQUEST_TIMEOUT_MS } from './constants.js';
 import { cacheContext } from './lib/cache.js';
 import { type ShutdownRegistry } from './lib/shutdown.js';
 import type { Strategy } from './strategy/types.js';
@@ -46,10 +45,7 @@ async function runStrategy({
               } else {
                 logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
                 await using ctx = await pageContext(browser);
-                const res = await ctx.page.goto(url, {
-                  waitUntil: 'load',
-                  timeout: SCRAPE_REQUEST_TIMEOUT_MS,
-                });
+                const res = await ctx.page.goto(url, strategy.pageOpenOptions());
 
                 if (!res) {
                   logger.warn(' ⚠️  No response received from puppeteer.');
