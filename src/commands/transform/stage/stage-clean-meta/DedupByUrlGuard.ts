@@ -1,8 +1,8 @@
-import { AbstractGuard } from './AbstractGuard.js';
-import type { AbstractGuardDecision } from './decisions/AbstractGuardDecision.js';
-import { GuardDecisionAdvance } from './decisions/GuardDecisionAdvance.js';
+import { AbstractGuard } from '../guards/AbstractGuard.js';
+import type { AbstractGuardDecision } from '../guards/decisions/AbstractGuardDecision.js';
+import { GuardDecisionAdvance } from '../guards/decisions/GuardDecisionAdvance.js';
 import { metaSchema } from '../../../../schema/schema.meta.js';
-import { GuardDecisionTrash } from './decisions/GuardDecisionTrash.js';
+import { GuardDecisionTrash } from '../guards/decisions/GuardDecisionTrash.js';
 
 export class DedupByUrlGuard extends AbstractGuard {
   async guard(result: string): Promise<AbstractGuardDecision> {

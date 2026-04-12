@@ -21,7 +21,7 @@ import assert from 'node:assert';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
-  private readonly directoryMutex = new HashMap<Promise<unknown>>();
+  private readonly directoryQueues = new HashMap<Promise<unknown>>();
   private listening = true;
   private readonly loadDir;
   private readonly quarantineDir;
@@ -54,11 +54,11 @@ export class StageOrchestrator {
     const jobDir = dirname(event.payload);
 
     for (const stage of this.stages.values()) {
-      const mutex = this.directoryMutex.get(jobDir) || Promise.resolve();
+      const queue = this.directoryQueues.get(jobDir) || Promise.resolve();
 
-      this.directoryMutex.set(
+      this.directoryQueues.set(
         jobDir,
-        mutex
+        queue
           .then(this.createPayload(jobDir, event, stage))
           .catch(this.createErrorHandler(jobDir, event, stage)),
       );
@@ -67,7 +67,7 @@ export class StageOrchestrator {
 
   public async shutdown(): Promise<void> {
     this.listening = false;
-    await Promise.allSettled(this.directoryMutex.values());
+    await Promise.allSettled(this.directoryQueues.values());
   }
 
   private createPayload(jobDir: string, event: StagingFileEvent, stage: AbstractStage) {
@@ -81,7 +81,7 @@ export class StageOrchestrator {
           event,
           stage: stage.name(),
         });
-        this.directoryMutex.delete(jobDir);
+        this.directoryQueues.delete(jobDir);
         this.trash(jobDir);
         this.logger.warn(`guard: Trashed ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
@@ -94,7 +94,7 @@ export class StageOrchestrator {
           event,
           stage: stage.name(),
         });
-        this.directoryMutex.delete(jobDir);
+        this.directoryQueues.delete(jobDir);
         this.quarantine(jobDir);
         this.logger.warn(
           `guard: Quarantined ${stripRoot(jobDir)} because of "${decision.message}"`,
@@ -103,7 +103,7 @@ export class StageOrchestrator {
       }
 
       if (decision instanceof GuardDecisionLoad) {
-        this.directoryMutex.delete(jobDir);
+        this.directoryQueues.delete(jobDir);
         this.load(jobDir);
         this.logger.log(`guard: Loaded ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;

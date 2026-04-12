@@ -36,6 +36,7 @@ export abstract class AbstractTransformation implements Transformation {
     content = content.replaceAll('<!-- -->', '');
     content = content.replaceAll('<!---->', '');
     content = content.replaceAll('<!--$-->', '');
+    content = content.replaceAll('<!--/$-->', '');
     return cheerio.load(content);
   }
 

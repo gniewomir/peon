@@ -6,7 +6,7 @@ import { CleanerMetaJji } from './CleanerMetaJji.js';
 import { CleanerMetaNfj } from './CleanerMetaNfj.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { KnownArtifactsEnum } from '../../artifacts.js';
-import { DedupByUrlGuard } from '../guards/DedupByUrlGuard.js';
+import { DedupByUrlGuard } from './DedupByUrlGuard.js';
 import { ExpirationGuard } from './ExpirationGuard.js';
 
 export class CleanMetaStage extends AbstractStage {

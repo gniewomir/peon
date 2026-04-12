@@ -62,12 +62,12 @@ export abstract class AbstractStage {
           return guardDecision;
         }
       }
+      return new GuardDecisionAdvance('advance because all guards passed');
     } catch (error) {
       return new GuardDecisionQuarantine('quarantine because unhandled error', { cause: error });
     } finally {
       this.logger.debug(`[${event.type}:${stripRoot(event.payload)}] processed`);
     }
-    return new GuardDecisionAdvance('advance because all guards passed');
   }
 
   protected abstract inputArtifacts(): Artifact[];

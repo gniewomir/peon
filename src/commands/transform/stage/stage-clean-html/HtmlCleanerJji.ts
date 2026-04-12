@@ -23,6 +23,40 @@ export class HtmlCleanerJji extends AbstractTransformation {
     $('footer').remove();
     $('a[href="/job-offers/all-locations"]').parent().parent().remove();
 
+    $('*').each(function () {
+      const $this = $(this);
+
+      const attrs = Object.keys($this.attr() || {});
+
+      if ($this.text().trim() === '' && $this.children().length === 0) {
+        $this.remove();
+      }
+
+      attrs.forEach((attr) => {
+        /**
+         * Drop material-ui classes
+         */
+        if (attr === 'class') {
+          const cssClassAttr = $this.attr('class') || '';
+          const cssClasses = cssClassAttr
+            .split(' ')
+            .map((c) => c.trim())
+            .filter(Boolean)
+            .filter((c) => !(c.startsWith('mui-') || c.startsWith('Mui')))
+            .join(' ');
+          $this.attr('class', cssClasses);
+        }
+        if (['href', 'id', 'class', 'type'].includes(attr)) {
+          return;
+        }
+        $this.removeAttr(attr);
+      });
+    });
+
+    if ($('p').length === 0) {
+      throw new Error('No paragraphs in html - website might not be rendered fully');
+    }
+
     return $.html();
   }
 }
