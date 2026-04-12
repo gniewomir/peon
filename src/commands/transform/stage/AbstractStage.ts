@@ -1,6 +1,6 @@
 import type { StagingFileEvent } from '../types.js';
 import path, { dirname } from 'node:path';
-import { existsSync } from 'node:fs';
+import { constants } from 'node:fs';
 import { stripRoot } from '../../../lib/root.js';
 import type { AbstractGuard } from './guards/AbstractGuard.js';
 import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
@@ -11,7 +11,7 @@ import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js
 import type { Transformation } from './AbstractTransformation.js';
 import assert from 'node:assert';
 import { type Artifact, artifactFilename, KnownArtifactsEnum } from '../artifacts.js';
-import { readFile } from 'fs/promises';
+import { access, readFile } from 'fs/promises';
 import type { TMetaSchema } from '../../../schema/schema.meta.js';
 
 export abstract class AbstractStage {
@@ -42,7 +42,7 @@ export abstract class AbstractStage {
   public async run(event: StagingFileEvent): Promise<AbstractGuardDecision[]> {
     const jobDir = dirname(event.payload);
     try {
-      if (!this.preconditionsMeet(event))
+      if (!(await this.preconditionsMeet(event)))
         return [new GuardDecisionAdvance('keep until preconditions met')];
       const result = await this.transform(event);
       const guardDecisions = await Promise.all(this.guards().map((guard) => guard.guard(result)));
@@ -65,14 +65,14 @@ export abstract class AbstractStage {
 
   protected abstract guards(): AbstractGuard[];
 
-  protected preconditionsMeet(event: StagingFileEvent): boolean {
+  protected async preconditionsMeet(event: StagingFileEvent): Promise<boolean> {
     const stagedJobDir = dirname(event.payload);
 
     if (event.type !== 'add' && event.type !== 'change') {
       this.logger.warn(`stage preconditions: unsupported event type '${event.type}'`);
       return false;
     }
-    if (!existsSync(stagedJobDir)) {
+    if (!(await this.pathExists(stagedJobDir))) {
       this.logger.debug(
         `stage preconditions: job directory does not exist '${stripRoot(stagedJobDir)}'`,
       );
@@ -81,7 +81,7 @@ export abstract class AbstractStage {
 
     for (const artifact of this.inputArtifacts()) {
       const inputArtifactPath = path.join(stagedJobDir, artifactFilename(artifact));
-      if (!existsSync(inputArtifactPath)) {
+      if (!(await this.pathExists(inputArtifactPath))) {
         this.logger.debug(
           `stage preconditions: artifact ${stripRoot(inputArtifactPath)} does not exist`,
         );
@@ -91,7 +91,7 @@ export abstract class AbstractStage {
 
     const outputArtifactPath = path.join(stagedJobDir, artifactFilename(this.outputArtifact()));
 
-    if (existsSync(outputArtifactPath)) {
+    if (await this.pathExists(outputArtifactPath)) {
       this.logger.warn(
         `stage preconditions: output artifact ${stripRoot(outputArtifactPath)} already exists`,
       );
@@ -99,6 +99,15 @@ export abstract class AbstractStage {
     }
 
     return true;
+  }
+
+  private async pathExists(filePath: string): Promise<boolean> {
+    try {
+      await access(filePath, constants.F_OK);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   protected async transform(event: StagingFileEvent): Promise<string> {
