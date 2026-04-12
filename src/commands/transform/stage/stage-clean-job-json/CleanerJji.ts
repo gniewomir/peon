@@ -13,7 +13,7 @@ export class CleanerJji extends AbstractTransformation {
   }
 
   async transform(input: Map<Artifact, string>): Promise<string> {
-    const nav = new JsonNavigator(this.toJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
+    const nav = new JsonNavigator(this.objectFromJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
 
     const employmentTypes = nav.getPath('employmentTypes').toArray();
     const b2bEntry = employmentTypes.find(

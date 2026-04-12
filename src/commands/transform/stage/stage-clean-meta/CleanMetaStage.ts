@@ -8,6 +8,7 @@ import type { Transformation } from '../AbstractTransformation.js';
 import { KnownArtifactsEnum } from '../../artifacts.js';
 import { SchemaGuard } from '../guards/SchemaGuard.js';
 import { metaSchema } from '../../../../schema/schema.meta.js';
+import { DedupByUrlGuard } from '../guards/DedupByUrlGuard.js';
 
 export class CleanMetaStage extends AbstractStage {
   public static transformations(): Transformation[] {
@@ -15,7 +16,7 @@ export class CleanMetaStage extends AbstractStage {
   }
 
   protected inputArtifacts() {
-    return [KnownArtifactsEnum.RAW_JOB_META_JSON, KnownArtifactsEnum.CLEAN_JOB_HTML];
+    return [KnownArtifactsEnum.RAW_JOB_META_JSON, KnownArtifactsEnum.RAW_JOB_JSON];
   }
 
   protected outputArtifact() {
@@ -23,6 +24,6 @@ export class CleanMetaStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [new NotEmptyGuard(), new SchemaGuard(metaSchema)];
+    return [new NotEmptyGuard(), new SchemaGuard(metaSchema), new DedupByUrlGuard()];
   }
 }

@@ -205,7 +205,7 @@ export class StageOrchestrator {
       };
     }
 
-    if (error !== null && typeof error === 'object') {
+    if (error !== null && typeof error === 'object' && error instanceof Error) {
       return {
         stage: stage,
         name: 'name' in error ? error.name : 'no name',

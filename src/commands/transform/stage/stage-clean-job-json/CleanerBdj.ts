@@ -13,7 +13,7 @@ export class CleanerBdj extends AbstractTransformation {
   }
 
   async transform(input: Map<Artifact, string>): Promise<string> {
-    const nav = new JsonNavigator(this.toJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
+    const nav = new JsonNavigator(this.objectFromJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
 
     return this.toString(
       merge(nullSchema(), {

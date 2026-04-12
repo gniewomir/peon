@@ -7,6 +7,7 @@ import type { Logger } from '../../../lib/logger.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../lib/types.js';
+import { slugifyWtPolishTransliteration } from '../../../lib/slugifyWtPolishTransliteration.js';
 
 interface NFJListing extends Listing {
   meta: {
@@ -142,6 +143,6 @@ export class NfjStrategy extends AbstractStrategy {
 
   jobToId(job: JobJson): string {
     assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
-    return job.id;
+    return slugifyWtPolishTransliteration(job.id);
   }
 }

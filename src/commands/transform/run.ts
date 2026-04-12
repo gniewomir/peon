@@ -24,6 +24,11 @@ export async function runTransform({
     logger,
     stagingDir,
     stages: [
+      new CleanJsonStage({
+        logger,
+        stagingDir,
+        transformations: CleanJsonStage.transformations(),
+      }),
       new HtmlToJsonStage({
         logger,
         stagingDir,
@@ -33,11 +38,6 @@ export async function runTransform({
         logger,
         stagingDir,
         transformations: CleanMetaStage.transformations(),
-      }),
-      new CleanJsonStage({
-        logger,
-        stagingDir,
-        transformations: CleanJsonStage.transformations(),
       }),
       new CleanHtmlStage({
         logger,

@@ -13,18 +13,21 @@ export abstract class AbstractTransformation implements Transformation {
   abstract strategy(): StrategySelector;
   abstract transform(input: Map<Artifact, string>): Promise<string>;
 
-  protected toJson<T>(artifact: Artifact, input: Map<Artifact, string>): T {
+  protected objectFromJson<T = Record<string, unknown>>(
+    artifact: Artifact,
+    input: Map<Artifact, string>,
+  ): T {
     const content = input.get(artifact);
     assert(content, 'No input for artifact');
     return JSON.parse(content) as T;
   }
 
-  protected toSchema<T>(
+  protected objectFromSchema<T>(
     schema: { parse: (data: unknown) => T },
     artifact: Artifact,
     input: Map<Artifact, string>,
   ): T {
-    return schema.parse(this.toJson<T>(artifact, input));
+    return schema.parse(this.objectFromJson<T>(artifact, input));
   }
 
   protected toCheerio(artifact: Artifact, input: Map<Artifact, string>): CheerioAPI {

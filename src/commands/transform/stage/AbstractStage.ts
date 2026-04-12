@@ -43,9 +43,13 @@ export abstract class AbstractStage {
     const jobDir = dirname(event.payload);
     try {
       if (!(await this.preconditionsMeet(event)))
-        return new GuardDecisionAdvance('keep until preconditions met');
+        return new GuardDecisionAdvance('advance until preconditions met');
 
       const result = await this.transform(event);
+      /**
+       * NOTE: saving the result before guards, so it is available for debugging
+       *       in the quarantined / trashed job directory
+       */
       await smartSave(
         path.join(jobDir, artifactFilename(this.outputArtifact())),
         result,
@@ -99,7 +103,7 @@ export abstract class AbstractStage {
     const outputArtifactPath = path.join(stagedJobDir, artifactFilename(this.outputArtifact()));
 
     if (await this.pathExists(outputArtifactPath)) {
-      this.logger.warn(
+      this.logger.debug(
         `stage preconditions: output artifact ${stripRoot(outputArtifactPath)} already exists`,
       );
       return false;
