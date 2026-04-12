@@ -89,7 +89,6 @@ export class StageOrchestrator {
           event,
           stage: stage.name(),
         });
-        this.directoryQueues.delete(jobDir);
         this.trash(jobDir);
         this.logger.warn(`guard: Trashed ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
@@ -102,7 +101,6 @@ export class StageOrchestrator {
           event,
           stage: stage.name(),
         });
-        this.directoryQueues.delete(jobDir);
         this.quarantine(jobDir);
         this.logger.warn(
           `guard: Quarantined ${stripRoot(jobDir)} because of "${decision.message}"`,
@@ -111,7 +109,6 @@ export class StageOrchestrator {
       }
 
       if (decision instanceof GuardDecisionLoad) {
-        this.directoryQueues.delete(jobDir);
         this.load(jobDir);
         this.logger.log(`guard: Loaded ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
@@ -127,6 +124,7 @@ export class StageOrchestrator {
   }
 
   private quarantine(jobDir: string) {
+    if (!existsSync(jobDir)) return;
     const quarantinedJobDir = path.join(this.quarantineDir, path.basename(jobDir));
     if (existsSync(quarantinedJobDir)) {
       rmdirSync(quarantinedJobDir, { recursive: true });
@@ -142,6 +140,7 @@ export class StageOrchestrator {
   }
 
   private trash(jobDir: string) {
+    if (!existsSync(jobDir)) return;
     const trashedJobDir = path.join(this.trashDir, path.basename(jobDir));
     if (existsSync(trashedJobDir)) {
       rmdirSync(trashedJobDir, { recursive: true });
@@ -157,6 +156,7 @@ export class StageOrchestrator {
   }
 
   private load(jobDir: string) {
+    if (!existsSync(jobDir)) return;
     const loadedJobDir = path.join(this.loadDir, path.basename(jobDir));
     if (existsSync(loadedJobDir)) {
       rmdirSync(loadedJobDir, { recursive: true });
