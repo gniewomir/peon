@@ -17,6 +17,7 @@ import {
 } from 'node:fs';
 import { z, ZodError } from 'zod';
 import { stripRoot } from '../../../lib/root.js';
+import assert from 'node:assert';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
@@ -27,15 +28,23 @@ export class StageOrchestrator {
   private readonly trashDir;
   private readonly logger;
 
-  constructor({ logger, stagingDir }: { logger: Logger; stagingDir: string }) {
+  constructor({
+    logger,
+    stagingDir,
+    stages,
+  }: {
+    logger: Logger;
+    stagingDir: string;
+    stages: AbstractStage[];
+  }) {
     this.logger = logger.withSuffix('orchestrator');
     this.loadDir = path.join(dirname(stagingDir), 'load');
     this.quarantineDir = path.join(dirname(stagingDir), 'quarantine');
     this.trashDir = path.join(dirname(stagingDir), 'trash');
-  }
-
-  public register(stage: AbstractStage): void {
-    this.stages.set(stage.name(), stage);
+    stages.forEach((stage) => {
+      this.stages.set(stage.name(), stage);
+    });
+    assert(this.stages.size === stages.length, 'Duplicated stage names detected!');
   }
 
   public handleStagingEvent(event: StagingFileEvent | undefined) {
