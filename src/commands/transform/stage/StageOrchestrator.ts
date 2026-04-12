@@ -16,6 +16,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { z, ZodError } from 'zod';
+import { stripRoot } from '../../../lib/root.js';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
@@ -74,6 +75,7 @@ export class StageOrchestrator {
           });
           this.directoryMutex.delete(jobDir);
           this.trash(jobDir);
+          this.logger.warn(`guard: Trashed ${stripRoot(jobDir)}`);
           break;
         }
         if (decision instanceof GuardDecisionQuarantine) {
@@ -85,11 +87,13 @@ export class StageOrchestrator {
           });
           this.directoryMutex.delete(jobDir);
           this.quarantine(jobDir);
+          this.logger.warn(`guard: Quarantined ${stripRoot(jobDir)}`);
           break;
         }
         if (decision instanceof GuardDecisionLoad) {
           this.directoryMutex.delete(jobDir);
           this.load(jobDir);
+          this.logger.log(`guard: Loaded ${stripRoot(jobDir)}`);
           break;
         }
       }

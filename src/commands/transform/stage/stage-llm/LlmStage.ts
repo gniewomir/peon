@@ -9,6 +9,9 @@ import type { StagingFileEvent } from '../../types.js';
 import type { Logger } from '../../../lib/logger.js';
 import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecutionTimeLimiter.js';
 import { createConcurrencyLimiter } from '../../lib/createConcurrencyLimiter.js';
+import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
+import { dirname } from 'node:path';
+import { stripRoot } from '../../../../lib/root.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimiter;
@@ -42,12 +45,22 @@ export class LlmStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [new SchemaShapeGuard(), new SchemaQualityGuard()];
+    return [new NotEmptyGuard(), new SchemaShapeGuard(), new SchemaQualityGuard()];
   }
 
   protected async transform(event: StagingFileEvent): Promise<string> {
     return this.concurrencyLimiter.run(() =>
-      this.minimumExecutionTimeLimiter(() => super.transform(event)),
+      this.minimumExecutionTimeLimiter(async () => {
+        const start = Date.now();
+        this.logger.log(` 🤖 LLM request start: ${stripRoot(dirname(event.payload))}`);
+        const result = await super.transform(event);
+        const end = Date.now();
+        this.logger.log(
+          ` 🤖 LLM request end after ${(end - start) / 1000}s: ${stripRoot(dirname(event.payload))}`,
+        );
+        this.logger.warn(` 🤖 LLM requests pending: ${this.concurrencyLimiter.pendingCount()}`);
+        return result;
+      }),
     );
   }
 }
