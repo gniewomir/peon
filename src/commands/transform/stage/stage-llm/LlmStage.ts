@@ -1,8 +1,6 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import { SchemaShapeGuard } from '../guards/SchemaShapeGuard.js';
-import { SchemaQualityGuard } from '../guards/SchemaQualityGuard.js';
-import type { AbstractTransformation } from '../AbstractTransformation.js';
+import type { Transformation } from '../AbstractTransformation.js';
 import { StructureUnstructured } from './StructureUnstructured.js';
 import { KnownArtifactsEnum } from '../../artifacts.js';
 import type { StagingFileEvent } from '../../types.js';
@@ -12,6 +10,7 @@ import { createConcurrencyLimiter } from '../../lib/createConcurrencyLimiter.js'
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import { dirname } from 'node:path';
 import { stripRoot } from '../../../../lib/root.js';
+import { LlmSchemaQualityGuard } from './LlmSchemaQualityGuard.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimiter;
@@ -22,17 +21,13 @@ export class LlmStage extends AbstractStage {
    *       to keep the laptop from running fans at 100% and throttling anyway
    *       when running local LLM
    */
-  constructor(args: {
-    logger: Logger;
-    stagingDir: string;
-    transformations: AbstractTransformation[];
-  }) {
+  constructor(args: { logger: Logger; stagingDir: string; transformations: Transformation[] }) {
     super(args);
     this.concurrencyLimiter = createConcurrencyLimiter(1);
-    this.minimumExecutionTimeLimiter = createMinimumExecutionTimeLimiter(1000 * 60 * 2);
+    this.minimumExecutionTimeLimiter = createMinimumExecutionTimeLimiter(1000 * 60);
   }
 
-  public static transformations(): AbstractTransformation[] {
+  public static transformations(): Transformation[] {
     return [new StructureUnstructured()];
   }
 
@@ -45,7 +40,7 @@ export class LlmStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [new NotEmptyGuard(), new SchemaShapeGuard(), new SchemaQualityGuard()];
+    return [new NotEmptyGuard(), new LlmSchemaQualityGuard(0.5)];
   }
 
   protected async transform(event: StagingFileEvent): Promise<string> {
@@ -53,7 +48,7 @@ export class LlmStage extends AbstractStage {
       this.minimumExecutionTimeLimiter(async () => {
         const start = Date.now();
         this.logger.log(` 🤖 LLM request start: ${stripRoot(dirname(event.payload))}`);
-        const result = await super.transform(event);
+        const result = await super.transform(event); // IMPORTANT PART
         const end = Date.now();
         this.logger.log(
           ` 🤖 LLM request end after ${(end - start) / 1000}s: ${stripRoot(dirname(event.payload))}`,

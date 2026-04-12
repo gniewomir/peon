@@ -26,6 +26,6 @@ export async function googleResponse<OutputType>({
   return {
     model,
     output,
-    response,
+    debug: response,
   };
 }

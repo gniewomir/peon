@@ -6,6 +6,7 @@ import { parseListingResponse } from './listing-parser.js';
 import type { Logger } from '../../../lib/logger.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
+import type { KnownStrategy } from '../../../lib/types.js';
 
 interface NFJListing extends Listing {
   meta: {
@@ -14,7 +15,7 @@ interface NFJListing extends Listing {
 }
 
 export class NfjStrategy extends AbstractStrategy {
-  public readonly slug: string = 'nfj';
+  public readonly slug: KnownStrategy = 'nfj';
 
   constructor(logger: Logger) {
     super({

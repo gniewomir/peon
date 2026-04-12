@@ -39,7 +39,33 @@ export abstract class AbstractStage {
     return artifactFilename(this.outputArtifact()).replaceAll('.', '-');
   }
 
-  public preconditionsMeet(event: StagingFileEvent): boolean {
+  public async run(event: StagingFileEvent): Promise<AbstractGuardDecision[]> {
+    const jobDir = dirname(event.payload);
+    try {
+      if (!this.preconditionsMeet(event))
+        return [new GuardDecisionAdvance('keep until preconditions met')];
+      const result = await this.transform(event);
+      const guardDecisions = await Promise.all(this.guards().map((guard) => guard.guard(result)));
+      await smartSave(
+        path.join(jobDir, artifactFilename(this.outputArtifact())),
+        result,
+        false,
+        this.logger,
+      );
+      this.logger.log(`[${event.type}:${stripRoot(event.payload)}] processed`);
+      return guardDecisions;
+    } catch (error) {
+      return [new GuardDecisionQuarantine('quarantine because unhanded error', { cause: error })];
+    }
+  }
+
+  protected abstract inputArtifacts(): Artifact[];
+
+  protected abstract outputArtifact(): Artifact;
+
+  protected abstract guards(): AbstractGuard[];
+
+  protected preconditionsMeet(event: StagingFileEvent): boolean {
     const stagedJobDir = dirname(event.payload);
 
     if (event.type !== 'add' && event.type !== 'change') {
@@ -74,32 +100,6 @@ export abstract class AbstractStage {
 
     return true;
   }
-
-  public async run(event: StagingFileEvent): Promise<AbstractGuardDecision[]> {
-    const jobDir = dirname(event.payload);
-    try {
-      if (!this.preconditionsMeet(event))
-        return [new GuardDecisionAdvance('keep until preconditions met')];
-      const result = await this.transform(event);
-      const guardDecisions = await Promise.all(this.guards().map((guard) => guard.guard(result)));
-      await smartSave(
-        path.join(jobDir, artifactFilename(this.outputArtifact())),
-        result,
-        false,
-        this.logger,
-      );
-      this.logger.log(`[${event.type}:${stripRoot(event.payload)}] processed`);
-      return guardDecisions;
-    } catch (error) {
-      return [new GuardDecisionQuarantine('quarantine because unhanded error', { cause: error })];
-    }
-  }
-
-  protected abstract inputArtifacts(): Artifact[];
-
-  protected abstract outputArtifact(): Artifact;
-
-  protected abstract guards(): AbstractGuard[];
 
   protected async transform(event: StagingFileEvent): Promise<string> {
     const stagedJobDir = dirname(event.payload);

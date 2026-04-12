@@ -4,6 +4,7 @@ import { JjiStrategy } from './jji/JjiStrategy.js';
 import { BdjStrategy } from './bdj/BdjStrategy.js';
 import { NfjStrategy } from './nfj/NfjStrategy.js';
 import type { AbstractStrategy } from './AbstractStrategy.js';
+import type { KnownStrategy } from '../../lib/types.js';
 
 const STRATEGY_REGISTRY = [
   (logger: Logger) => new BdjStrategy(logger),
@@ -13,23 +14,22 @@ const STRATEGY_REGISTRY = [
 
 let instantiated: null | AbstractStrategy[] = null;
 
-export function selectStrategies(chosen: Set<string> | 'all', logger: Logger): Strategy[] {
+export function selectStrategies(chosen: Set<KnownStrategy> | 'all', logger: Logger): Strategy[] {
   if (instantiated === null) {
     instantiated = STRATEGY_REGISTRY.map((e) => e(logger));
   }
-  const all = instantiated;
   if (chosen === 'all') {
-    return all;
+    return [...instantiated];
   }
-  const unknownStrategies = all
+  const unknownStrategies = instantiated
     .filter((strat) => !chosen.has(strat.slug))
     .map((strat) => strat.slug);
   if (unknownStrategies.length > 0) {
-    const knownStrategies = all.map((strat) => strat.slug);
+    const knownStrategies = instantiated.map((strat) => strat.slug);
     throw new Error(
       `Strategies ${unknownStrategies.join(', ')} do not exist.` +
         `Use ${knownStrategies.join(' ')}`,
     );
   }
-  return all.filter((strat) => chosen.has(strat.slug));
+  return instantiated.filter((strat) => chosen.has(strat.slug));
 }

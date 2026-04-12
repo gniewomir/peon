@@ -4,7 +4,7 @@ import { LlmStage } from './stage-llm/LlmStage.js';
 import { CleanHtmlStage } from './stage-clean-html/CleanHtmlStage.js';
 import { StageOrchestrator } from './StageOrchestrator.js';
 import type { Logger } from '../../lib/logger.js';
-import { HtmlToJsonStage } from './stage-json-from-html/HtmlToJsonStage.js';
+import { HtmlToJsonStage } from './stage-html-to-json/HtmlToJsonStage.js';
 import { CleanMetaStage } from './stage-clean-meta/CleanMetaStage.js';
 
 export function createStageOrchestrator({

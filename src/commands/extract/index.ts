@@ -5,8 +5,9 @@ import { runExtract } from './run.js';
 import { selectStrategies } from './strategy/index.js';
 import { loggerContext } from '../lib/logger.js';
 import { createShutdownRegistry } from './lib/shutdown.js';
+import { isStrategySlug, type KnownStrategy } from '../lib/types.js';
 
-function parseOnlySlugs(only: string | undefined): Set<string> | 'all' {
+function parseOnlySlugs(only: string | undefined): Set<KnownStrategy> | 'all' {
   if (only === undefined || only.trim() === '' || only === 'all') {
     return 'all';
   }
@@ -14,7 +15,8 @@ function parseOnlySlugs(only: string | undefined): Set<string> | 'all' {
     only
       .split(',')
       .map((s) => s.trim())
-      .filter(Boolean),
+      .filter(Boolean)
+      .filter(isStrategySlug),
   );
 }
 

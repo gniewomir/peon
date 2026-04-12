@@ -1,12 +1,13 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import { SchemaShapeGuard } from '../guards/SchemaShapeGuard.js';
+import { SchemaGuard } from '../guards/SchemaGuard.js';
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { CleanerJji } from './CleanerJji.js';
 import { CleanerNfj } from './CleanerNfj.js';
 import { CleanerBdj } from './CleanerBdj.js';
 import { KnownArtifactsEnum } from '../../artifacts.js';
+import { schema } from '../../../../schema/schema.js';
 
 export class CleanJsonStage extends AbstractStage {
   public static transformations(): Transformation[] {
@@ -22,6 +23,6 @@ export class CleanJsonStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [new NotEmptyGuard(), new SchemaShapeGuard()];
+    return [new NotEmptyGuard(), new SchemaGuard(schema)];
   }
 }

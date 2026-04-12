@@ -6,6 +6,7 @@ import type { Logger } from '../../lib/logger.js';
 import type { Strategy, StrategySaveOptions, StrategyStats } from './types.js';
 import type { JobJson, Listing } from '../types.js';
 import type { CacheOperations } from '../lib/cache.js';
+import type { KnownStrategy } from '../../lib/types.js';
 
 function createBaseStats(): StrategyStats {
   return {
@@ -21,7 +22,7 @@ function createBaseStats(): StrategyStats {
 }
 
 export abstract class AbstractStrategy implements Strategy {
-  public abstract readonly slug: string;
+  public abstract readonly slug: KnownStrategy;
   private readonly logger: Logger;
   stats: StrategyStats;
   ids: Set<string>;

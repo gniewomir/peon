@@ -1,6 +1,7 @@
 import type { Logger } from '../../lib/logger.js';
 import type { CacheOperations } from '../lib/cache.js';
 import type { JobJson, Listing } from '../types.js';
+import type { KnownStrategy } from '../../lib/types.js';
 
 export interface StrategySaveOptions {
   outDir: string;
@@ -23,7 +24,7 @@ export interface StrategyStats {
 }
 
 export interface Strategy {
-  slug: string;
+  slug: KnownStrategy;
   stats: StrategyStats;
   ids: Set<string>;
   jobListingsGenerator(): AsyncGenerator<Listing>;

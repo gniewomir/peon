@@ -59,6 +59,6 @@ export async function ollamaResponse<OutputType>({
   return {
     model,
     output,
-    response: data,
+    debug: data,
   };
 }

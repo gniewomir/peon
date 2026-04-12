@@ -1,7 +1,7 @@
 export type LlmResponse<OutputType> = {
   model: string;
   output: OutputType;
-  response: unknown;
+  debug: unknown;
 };
 
 export type LlmInput = {

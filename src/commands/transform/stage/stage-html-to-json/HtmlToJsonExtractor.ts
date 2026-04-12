@@ -11,10 +11,23 @@ export class HtmlToJsonExtractor extends AbstractTransformation {
     const $ = this.toCheerio(KnownArtifactsEnum.RAW_JOB_HTML, input);
     const ld = $('script[type="application/ld+json"]')
       .toArray()
-      .map((el) => JSON.parse($(el).html() || '{}'));
+      .map((el) => {
+        try {
+          return JSON.parse($(el).html() || '{}');
+        } catch {
+          return {};
+        }
+      });
     const hydration = $('script[type="application/json"]')
       .toArray()
-      .map((el) => JSON.parse($(el).html() || '{}'));
+      .map((el) => {
+        try {
+          return JSON.parse($(el).html() || '{}');
+        } catch {
+          return {};
+        }
+      });
+
     return this.toString({
       ld,
       hydration,

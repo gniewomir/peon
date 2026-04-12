@@ -6,9 +6,10 @@ import { parseListingResponse } from './listing-parser.js';
 import type { Logger } from '../../../lib/logger.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
+import type { KnownStrategy } from '../../../lib/types.js';
 
 export class BdjStrategy extends AbstractStrategy {
-  public slug: string = 'bdj';
+  public slug: KnownStrategy = 'bdj';
 
   constructor(logger: Logger) {
     super({
