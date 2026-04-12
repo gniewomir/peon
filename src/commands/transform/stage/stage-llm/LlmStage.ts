@@ -32,7 +32,7 @@ export class LlmStage extends AbstractStage {
   }
 
   protected inputArtifacts() {
-    return [KnownArtifactsEnum.LLM_MARKDOWN];
+    return [KnownArtifactsEnum.LLM_MARKDOWN, KnownArtifactsEnum.CLEAN_JOB_META_JSON];
   }
 
   protected outputArtifact() {

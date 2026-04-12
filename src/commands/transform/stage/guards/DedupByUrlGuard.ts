@@ -7,7 +7,7 @@ import { GuardDecisionTrash } from './decisions/GuardDecisionTrash.js';
 export class DedupByUrlGuard extends AbstractGuard {
   async guard(result: string): Promise<AbstractGuardDecision> {
     const meta = metaSchema.parse(JSON.parse(result));
-    if (!meta.offer.canonicalUrl) {
+    if (!meta.offer.canonicalUrl || meta.offer.alternateUrls.length === 0) {
       return new GuardDecisionAdvance('No data to dedup by url');
     }
     if (meta.offer.url === meta.offer.canonicalUrl) {

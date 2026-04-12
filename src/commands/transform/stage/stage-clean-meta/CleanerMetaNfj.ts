@@ -5,6 +5,7 @@ import type { StrategySelector } from '../../../lib/types.js';
 import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
 import { JsonNavigator } from '../../lib/JsonNavigator.js';
 import assert from 'node:assert';
+import { normalizeDMYDateWtPeriodSep } from '../lib/normalizeDMYDateWtPeriodSep.js';
 
 export class CleanerMetaNfj extends AbstractTransformation {
   strategy(): StrategySelector {
@@ -23,9 +24,9 @@ export class CleanerMetaNfj extends AbstractTransformation {
     return this.toString(
       merge(metaSchema.parse(meta), {
         offer: {
-          publishedAt: null,
-          expiresAt: null,
-          updatedAt: null,
+          publishedAt: nav.getPath('posted').toDateFromTimestamp().toISOString(),
+          expiresAt: this.findExpiration(input.get(KnownArtifactsEnum.LLM_MARKDOWN)),
+          updatedAt: nav.getPath('renewed').toDateFromTimestamp().toISOString(),
           canonicalUrl:
             this.slugsToUrls(meta.offer.url || '', [this.establishCanonicalUrlSlug(nav)]).pop() ||
             null,
@@ -36,6 +37,15 @@ export class CleanerMetaNfj extends AbstractTransformation {
         },
       } satisfies DeepPartial<TMetaSchema>),
     );
+  }
+
+  private findExpiration(markdown: string | undefined): string | null {
+    if (!markdown) {
+      return null;
+    }
+    const matches = markdown.match(/^- Offer valid until: (.+)$/);
+    const match = matches && matches[0] ? matches[0].split(' ')?.shift() : null;
+    return match ? normalizeDMYDateWtPeriodSep(match) : null;
   }
 
   private slugsToUrls(offerUrl: string, slugs: string[]): string[] {

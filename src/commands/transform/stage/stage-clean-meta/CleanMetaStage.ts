@@ -16,7 +16,13 @@ export class CleanMetaStage extends AbstractStage {
   }
 
   protected inputArtifacts() {
-    return [KnownArtifactsEnum.RAW_JOB_META_JSON, KnownArtifactsEnum.RAW_JOB_JSON];
+    return [
+      KnownArtifactsEnum.RAW_JOB_META_JSON,
+      KnownArtifactsEnum.RAW_JOB_JSON,
+      KnownArtifactsEnum.LLM_MARKDOWN,
+      KnownArtifactsEnum.CLEAN_JOB_HTML,
+      KnownArtifactsEnum.RAW_JOB_HTML_JSON,
+    ];
   }
 
   protected outputArtifact() {

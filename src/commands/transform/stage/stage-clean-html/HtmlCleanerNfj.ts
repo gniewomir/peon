@@ -15,9 +15,36 @@ export class HtmlCleanerNfj extends AbstractTransformation {
 
     $sidebar.remove('nfj-posting-similar');
 
-    let html = ($content.html() || '') + ($sidebar.html() || '');
-    html = html.replaceAll('<!---->', '');
+    $('*').each(function () {
+      const $this = $(this);
 
-    return html;
+      const attrs = Object.keys($this.attr() || {});
+
+      if ($this.text().trim() === '' && $this.children().length === 0) {
+        $this.remove();
+      }
+
+      attrs.forEach((attr) => {
+        /**
+         * Drop tailwind, grid and angular classes
+         */
+        if (attr === 'class') {
+          const cssClassAttr = $this.attr('class') || '';
+          const cssClasses = cssClassAttr
+            .split(' ')
+            .map((c) => c.trim())
+            .filter(Boolean)
+            .filter((c) => !(c.startsWith('tr-') || c.startsWith('mb-') || c.startsWith('ng-')))
+            .join(' ');
+          $this.attr('class', cssClasses);
+        }
+        if (['href', 'id', 'class', 'type'].includes(attr)) {
+          return;
+        }
+        $this.removeAttr(attr);
+      });
+    });
+
+    return ($content.html() || '') + ($sidebar.html() || '');
   }
 }

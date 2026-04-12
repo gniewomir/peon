@@ -3,6 +3,7 @@ import { metaSchema, type TMetaSchema } from '../../../../schema/schema.meta.js'
 import { AbstractTransformation } from '../AbstractTransformation.js';
 import type { StrategySelector } from '../../../lib/types.js';
 import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
+import { JsonNavigator } from '../../lib/JsonNavigator.js';
 
 export class CleanerMetaJji extends AbstractTransformation {
   strategy(): StrategySelector {
@@ -15,13 +16,16 @@ export class CleanerMetaJji extends AbstractTransformation {
       KnownArtifactsEnum.RAW_JOB_META_JSON,
       input,
     );
+    const json = this.objectFromJson(KnownArtifactsEnum.RAW_JOB_JSON, input);
+    const nav = new JsonNavigator(json);
+
     return this.toString(
       merge(meta, {
         offer: {
-          publishedAt: null,
-          expiresAt: null,
+          publishedAt: nav.getPath('publishedAt').toString(),
+          expiresAt: nav.getPath('expiredAt').toString(),
           updatedAt: null,
-          canonicalUrl: null,
+          canonicalUrl: meta.offer.url,
           alternateUrls: [],
         },
       } satisfies DeepPartial<TMetaSchema>),

@@ -1,6 +1,5 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import { HtmlToJsonExtractor } from './HtmlToJsonExtractor.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { KnownArtifactsEnum } from '../../artifacts.js';
@@ -19,6 +18,6 @@ export class HtmlToJsonStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [new NotEmptyGuard()];
+    return [];
   }
 }

@@ -13,7 +13,8 @@ export class HtmlCleanerBdj extends AbstractTransformation {
     $('.cookie-bar').remove();
     $('#main-menu').remove();
     $('.bg-action').remove();
-    $('.bg-black ').remove();
+    $('.bg-black').remove();
+    $('next-route-announcer').remove();
     $('footer').remove();
     $('h3')
       .filter(function () {

@@ -31,8 +31,10 @@ export abstract class AbstractTransformation implements Transformation {
   }
 
   protected toCheerio(artifact: Artifact, input: Map<Artifact, string>): CheerioAPI {
-    const content = input.get(artifact);
+    let content = input.get(artifact);
     assert(content, 'No input for artifact');
+    content = content.replaceAll('<!-- -->', '');
+    content = content.replaceAll('<!---->', '');
     return cheerio.load(content);
   }
 
@@ -42,6 +44,13 @@ export abstract class AbstractTransformation implements Transformation {
     for (const tag of removeTags) {
       $(tag).remove();
     }
+
+    $.root()
+      .contents()
+      .filter(function () {
+        return this.type === 'comment';
+      })
+      .remove();
 
     $('*').each(function () {
       const $this = $(this);

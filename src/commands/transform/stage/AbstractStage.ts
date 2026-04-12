@@ -63,9 +63,9 @@ export abstract class AbstractStage {
         }
       }
     } catch (error) {
-      return new GuardDecisionQuarantine('quarantine because unhanded error', { cause: error });
+      return new GuardDecisionQuarantine('quarantine because unhandled error', { cause: error });
     } finally {
-      this.logger.log(`[${event.type}:${stripRoot(event.payload)}] processed`);
+      this.logger.debug(`[${event.type}:${stripRoot(event.payload)}] processed`);
     }
     return new GuardDecisionAdvance('advance because all guards passed');
   }
