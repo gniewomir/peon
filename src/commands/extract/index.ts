@@ -1,10 +1,10 @@
 import path from 'node:path';
 import type { Command } from 'commander';
-import { rootPath } from '../lib/root.js';
-import { runExtract } from './extract/run.js';
-import { selectStrategies } from './extract/strategy/index.js';
-import { loggerContext } from './lib/logger.js';
-import { createShutdownRegistry } from './extract/lib/shutdown.js';
+import { rootPath } from '../../lib/root.js';
+import { runExtract } from './run.js';
+import { selectStrategies } from './strategy/index.js';
+import { loggerContext } from '../lib/logger.js';
+import { createShutdownRegistry } from './lib/shutdown.js';
 
 function parseOnlySlugs(only: string | undefined): Set<string> | 'all' {
   if (only === undefined || only.trim() === '' || only === 'all') {
@@ -35,7 +35,7 @@ export function registerExtractCommand(program: Command): void {
     .option('--only <slugs>', `Comma-separated strategies to run`)
     .action(async (opts: { out?: string; cache?: string; only?: string; verbose?: boolean }) => {
       const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
-      return withLogger((logger) =>
+      await withLogger((logger) =>
         runExtract({
           logger,
           stagingDir: path.resolve(opts.out ?? path.join(root, defaultStagingDir)),

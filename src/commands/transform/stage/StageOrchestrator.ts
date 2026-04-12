@@ -15,6 +15,7 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
+import { z, ZodError } from 'zod';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
@@ -176,7 +177,21 @@ export class StageOrchestrator {
     if (error === undefined) {
       return undefined;
     }
+
     const timestamp = new Date().toISOString();
+
+    if (error instanceof ZodError) {
+      return {
+        stage: stage,
+        name: 'name' in error ? error.name : 'no name',
+        message: z.treeifyError(error),
+        event,
+        timestamp,
+        stack: 'stack' in error ? error.stack : 'no stack',
+        cause: 'cause' in error ? this.parseError(error.cause, event, stage) : undefined,
+      };
+    }
+
     if (error !== null && typeof error === 'object') {
       return {
         stage: stage,
@@ -188,6 +203,7 @@ export class StageOrchestrator {
         cause: 'cause' in error ? this.parseError(error.cause, event, stage) : undefined,
       };
     }
+
     return {
       stage,
       error,

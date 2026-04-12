@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { registerExtractCommand } from './commands/extract.js';
-import { registerTransformCommand } from './commands/transform.js';
+import { registerExtractCommand } from './commands/extract/index.js';
+import { registerTransformCommand } from './commands/transform/index.js';
 
 const program = new Command();
 

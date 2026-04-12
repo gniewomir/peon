@@ -1,8 +1,8 @@
 import path from 'node:path';
 import type { Command } from 'commander';
-import { rootPath } from '../lib/root.js';
-import { runTransform } from './transform/run.js';
-import { type Logger, loggerContext } from './lib/logger.js';
+import { rootPath } from '../../lib/root.js';
+import { runTransform } from './run.js';
+import { type Logger, loggerContext } from '../lib/logger.js';
 
 export function registerTransformCommand(program: Command): void {
   const root = rootPath();
@@ -15,7 +15,7 @@ export function registerTransformCommand(program: Command): void {
     .option('--dir <dir>', `Directory to watch (default: <repo>/${defaultStagingDir})`)
     .action(async (opts: { dir?: string; verbose?: boolean }) => {
       const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
-      return withLogger((logger: Logger) =>
+      await withLogger((logger: Logger) =>
         runTransform({
           stagingDir: path.resolve(opts.dir ?? path.join(root, defaultStagingDir)),
           logger,
