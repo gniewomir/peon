@@ -1,35 +1,24 @@
 import { AbstractStage } from '../AbstractStage.js';
-import type { StagingFileEvent } from '../../types.js';
-import { readFile } from 'fs/promises';
-import { convert } from '@kreuzberg/html-to-markdown-node';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import path, { dirname } from 'path';
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
+import type { Transformation } from '../AbstractTransformation.js';
+import { HtmlToMarkdownConverter } from './HtmlToMarkdownConverter.js';
+import { KnownArtifactsEnum } from '../../artifacts.js';
 
 export class HtmlToMdStage extends AbstractStage {
-  protected inputFiles(): string[] {
-    return ['clean.job.html'];
+  public static transformations(): Transformation[] {
+    return [new HtmlToMarkdownConverter()];
   }
 
-  protected outputFile(): string {
-    return 'job.md';
+  protected inputArtifacts() {
+    return [KnownArtifactsEnum.CLEAN_JOB_HTML];
+  }
+
+  protected outputArtifact() {
+    return KnownArtifactsEnum.LLM_MARKDOWN;
   }
 
   protected guards(): AbstractGuard[] {
     return [new NotEmptyGuard()];
-  }
-
-  protected async payload(event: StagingFileEvent) {
-    const jobDir = dirname(event.payload);
-    const html = await readFile(path.join(jobDir, this.inputFiles()[0]), 'utf8');
-
-    return convert(html, {
-      // @ts-expect-error workaround: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
-      headingStyle: 'Atx',
-      // @ts-expect-error workaround: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
-      codeBlockStyle: 'Backticks',
-      wrap: true,
-      wrapWidth: 100,
-    });
   }
 }

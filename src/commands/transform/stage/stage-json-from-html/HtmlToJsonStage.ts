@@ -1,53 +1,24 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import type { StagingFileEvent } from '../../types.js';
-import type { Logger } from '../../../lib/logger.js';
-import type { AbstractHtmlToJsonExtractor } from './AbstractHtmlToJsonExtractor.js';
-import path, { dirname } from 'node:path';
-import assert from 'node:assert';
-import { readFile } from 'node:fs/promises';
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
+import { HtmlToJsonExtractor } from './HtmlToJsonExtractor.js';
+import type { Transformation } from '../AbstractTransformation.js';
+import { KnownArtifactsEnum } from '../../artifacts.js';
 
 export class HtmlToJsonStage extends AbstractStage {
-  private readonly extractors = new Map<string, AbstractHtmlToJsonExtractor>();
-
-  constructor({
-    logger,
-    stagingDir,
-    extractors,
-  }: {
-    logger: Logger;
-    stagingDir: string;
-    extractors: AbstractHtmlToJsonExtractor[];
-  }) {
-    super({ logger, stagingDir });
-    for (const extractor of extractors) {
-      this.extractors.set(extractor.strategy(), extractor);
-    }
+  public static transformations(): Transformation[] {
+    return [new HtmlToJsonExtractor()];
   }
 
-  protected inputFiles(): string[] {
-    return ['raw.job.html'];
+  protected inputArtifacts() {
+    return [KnownArtifactsEnum.RAW_JOB_HTML];
   }
 
-  protected outputFile(): string {
-    return 'html.json';
+  protected outputArtifact() {
+    return KnownArtifactsEnum.RAW_JOB_HTML_JSON;
   }
 
   protected guards(): AbstractGuard[] {
     return [new NotEmptyGuard()];
-  }
-
-  protected async payload(
-    event: StagingFileEvent,
-  ): Promise<string | Record<string, unknown> | unknown[]> {
-    const jobDir = dirname(event.payload);
-    const input = await readFile(path.join(jobDir, this.inputFiles()[0]), 'utf8');
-    const meta = await this.readRawMetadata(jobDir);
-    const source = meta.offer.source;
-    assert(source !== null, 'unknown offer source');
-    const extractor = this.extractors.get(source);
-    assert(extractor, `no json extractor registered for source "${source}"`);
-    return extractor.extract(input);
   }
 }

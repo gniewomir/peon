@@ -1,6 +1,6 @@
 import { type GenerateContentConfig, GoogleGenAI } from '@google/genai';
 import { buildUserPrompt } from '../prompt.js';
-import type { TModelInput, TLlmResponse } from '../types.js';
+import type { ModelInput, LlmResponse } from '../types.js';
 
 let cachedClient: null | GoogleGenAI;
 function getClient() {
@@ -16,7 +16,7 @@ export async function googleResponse<OutputType>({
   input,
   model = 'gemini-2.5-flash-lite',
   config,
-}: TModelInput<GenerateContentConfig>): Promise<TLlmResponse<OutputType>> {
+}: ModelInput<GenerateContentConfig>): Promise<LlmResponse<OutputType>> {
   const response = await getClient().models.generateContent({
     model,
     contents: buildUserPrompt(input),

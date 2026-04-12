@@ -38,7 +38,7 @@ export async function proxyContext(logger: Logger): Promise<ProxyContext> {
           consecutiveFailures = consecutiveFailures + 1;
 
           if (consecutiveFailures >= maxConsecutiveFailures) {
-            console.warn(' ⚠️  Reached max consecutive failures - refreshing proxies');
+            logger.warn(' ⚠️  Reached max consecutive failures - refreshing proxies');
             proxyGen = proxyGenerator(logger);
             currentProxy = (await proxyGen.next()).value;
             consecutiveFailures = 0;

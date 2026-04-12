@@ -8,17 +8,11 @@ export class NotEmptyGuard extends AbstractGuard {
     super();
   }
 
-  async guard(result: unknown): Promise<AbstractGuardDecision> {
-    if (typeof result === 'string' && result.trim().length < this.minLength) {
+  async guard(result: string): Promise<AbstractGuardDecision> {
+    if (result.trim().length < this.minLength) {
       return new GuardDecisionQuarantine(`Result empty or shorter than ${this.minLength}`);
     }
-    if (typeof result === 'object' && (!result || Object.keys(result).length === 0)) {
-      return new GuardDecisionQuarantine(`Result empty or shorter than ${this.minLength}`);
-    }
-    if (typeof result === 'string' || typeof result === 'object') {
-      return new GuardDecisionAdvance('Expected type and non empty');
-    }
-    return new GuardDecisionQuarantine('Unexpected type', { cause: typeof result });
+    return new GuardDecisionAdvance('Expected type and non empty');
   }
 
   name(): string {

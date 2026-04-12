@@ -3,7 +3,7 @@ import 'dotenv/config';
 import chokidar from 'chokidar';
 import { type Logger } from '../lib/logger.js';
 import { createStageOrchestrator } from './stage/createStageOrchestrator.js';
-import { stripRootPath } from '../../root.js';
+import { stripRoot } from '../../lib/root.js';
 
 export async function runTransform({
   stagingDir,
@@ -24,12 +24,12 @@ export async function runTransform({
   });
 
   watcher.on('add', (filePath) => {
-    logger.debug(`added: ${filePath}`);
+    logger.debug(`added: ${stripRoot(filePath)}`);
     orchestrator.handleStagingEvent({ type: 'add', payload: filePath });
   });
 
   watcher.on('change', (filePath) => {
-    logger.debug(`changed: ${filePath}`);
+    logger.debug(`changed: ${stripRoot(filePath)}`);
     orchestrator.handleStagingEvent({ type: 'change', payload: filePath });
   });
 
@@ -62,5 +62,5 @@ export async function runTransform({
   process.once('SIGINT', () => shutdown('SIGINT'));
   process.once('SIGTERM', () => shutdown('SIGTERM'));
 
-  logger.log(`Watching for changes in: ${stripRootPath(stagingDir)}`);
+  logger.log(`Watching for changes in: ${stripRoot(stagingDir)}`);
 }

@@ -1,21 +1,30 @@
-import { AbstractMetaCleaner } from './AbstractMetaCleaner.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
 import { metaSchema, type TMetaSchema } from '../../../../schema/schema.meta.js';
+import { AbstractTransformation } from '../AbstractTransformation.js';
+import type { StrategySelector } from '../../../lib/types.js';
+import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
 
-export class CleanerMetaNfj extends AbstractMetaCleaner {
-  clean(meta: unknown): TMetaSchema {
-    return merge(metaSchema.parse(meta), {
-      offer: {
-        publishedAt: null,
-        expiresAt: null,
-        updatedAt: null,
-        canonicalUrl: null,
-        alternateUrls: [],
-      },
-    } satisfies DeepPartial<TMetaSchema>);
+export class CleanerMetaNfj extends AbstractTransformation {
+  strategy(): StrategySelector {
+    return 'nfj';
   }
 
-  strategy(): string {
-    return 'nfj';
+  async transform(input: Map<Artifact, string>): Promise<string> {
+    const meta = this.toSchema<TMetaSchema>(
+      metaSchema,
+      KnownArtifactsEnum.RAW_JOB_META_JSON,
+      input,
+    );
+    return this.toString(
+      merge(metaSchema.parse(meta), {
+        offer: {
+          publishedAt: null,
+          expiresAt: null,
+          updatedAt: null,
+          canonicalUrl: null,
+          alternateUrls: [],
+        },
+      } satisfies DeepPartial<TMetaSchema>),
+    );
   }
 }

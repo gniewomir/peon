@@ -1,10 +1,65 @@
-import { AbstractCleaner } from './AbstractCleaner.js';
 import { nullSchema, type TSchema } from '../../../../schema/schema.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
 import { JsonNavigator } from '../../lib/JsonNavigator.js';
 import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
+import { normalizeSeniority } from '../lib/normalizeSeniority.js';
+import { AbstractTransformation } from '../AbstractTransformation.js';
+import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
+import type { StrategySelector } from '../../../lib/types.js';
 
-export class CleanerNfj extends AbstractCleaner {
+export class CleanerNfj extends AbstractTransformation {
+  strategy(): StrategySelector {
+    return 'nfj';
+  }
+
+  async transform(input: Map<Artifact, string>): Promise<string> {
+    const nav = new JsonNavigator(this.toJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
+
+    const salaryCoE: DeepPartial<TSchema['salaryCoE']> = {};
+    const salaryB2B: DeepPartial<TSchema['salaryB2B']> = {};
+    const contractTypes: string[] = [];
+
+    const salaryNav = nav.getOptionalPath('salary');
+    if (salaryNav && typeof salaryNav.value() === 'object' && salaryNav.value() !== null) {
+      const salaryData = this.normalizeSalary(salaryNav);
+      const ct = this.normalizeContractType(salaryNav);
+      if (ct) contractTypes.push(ct);
+
+      if (ct === 'b2b/contractor') {
+        Object.assign(salaryB2B, salaryData);
+      } else if (ct === 'employment') {
+        Object.assign(salaryCoE, salaryData);
+      } else {
+        Object.assign(salaryCoE, salaryData);
+        Object.assign(salaryB2B, salaryData);
+      }
+    }
+
+    return this.toString(
+      merge(nullSchema(), {
+        employer: {
+          name: nav.getPath('name').toString(),
+        },
+        role: {
+          title: nav.getPath('title').toString(),
+          seniority: normalizeSeniority(this.normalizeSeniority(nav)),
+        },
+        workplace: {
+          isRemote: this.normalizeIsRemote(nav),
+          isHybrid: null,
+          isOnsite: null,
+          cities: this.normalizeLocations(nav),
+        },
+        contract: {
+          type: contractTypes,
+        },
+        salaryCoE,
+        salaryB2B,
+        hardTechnologyRequirements: this.normalizeRequiredSkills(nav),
+      } satisfies DeepPartial<TSchema>),
+    );
+  }
+
   private normalizeLocations(nav: JsonNavigator): string[] {
     const placesRaw = nav.getOptionalPath('location.places')?.value();
     const places = Array.isArray(placesRaw) ? placesRaw : [];
@@ -41,7 +96,7 @@ export class CleanerNfj extends AbstractCleaner {
     return 'month';
   }
 
-  private normalizeSeniorityLevel(nav: JsonNavigator): string {
+  private normalizeSeniority(nav: JsonNavigator): string {
     const seniorityNav = nav.getOptionalPath('seniority');
     if (!seniorityNav) return '';
     const parts = seniorityNav
@@ -106,55 +161,5 @@ export class CleanerNfj extends AbstractCleaner {
       currency: typeof currencyVal === 'string' ? currencyVal : '',
       unit: this.normalizeSalaryUnit(salaryNav),
     };
-  }
-
-  clean(listing: Record<string, unknown>) {
-    const nav = new JsonNavigator(listing);
-
-    const salaryCoE: DeepPartial<TSchema['salaryCoE']> = {};
-    const salaryB2B: DeepPartial<TSchema['salaryB2B']> = {};
-    const contractTypes: string[] = [];
-
-    const salaryNav = nav.getOptionalPath('salary');
-    if (salaryNav && typeof salaryNav.value() === 'object' && salaryNav.value() !== null) {
-      const salaryData = this.normalizeSalary(salaryNav);
-      const ct = this.normalizeContractType(salaryNav);
-      if (ct) contractTypes.push(ct);
-
-      if (ct === 'b2b/contractor') {
-        Object.assign(salaryB2B, salaryData);
-      } else if (ct === 'employment') {
-        Object.assign(salaryCoE, salaryData);
-      } else {
-        Object.assign(salaryCoE, salaryData);
-        Object.assign(salaryB2B, salaryData);
-      }
-    }
-
-    return merge(nullSchema(), {
-      employer: {
-        name: nav.getPath('name').toString(),
-      },
-      role: {
-        title: nav.getPath('title').toString(),
-        seniority: this.normalizeSeniority(this.normalizeSeniorityLevel(nav)),
-      },
-      workplace: {
-        isRemote: this.normalizeIsRemote(nav),
-        isHybrid: nav.getPath('workplaceType').toString().toLowerCase() === 'hybrid',
-        isOnsite: nav.getPath('workplaceType').toString().toLowerCase() === 'onsite',
-        cities: this.normalizeLocations(nav),
-      },
-      contract: {
-        type: contractTypes,
-      },
-      salaryCoE,
-      salaryB2B,
-      hardTechnologyRequirements: this.normalizeRequiredSkills(nav),
-    } satisfies DeepPartial<TSchema>);
-  }
-
-  strategy(): string {
-    return 'nfj';
   }
 }

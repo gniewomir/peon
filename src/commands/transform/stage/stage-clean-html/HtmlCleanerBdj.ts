@@ -1,12 +1,14 @@
-import { AbstractHtmlCleaner } from './AbstractHtmlCleaner.js';
+import { AbstractTransformation } from '../AbstractTransformation.js';
+import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
+import type { StrategySelector } from '../../../lib/types.js';
 
-export class HtmlCleanerBdj extends AbstractHtmlCleaner {
-  strategy(): string {
+export class HtmlCleanerBdj extends AbstractTransformation {
+  strategy(): StrategySelector {
     return 'bdj';
   }
 
-  clean(dirtyContent: string): string {
-    const $ = this.$(dirtyContent);
+  async transform(input: Map<Artifact, string>): Promise<string> {
+    const $ = this.toPreprocessedCheerio(KnownArtifactsEnum.RAW_JOB_HTML, input);
 
     $('.cookie-bar').remove();
     $('#main-menu').remove();

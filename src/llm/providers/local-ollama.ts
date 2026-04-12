@@ -1,6 +1,6 @@
 import { buildUserPrompt } from '../prompt.js';
 import { jsonSchema } from '../../schema/schema.js';
-import type { TModelInput, TLlmResponse } from '../types.js';
+import type { ModelInput, LlmResponse } from '../types.js';
 
 export type OllamaConfig = {
   host: string;
@@ -18,7 +18,7 @@ export async function ollamaResponse<OutputType>({
   input,
   model,
   config,
-}: TModelInput<OllamaConfig>): Promise<TLlmResponse<OutputType>> {
+}: ModelInput<OllamaConfig>): Promise<LlmResponse<OutputType>> {
   const res = await fetch(`${config.host}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

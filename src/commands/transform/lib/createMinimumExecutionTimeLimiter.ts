@@ -16,3 +16,5 @@ export function createMinimumExecutionTimeLimiter(minimumMs: number) {
     return result;
   };
 }
+
+export type MinimumExecutionTimeLimiter = ReturnType<typeof createMinimumExecutionTimeLimiter>;

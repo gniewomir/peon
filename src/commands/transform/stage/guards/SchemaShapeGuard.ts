@@ -5,9 +5,9 @@ import { GuardDecisionQuarantine } from './decisions/GuardDecisionQuarantine.js'
 import { GuardDecisionAdvance } from './decisions/GuardDecisionAdvance.js';
 
 export class SchemaShapeGuard extends AbstractGuard {
-  async guard(result: unknown): Promise<AbstractGuardDecision> {
+  async guard(result: string): Promise<AbstractGuardDecision> {
     try {
-      schema.parse(result);
+      schema.parse(JSON.parse(result));
       return new GuardDecisionAdvance('valid shape');
     } catch (error) {
       return new GuardDecisionQuarantine('invalid shape', { cause: error });

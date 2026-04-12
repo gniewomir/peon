@@ -1,19 +1,10 @@
 import { CleanJsonStage } from './stage-clean-job-json/CleanJsonStage.js';
-import { CleanerBdj } from './stage-clean-job-json/CleanerBdj.js';
-import { CleanerJji } from './stage-clean-job-json/CleanerJji.js';
-import { CleanerNfj } from './stage-clean-job-json/CleanerNfj.js';
 import { HtmlToMdStage } from './stage-html-to-md/HtmlToMdStage.js';
 import { LlmStage } from './stage-llm/LlmStage.js';
-import { HtmlCleanerBdj } from './stage-clean-html/HtmlCleanerBdj.js';
-import { HtmlCleanerJji } from './stage-clean-html/HtmlCleanerJji.js';
-import { HtmlCleanerNfj } from './stage-clean-html/HtmlCleanerNfj.js';
 import { CleanHtmlStage } from './stage-clean-html/CleanHtmlStage.js';
 import { StageOrchestrator } from './StageOrchestrator.js';
 import type { Logger } from '../../lib/logger.js';
 import { HtmlToJsonStage } from './stage-json-from-html/HtmlToJsonStage.js';
-import { HtmlToJsonExtractorNfj } from './stage-json-from-html/HtmlToJsonExtractorNfj.js';
-import { HtmlToJsonExtractorBdj } from './stage-json-from-html/HtmlToJsonExtractorBdj.js';
-import { HtmlToJsonExtractorJji } from './stage-json-from-html/HtmlToJsonExtractorJji.js';
 import { CleanMetaStage } from './stage-clean-meta/CleanMetaStage.js';
 
 export function createStageOrchestrator({
@@ -28,44 +19,42 @@ export function createStageOrchestrator({
     new HtmlToJsonStage({
       logger,
       stagingDir,
-      extractors: [
-        new HtmlToJsonExtractorJji(),
-        new HtmlToJsonExtractorBdj(),
-        new HtmlToJsonExtractorNfj(),
-      ],
+      transformations: HtmlToJsonStage.transformations(),
     }),
   );
   registry.register(
     new CleanMetaStage({
       logger,
       stagingDir,
-      cleaners: CleanMetaStage.cleaners(),
+      transformations: CleanMetaStage.transformations(),
     }),
   );
   registry.register(
     new CleanJsonStage({
       logger,
       stagingDir,
-      cleaners: [new CleanerJji(), new CleanerNfj(), new CleanerBdj()],
+      transformations: CleanJsonStage.transformations(),
     }),
   );
   registry.register(
     new CleanHtmlStage({
       logger,
       stagingDir,
-      cleaners: [new HtmlCleanerJji(), new HtmlCleanerNfj(), new HtmlCleanerBdj()],
+      transformations: CleanHtmlStage.transformations(),
     }),
   );
   registry.register(
     new HtmlToMdStage({
       logger,
       stagingDir,
+      transformations: HtmlToMdStage.transformations(),
     }),
   );
   registry.register(
     new LlmStage({
       logger,
       stagingDir,
+      transformations: LlmStage.transformations(),
     }),
   );
   return registry;

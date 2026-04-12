@@ -12,13 +12,19 @@ import type { JobJson } from './types.js';
 
 class HttpException extends Error {}
 
-async function runStrategy(
-  strategy: Strategy,
-  outDir: string,
-  cacheDir: string,
-  registry: ShutdownRegistry,
-  logger: Logger,
-): Promise<void> {
+async function runStrategy({
+  strategy,
+  stagingDir,
+  cacheDir,
+  registry,
+  logger,
+}: {
+  strategy: Strategy;
+  stagingDir: string;
+  cacheDir: string;
+  registry: ShutdownRegistry;
+  logger: Logger;
+}): Promise<void> {
   await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
     await using ctx = await browserContext(logger, registry);
     try {
@@ -75,7 +81,7 @@ async function runStrategy(
               }
 
               await strategy.save({
-                outDir,
+                outDir: stagingDir,
                 cached: cache.cacheFilePath(cacheKey),
                 job: job as JobJson,
                 url,
@@ -87,7 +93,7 @@ async function runStrategy(
             } catch (error) {
               strategy.stats.errors += 1;
               if (error instanceof HttpException) {
-                console.error(` ⚠️  Skipping because of error ${error.message}`);
+                logger.error(` ⚠️  Skipping because of error ${error.message}`);
                 return;
               }
 
@@ -112,13 +118,13 @@ async function runStrategy(
 }
 
 export async function runExtract({
-  outDir,
+  stagingDir,
   cacheDir,
   strategies,
   logger,
   registry,
 }: {
-  outDir: string;
+  stagingDir: string;
   cacheDir: string;
   strategies: Strategy[];
   logger: Logger;
@@ -127,7 +133,13 @@ export async function runExtract({
   try {
     await Promise.all(
       strategies.map(async (strategy) =>
-        runStrategy(strategy, outDir, cacheDir, registry, logger.withSuffix(strategy.slug)),
+        runStrategy({
+          strategy,
+          stagingDir,
+          cacheDir,
+          registry,
+          logger: logger.withSuffix(strategy.slug),
+        }),
       ),
     );
     logger.log(' ✅ All strategies finished successfully. Done');

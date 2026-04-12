@@ -1,18 +1,23 @@
-import { AbstractHtmlCleaner } from './AbstractHtmlCleaner.js';
+import { AbstractTransformation } from '../AbstractTransformation.js';
+import type { StrategySelector } from '../../../lib/types.js';
+import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
 
-export class HtmlCleanerNfj extends AbstractHtmlCleaner {
-  strategy(): string {
+export class HtmlCleanerNfj extends AbstractTransformation {
+  strategy(): StrategySelector {
     return 'nfj';
   }
 
-  clean(dirtyContent: string): string {
-    const $ = this.$(dirtyContent);
+  async transform(input: Map<Artifact, string>): Promise<string> {
+    const $ = this.toPreprocessedCheerio(KnownArtifactsEnum.RAW_JOB_HTML, input);
 
     const $content = $('common-posting-content-wrapper');
     const $sidebar = $('common-apply-box');
 
     $sidebar.remove('nfj-posting-similar');
 
-    return ($content.html() || '') + ($sidebar.html() || '');
+    let html = ($content.html() || '') + ($sidebar.html() || '');
+    html = html.replaceAll('<!---->', '');
+
+    return html;
   }
 }

@@ -1,10 +1,57 @@
-import { AbstractCleaner } from './AbstractCleaner.js';
 import { nullSchema, type TSchema } from '../../../../schema/schema.js';
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
 import { JsonNavigator } from '../../lib/JsonNavigator.js';
 import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
+import { normalizeSeniority } from '../lib/normalizeSeniority.js';
+import { AbstractTransformation } from '../AbstractTransformation.js';
+import type { StrategySelector } from '../../../lib/types.js';
+import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
 
-export class CleanerBdj extends AbstractCleaner {
+export class CleanerBdj extends AbstractTransformation {
+  strategy(): StrategySelector {
+    return 'bdj';
+  }
+
+  async transform(input: Map<Artifact, string>): Promise<string> {
+    const nav = new JsonNavigator(this.toJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
+
+    return this.toString(
+      merge(nullSchema(), {
+        employer: {
+          name: nav.getPath('company.name').toString(),
+          logo: nav.getPath('company.logo.url').toString(),
+        },
+        role: {
+          title: nav.getPath('position').toString(),
+          seniority: normalizeSeniority(nav.getPath('experienceLevel').toString()),
+        },
+        workplace: {
+          isRemote: nav.getPath('remote').toBool(),
+          cities: [nav.getPath('city').toString()],
+        },
+        contract: {
+          type: normalizeStringArray([
+            nav.getPath('contractB2b').toOptionalBool() ? 'b2b/contractor' : null,
+            nav.getPath('contractEmployment').toOptionalBool() ? 'employment' : null,
+            nav.getPath('contractOther').toOptionalBool() ? 'other' : null,
+          ]),
+        },
+        salaryCoE: nav.getPath('contractB2b').toOptionalBool()
+          ? this.normalizeSalary(nav)
+          : nullSchema().salaryCoE,
+        salaryB2B: nav.getPath('contractEmployment').toOptionalBool()
+          ? this.normalizeSalary(nav)
+          : nullSchema().salaryB2B,
+        hardTechnologyRequirements: normalizeStringArray(
+          nav
+            .getPath('technologyTags')
+            .toArray()
+            .map((t) => t.toString()),
+        ),
+      } satisfies DeepPartial<TSchema>),
+    );
+  }
+
   private normalizeSalary(nav: JsonNavigator): TSchema['salaryCoE'] {
     if (
       !nav.getOptionalPath('denominatedSalaryLong.money') ||
@@ -28,47 +75,5 @@ export class CleanerBdj extends AbstractCleaner {
       unit: 'month',
       currency: nav.getPath('denominatedSalaryLong.currency').toString(),
     };
-  }
-
-  clean(listing: Record<string, unknown>) {
-    const nav = new JsonNavigator(listing);
-
-    return merge(nullSchema(), {
-      employer: {
-        name: nav.getPath('company.name').toString(),
-        logo: nav.getPath('company.logo.url').toString(),
-      },
-      role: {
-        title: nav.getPath('position').toString(),
-        seniority: this.normalizeSeniority(nav.getPath('experienceLevel').toString()),
-      },
-      workplace: {
-        isRemote: nav.getPath('remote').toBool(),
-        cities: [nav.getPath('city').toString()],
-      },
-      contract: {
-        type: normalizeStringArray([
-          nav.getPath('contractB2b').toOptionalBool() ? 'b2b/contractor' : null,
-          nav.getPath('contractEmployment').toOptionalBool() ? 'employment' : null,
-          nav.getPath('contractOther').toOptionalBool() ? 'other' : null,
-        ]),
-      },
-      salaryCoE: nav.getPath('contractB2b').toOptionalBool()
-        ? this.normalizeSalary(nav)
-        : nullSchema().salaryCoE,
-      salaryB2B: nav.getPath('contractEmployment').toOptionalBool()
-        ? this.normalizeSalary(nav)
-        : nullSchema().salaryB2B,
-      hardTechnologyRequirements: normalizeStringArray(
-        nav
-          .getPath('technologyTags')
-          .toArray()
-          .map((t) => t.toString()),
-      ),
-    } satisfies DeepPartial<TSchema>);
-  }
-
-  strategy(): string {
-    return 'bdj';
   }
 }

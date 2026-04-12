@@ -5,9 +5,9 @@ import { GuardDecisionAdvance } from './decisions/GuardDecisionAdvance.js';
 import { qualityEstimator } from '../../lib/qualityEstimator.js';
 
 export class SchemaQualityGuard extends AbstractGuard {
-  async guard(result: unknown): Promise<AbstractGuardDecision> {
+  async guard(result: string): Promise<AbstractGuardDecision> {
     try {
-      const quality = qualityEstimator(result);
+      const quality = qualityEstimator(JSON.parse(result));
       if (quality > 0.5) {
         return new GuardDecisionAdvance('quality above 0.5');
       } else {

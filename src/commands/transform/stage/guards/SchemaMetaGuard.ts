@@ -5,9 +5,9 @@ import { GuardDecisionAdvance } from './decisions/GuardDecisionAdvance.js';
 import { metaSchema } from '../../../../schema/schema.meta.js';
 
 export class SchemaMetaGuard extends AbstractGuard {
-  async guard(result: unknown): Promise<AbstractGuardDecision> {
+  async guard(result: string): Promise<AbstractGuardDecision> {
     try {
-      metaSchema.parse(result);
+      metaSchema.parse(JSON.parse(result));
       return new GuardDecisionAdvance('valid shape');
     } catch (error) {
       return new GuardDecisionQuarantine('invalid shape', { cause: error });

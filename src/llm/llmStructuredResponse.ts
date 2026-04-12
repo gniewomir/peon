@@ -1,4 +1,4 @@
-import type { TLlmInput, TLlmResponse, TModelInput } from './types.js';
+import type { LlmInput, LlmResponse, ModelInput } from './types.js';
 import { googleResponse } from './providers/cloud-gemini.js';
 import { type OllamaConfig, ollamaResponse } from './providers/local-ollama.js';
 import type { GenerateContentConfig } from '@google/genai';
@@ -13,7 +13,7 @@ const llmFallbackModel = process.env.LLM_DEFAULT_MODEL || 'qwen2.5:7b';
 export function llmStructuredResponse<OutputType>({
   fallback = false,
   input,
-}: TLlmInput): Promise<TLlmResponse<OutputType>> {
+}: LlmInput): Promise<LlmResponse<OutputType>> {
   if (
     (!fallback && llmDefaultProvider === 'local-ollama') ||
     (fallback && llmFallbackProvider === 'local-ollama')
@@ -32,7 +32,7 @@ export function llmStructuredResponse<OutputType>({
         },
         prompt: buildUserPrompt(input),
       },
-    } satisfies TModelInput<OllamaConfig>);
+    } satisfies ModelInput<OllamaConfig>);
   }
   if (
     (!fallback && llmDefaultProvider === 'cloud-google') ||
@@ -47,7 +47,7 @@ export function llmStructuredResponse<OutputType>({
         responseMimeType: 'application/json',
         responseJsonSchema: jsonSchema,
       },
-    } satisfies TModelInput<GenerateContentConfig>);
+    } satisfies ModelInput<GenerateContentConfig>);
   }
   throw new Error(`Unsupported provider ${llmDefaultProvider}`);
 }

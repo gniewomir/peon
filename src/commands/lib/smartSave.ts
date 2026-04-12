@@ -2,13 +2,15 @@ import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 
 import type { Logger } from './logger.js';
+import assert from 'node:assert';
 
 export async function smartSave(
   filePath: string,
-  content: Record<string, unknown> | unknown[] | string,
+  content: unknown,
   force: boolean,
   logger: Logger,
 ): Promise<boolean> {
+  assert(typeof content === 'string' || typeof content === 'object', 'Expected string or object!');
   const newContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
 
   if (!force) {
