@@ -1,6 +1,6 @@
 import { AbstractTransformation } from '../AbstractTransformation.js';
 import { convert } from '@kreuzberg/html-to-markdown-node';
-import type { StrategySelector } from '../../../lib/types.js';
+import type { StrategySelector } from '../../../../lib/types.js';
 import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
 
 export class HtmlToMarkdownConverter extends AbstractTransformation {

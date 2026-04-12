@@ -1,7 +1,7 @@
 import type { Logger } from '../../lib/logger.js';
 import type { CacheOperations } from '../lib/cache.js';
 import type { JobJson, Listing } from '../types.js';
-import type { KnownStrategy } from '../../lib/types.js';
+import type { KnownStrategy } from '../../../lib/types.js';
 import type { GoToOptions } from 'puppeteer-core';
 
 export interface StrategySaveOptions {

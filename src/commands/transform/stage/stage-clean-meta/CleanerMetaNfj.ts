@@ -1,7 +1,7 @@
 import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
 import { metaSchema, type TMetaSchema } from '../../../../schema/schema.meta.js';
 import { AbstractTransformation } from '../AbstractTransformation.js';
-import type { StrategySelector } from '../../../lib/types.js';
+import type { StrategySelector } from '../../../../lib/types.js';
 import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
 import { JsonNavigator } from '../../lib/JsonNavigator.js';
 import assert from 'node:assert';

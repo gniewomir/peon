@@ -6,7 +6,7 @@ import type { Logger } from '../../lib/logger.js';
 import type { Strategy, StrategySaveOptions, StrategyStats } from './types.js';
 import type { JobJson, Listing } from '../types.js';
 import type { CacheOperations } from '../lib/cache.js';
-import type { KnownStrategy } from '../../lib/types.js';
+import type { KnownStrategy } from '../../../lib/types.js';
 import type { GoToOptions } from 'puppeteer-core';
 
 function createBaseStats(): StrategyStats {

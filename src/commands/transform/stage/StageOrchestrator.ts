@@ -102,7 +102,7 @@ export class StageOrchestrator {
           stage: stage.name(),
         });
         this.quarantine(jobDir);
-        this.logger.warn(
+        this.logger.error(
           `guard: Quarantined ${stripRoot(jobDir)} because of "${decision.message}"`,
         );
         return;

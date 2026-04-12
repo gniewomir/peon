@@ -5,8 +5,8 @@ import { parseListingResponse } from './listing-parser.js';
 import type { Logger } from '../../../lib/logger.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
-import type { KnownStrategy } from '../../../lib/types.js';
-import { slugifyWtPolishTransliteration } from '../../../lib/slugifyWtPolishTransliteration.js';
+import type { KnownStrategy } from '../../../../lib/types.js';
+import { slugifyWtPolishTransliteration } from '../../lib/slugifyWtPolishTransliteration.js';
 import type { GoToOptions } from 'puppeteer';
 
 interface NFJListing extends Listing {

@@ -12,7 +12,3 @@ export function isStrategySlug(val: unknown): val is KnownStrategy {
   }
   return Object.keys(strategyRegister).includes(val);
 }
-
-export function knownStrategies(): KnownStrategy[] {
-  return Object.keys(strategyRegister) as unknown as KnownStrategy[];
-}

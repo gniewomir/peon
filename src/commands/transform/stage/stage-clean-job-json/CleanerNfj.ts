@@ -5,7 +5,7 @@ import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
 import { normalizeSeniority } from '../lib/normalizeSeniority.js';
 import { AbstractTransformation } from '../AbstractTransformation.js';
 import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
-import type { StrategySelector } from '../../../lib/types.js';
+import type { StrategySelector } from '../../../../lib/types.js';
 
 export class CleanerNfj extends AbstractTransformation {
   strategy(): StrategySelector {

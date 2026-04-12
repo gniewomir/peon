@@ -4,7 +4,7 @@ import { JsonNavigator } from '../../lib/JsonNavigator.js';
 import { normalizeStringArray } from '../../lib/normalizeStringArray.js';
 import { normalizeSeniority } from '../lib/normalizeSeniority.js';
 import { AbstractTransformation } from '../AbstractTransformation.js';
-import type { StrategySelector } from '../../../lib/types.js';
+import type { StrategySelector } from '../../../../lib/types.js';
 import { type Artifact, KnownArtifactsEnum } from '../../artifacts.js';
 
 export class CleanerJji extends AbstractTransformation {

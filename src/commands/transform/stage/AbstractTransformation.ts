@@ -2,7 +2,7 @@ import type { Artifact } from '../artifacts.js';
 import type { CheerioAPI } from 'cheerio';
 import * as cheerio from 'cheerio';
 import assert from 'node:assert';
-import type { StrategySelector } from '../../lib/types.js';
+import type { StrategySelector } from '../../../lib/types.js';
 
 export interface Transformation {
   strategy(): StrategySelector;

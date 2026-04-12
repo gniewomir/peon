@@ -4,7 +4,7 @@ import { rootPath } from '../../lib/root.js';
 import { runExtract } from './run.js';
 import { type Logger, loggerContext } from '../lib/logger.js';
 import { createShutdownRegistry } from './lib/shutdown.js';
-import { isStrategySlug } from '../lib/types.js';
+import { isStrategySlug } from '../../lib/types.js';
 import assert from 'node:assert';
 import type { Strategy } from './strategy/types.js';
 import { BdjStrategy } from './strategy/bdj/BdjStrategy.js';
