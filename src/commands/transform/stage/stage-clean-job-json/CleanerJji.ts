@@ -72,9 +72,7 @@ export class CleanerJji extends AbstractTransformation {
     };
   }
 
-  private normalizeNiceToHaveSkills(
-    entry: JsonNavigator,
-  ): TSchema['optionalTechnologyRequirements'] {
+  private normalizeNiceToHaveSkills(entry: JsonNavigator): TSchema['optTechnology'] {
     const skills = entry.getPath('niceToHaveSkills').toOptionalArray();
     return normalizeStringArray(skills.map((n) => n.toString()));
   }
@@ -82,27 +80,27 @@ export class CleanerJji extends AbstractTransformation {
   private normalizeSkills(
     entry: JsonNavigator,
     requiredThreshold: number = 2,
-  ): DeepPartial<Pick<TSchema, 'hardTechnologyRequirements' | 'optionalTechnologyRequirements'>> {
+  ): DeepPartial<Pick<TSchema, 'reqTechnology' | 'optTechnology'>> {
     if (!entry.getOptionalPath('requiredSkills')) return {};
     const skills = entry.getPath('requiredSkills').toOptionalArray();
     if (skills.length === 0)
       return {
-        optionalTechnologyRequirements: this.normalizeNiceToHaveSkills(entry),
+        optTechnology: this.normalizeNiceToHaveSkills(entry),
       };
     if (skills.map((nav) => typeof nav.value() === 'string').every(Boolean)) {
       return {
-        hardTechnologyRequirements: normalizeStringArray(skills.map((nav) => nav.toString())),
-        optionalTechnologyRequirements: this.normalizeNiceToHaveSkills(entry),
+        reqTechnology: normalizeStringArray(skills.map((nav) => nav.toString())),
+        optTechnology: this.normalizeNiceToHaveSkills(entry),
       };
     }
     if (skills.map((nav) => typeof nav.value() === 'object').every(Boolean)) {
       return {
-        hardTechnologyRequirements: normalizeStringArray(
+        reqTechnology: normalizeStringArray(
           skills
             .filter((nav) => nav.getPath('level').toNumber() > requiredThreshold)
             .map((nav) => nav.getPath('name').toString()),
         ),
-        optionalTechnologyRequirements: normalizeStringArray([
+        optTechnology: normalizeStringArray([
           ...this.normalizeNiceToHaveSkills(entry),
           skills
             .filter((nav) => nav.getPath('level').toNumber() <= requiredThreshold)
@@ -111,7 +109,7 @@ export class CleanerJji extends AbstractTransformation {
       };
     }
     return {
-      optionalTechnologyRequirements: this.normalizeNiceToHaveSkills(entry),
+      optTechnology: this.normalizeNiceToHaveSkills(entry),
     };
   }
 }

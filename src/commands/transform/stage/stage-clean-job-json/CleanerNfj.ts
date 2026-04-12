@@ -55,7 +55,7 @@ export class CleanerNfj extends AbstractTransformation {
         },
         salaryCoE,
         salaryB2B,
-        hardTechnologyRequirements: this.normalizeRequiredSkills(nav),
+        reqTechnology: this.normalizeRequiredSkills(nav),
       } satisfies DeepPartial<TSchema>),
     );
   }

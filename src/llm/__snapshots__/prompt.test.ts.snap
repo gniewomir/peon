@@ -18,6 +18,7 @@ Field guidance:
 
 employer:
 - name (string, nullable): Employer name
+- url (string, nullable): Employer website URL
 - type (string, nullable): Employer company type
 - logo (string, nullable): Employer logo URL
 
@@ -58,17 +59,17 @@ benefits:
 - multisport (boolean, nullable): Whether sports card benefit is provided
 
 top-level:
-- naturalLanguages (array): Required natural languages (always add English, if input is in English)
-- hardTechnologyRequirements (array): Required technologies and tools
-- optionalTechnologyRequirements (array): Optional or nice-to-have technologies and tools
-- hardSkills (array): Required hard technical skills
-- softSkills (array): Required soft skills
+- languages (array): Required natural languages (always add English, if input is in English)
+- reqTechnology (array): Required languages, technologies and tools
+- optTechnology (array): Optional/nice-to-have languages, technologies and tools
+- techSkills (array): Required technical skills (without languages, technologies and tools)
+- softSkills (array): Required soft, people, management skills
 
-technicalEnvironment:
+techEnv:
 - aiFirst (boolean, nullable): Whether AI-native tooling is expected in day-to-day work
 - aiFriendly (boolean, nullable): Whether AI tooling familiarity is a plus
 - ddd (boolean, nullable): Whether Domain-Driven Design is used or expected
-- testFirst (boolean, nullable): Whether testing-first practices are emphasized
-- architecture (string, nullable): System architecture style (lamda/edge, if Vercel is a requirement)
+- tdd (boolean, nullable): Whether test first approach or TDD is expected
+- architecture (string, nullable): System architecture style (always lambda/edge when Vercel is a requirement)
 - stage (string, nullable): System lifecycle stage"
 `;

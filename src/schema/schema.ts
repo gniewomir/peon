@@ -5,6 +5,7 @@ export const schemaObject = {
   employer: sNamespace(
     {
       name: sString('Employer name'),
+      url: sString('Employer website URL'),
       type: sEnum(
         ['startup', 'scaleup', 'corporation', 'outsourcing agency', 'software house'],
         'Employer company type',
@@ -23,11 +24,12 @@ export const schemaObject = {
           'regular',
           'senior',
           'expert',
-          'architect',
           'staff',
           'principal',
           'lead',
+          'head',
           'management',
+          'c-level',
         ],
         'Role seniority',
       ),
@@ -36,11 +38,15 @@ export const schemaObject = {
           'backend',
           'frontend',
           'fullstack',
+          'embedded',
           'DevOps',
           'security',
           'mobile',
           'design',
           'testing',
+          'analyst',
+          'architect',
+          'researcher',
           'management',
         ],
         'Primary role focus',
@@ -99,22 +105,22 @@ export const schemaObject = {
     },
     'Benefits',
   ),
-  naturalLanguages: sStringArray(
+  languages: sStringArray(
     'Required natural languages (always add English, if input is in English)',
   ),
-  hardTechnologyRequirements: sStringArray('Required technologies and tools'),
-  optionalTechnologyRequirements: sStringArray('Optional or nice-to-have technologies and tools'),
-  hardSkills: sStringArray('Required hard technical skills'),
-  softSkills: sStringArray('Required soft skills'),
-  technicalEnvironment: sNamespace(
+  reqTechnology: sStringArray('Required languages, technologies and tools '),
+  optTechnology: sStringArray('Optional/nice-to-have languages, technologies and tools'),
+  techSkills: sStringArray('Required technical skills (without languages, technologies and tools)'),
+  softSkills: sStringArray('Required soft, people, management skills'),
+  techEnv: sNamespace(
     {
       aiFirst: sBool('Whether AI-native tooling is expected in day-to-day work'),
       aiFriendly: sBool('Whether AI tooling familiarity is a plus'),
       ddd: sBool('Whether Domain-Driven Design is used or expected'),
-      testFirst: sBool('Whether testing-first practices are emphasized'),
+      tdd: sBool('Whether test first approach or TDD is expected '),
       architecture: sEnum(
-        ['monolith', 'microservices', 'embedded', 'lambda/edge'],
-        'System architecture style (lamda/edge, if Vercel is a requirement)',
+        ['legacy', 'monolith', 'microservices', 'embedded', 'lambda/edge'],
+        'System architecture style (always lambda/edge when Vercel is a requirement)',
       ),
       stage: sEnum(['greenfield', 'mature', 'legacy'], 'System lifecycle stage'),
     },
@@ -134,7 +140,7 @@ Rules:
 export type TSchema = z.infer<typeof schema>;
 export const jsonSchema = toJSONSchema(schema, { target: 'draft-07' });
 export const nullSchema = (): TSchema => ({
-  employer: { name: null, logo: null, type: null },
+  employer: { name: null, logo: null, type: null, url: null },
   role: {
     title: null,
     seniority: null,
@@ -171,16 +177,16 @@ export const nullSchema = (): TSchema => ({
     bonus: null,
     multisport: null,
   },
-  naturalLanguages: [],
-  hardTechnologyRequirements: [],
-  optionalTechnologyRequirements: [],
-  hardSkills: [],
+  languages: [],
+  reqTechnology: [],
+  optTechnology: [],
+  techSkills: [],
   softSkills: [],
-  technicalEnvironment: {
+  techEnv: {
     aiFirst: null,
     aiFriendly: null,
     ddd: null,
-    testFirst: null,
+    tdd: null,
     architecture: null,
     stage: null,
   },

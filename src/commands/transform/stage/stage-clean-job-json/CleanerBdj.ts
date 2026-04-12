@@ -42,7 +42,7 @@ export class CleanerBdj extends AbstractTransformation {
         salaryB2B: nav.getPath('contractEmployment').toOptionalBool()
           ? this.normalizeSalary(nav)
           : nullSchema().salaryB2B,
-        hardTechnologyRequirements: normalizeStringArray(
+        reqTechnology: normalizeStringArray(
           nav
             .getPath('technologyTags')
             .toArray()
