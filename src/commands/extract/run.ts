@@ -40,7 +40,7 @@ async function runStrategy({
 
               let content: string;
 
-              if (cache.hasCacheKey(cacheKey, logger)) {
+              if (await cache.hasCacheKey(cacheKey, logger)) {
                 content = await cache.readCache(cacheKey, logger);
                 strategy.stats.cache_hit += 1;
               } else {

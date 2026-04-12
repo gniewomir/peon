@@ -1,4 +1,3 @@
-import * as fsSync from 'node:fs';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import * as crypto from 'node:crypto';
@@ -44,14 +43,24 @@ export function createCacheOperations(root: string): CacheOperations {
       return path.resolve(cacheKeyToPath(key, basePath));
     },
 
-    hasCacheKey(key: string, logger: Logger): boolean {
+    async hasCacheKey(key: string, logger: Logger): Promise<boolean> {
       const cachePath = cacheKeyToPath(key, basePath);
-      if (fsSync.existsSync(cachePath)) {
-        logger.log(` 🎯 Cache hit! ${relativeCachePath(cachePath, basePath)}`);
+      try {
+        await fs.access(cachePath);
+        logger.debug(` 🎯 Cache hit! ${relativeCachePath(cachePath, basePath)}`);
         return true;
+      } catch (err: unknown) {
+        if (
+          err &&
+          typeof err === 'object' &&
+          'code' in err &&
+          (err as NodeJS.ErrnoException).code !== 'ENOENT'
+        ) {
+          throw err;
+        }
+        logger.debug(` ❌ Cache miss! ${relativeCachePath(cachePath, basePath)}`);
+        return false;
       }
-      logger.log(` ❌ Cache miss! ${relativeCachePath(cachePath, basePath)}`);
-      return false;
     },
 
     async writeCache(key: string, content: string, logger: Logger): Promise<boolean> {
@@ -60,7 +69,7 @@ export function createCacheOperations(root: string): CacheOperations {
 
     readCache(key: string, logger: Logger): Promise<string> {
       const cachePath = cacheKeyToPath(key, basePath);
-      logger.log(` 📖 reading cache ${relativeCachePath(cachePath, basePath)}`);
+      logger.debug(` 📖 reading cache ${relativeCachePath(cachePath, basePath)}`);
       return fs.readFile(cachePath, { encoding: 'utf8' });
     },
 
@@ -79,7 +88,7 @@ export function cacheContext(root: string): CacheContext {
 export interface CacheOperations {
   /** Absolute filesystem path for the cache file for this key. */
   cacheFilePath(key: string): string;
-  hasCacheKey(key: string, logger: Logger): boolean;
+  hasCacheKey(key: string, logger: Logger): Promise<boolean>;
   readCache(key: string, logger: Logger): Promise<string>;
   writeCache(key: string, content: string, logger: Logger): Promise<boolean>;
   dailyCacheKey(str: string): string;

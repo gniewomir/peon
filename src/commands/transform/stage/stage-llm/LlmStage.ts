@@ -21,7 +21,13 @@ export class LlmStage extends AbstractStage {
    *       to keep the laptop from running fans at 100% and throttling anyway
    *       when running local LLM
    */
-  constructor(args: { logger: Logger; stagingDir: string; transformations: Transformation[] }) {
+  constructor(args: {
+    logger: Logger;
+    stagingDir: string;
+    trashDir: string;
+    loadDir: string;
+    transformations: Transformation[];
+  }) {
     super(args);
     this.concurrencyLimiter = createConcurrencyLimiter(1);
     this.minimumExecutionTimeLimiter = createMinimumExecutionTimeLimiter(1000 * 60);

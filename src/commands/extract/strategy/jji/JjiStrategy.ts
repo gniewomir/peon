@@ -42,7 +42,7 @@ export class JjiStrategy extends AbstractStrategy {
       const cacheKey = cache.dailyCacheKey(url);
 
       let jsonText: string;
-      if (cache.hasCacheKey(cacheKey, logger)) {
+      if (await cache.hasCacheKey(cacheKey, logger)) {
         jsonText = await cache.readCache(cacheKey, logger);
       } else {
         const response = await fetch(url, {

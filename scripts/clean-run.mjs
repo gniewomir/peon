@@ -53,7 +53,7 @@ async function cleanRun() {
   await run("npm", ["run", "overkill"]);
 
   console.log("--- stage:clear ---");
-  await run("npm", ["run", "stage:clear"]);
+  await run("npm", ["run", "quarantine:clear"]);
 
   console.log("--- extract + transform (parallel) ---");
   await runParallel([

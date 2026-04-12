@@ -45,7 +45,7 @@ export class BdjStrategy extends AbstractStrategy {
 
       const cacheKey = cache.dailyCacheKey(url);
       let html: string;
-      if (cache.hasCacheKey(cacheKey, logger)) {
+      if (await cache.hasCacheKey(cacheKey, logger)) {
         html = await cache.readCache(cacheKey, logger);
       } else {
         const response = await fetch(url, {

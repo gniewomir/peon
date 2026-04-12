@@ -1,12 +1,16 @@
 import { readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { existsSync } from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataDir = path.resolve(__dirname, "..", "data");
 
 async function cleanAllDataDirectories() {
+  if (!existsSync(dataDir)) {
+    return;
+  }
   const entries = await readdir(dataDir, { withFileTypes: true });
 
   const directoriesToRemove = entries

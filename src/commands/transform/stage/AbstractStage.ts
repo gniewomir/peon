@@ -1,5 +1,5 @@
 import type { StagingFileEvent } from '../types.js';
-import path, { dirname } from 'node:path';
+import path, { basename, dirname } from 'node:path';
 import { constants } from 'node:fs';
 import { stripRoot } from '../../../lib/root.js';
 import type { AbstractGuard } from './guards/AbstractGuard.js';
@@ -18,14 +18,20 @@ export abstract class AbstractStage {
   protected readonly transformations = new Map<string, Transformation>();
   protected logger;
   protected stagingDir;
+  protected loadDir;
+  protected trashDir;
 
   constructor({
     logger,
     stagingDir,
+    trashDir,
+    loadDir,
     transformations,
   }: {
     logger: Logger;
     stagingDir: string;
+    trashDir: string;
+    loadDir: string;
     transformations: Transformation[];
   }) {
     for (const transformation of transformations) {
@@ -33,6 +39,8 @@ export abstract class AbstractStage {
     }
     this.logger = logger.withSuffix(this.name());
     this.stagingDir = stagingDir;
+    this.loadDir = loadDir;
+    this.trashDir = trashDir;
   }
 
   public name(): string {
@@ -40,7 +48,7 @@ export abstract class AbstractStage {
   }
 
   public async run(event: StagingFileEvent): Promise<AbstractGuardDecision> {
-    const jobDir = dirname(event.payload);
+    const jobDir = path.resolve(dirname(event.payload));
     try {
       if (!(await this.preconditionsMeet(event)))
         return new GuardDecisionAdvance('advance until preconditions met');
@@ -78,6 +86,7 @@ export abstract class AbstractStage {
 
   protected async preconditionsMeet(event: StagingFileEvent): Promise<boolean> {
     const stagedJobDir = dirname(event.payload);
+    const trashedJobDir = path.join(this.trashDir, basename(event.payload));
 
     if (event.type !== 'add' && event.type !== 'change') {
       this.logger.warn(`stage preconditions: unsupported event type '${event.type}'`);
@@ -87,6 +96,10 @@ export abstract class AbstractStage {
       this.logger.debug(
         `stage preconditions: job directory does not exist '${stripRoot(stagedJobDir)}'`,
       );
+      return false;
+    }
+    if (await this.pathExists(trashedJobDir)) {
+      this.logger.debug(`stage preconditions: job was trashed '${stripRoot(stagedJobDir)}'`);
       return false;
     }
 

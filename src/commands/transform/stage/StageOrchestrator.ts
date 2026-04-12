@@ -23,24 +23,32 @@ export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
   private readonly directoryQueues = new HashMap<Promise<unknown>>();
   private listening = true;
-  private readonly loadDir;
+  private readonly stagingDir;
   private readonly quarantineDir;
   private readonly trashDir;
+  private readonly loadDir;
   private readonly logger;
 
   constructor({
     logger,
     stagingDir,
+    quarantineDir,
+    trashDir,
+    loadDir,
     stages,
   }: {
     logger: Logger;
     stagingDir: string;
+    quarantineDir: string;
+    trashDir: string;
+    loadDir: string;
     stages: AbstractStage[];
   }) {
     this.logger = logger.withSuffix('orchestrator');
-    this.loadDir = path.join(dirname(stagingDir), 'load');
-    this.quarantineDir = path.join(dirname(stagingDir), 'quarantine');
-    this.trashDir = path.join(dirname(stagingDir), 'trash');
+    this.stagingDir = stagingDir;
+    this.quarantineDir = quarantineDir;
+    this.trashDir = trashDir;
+    this.loadDir = loadDir;
     stages.forEach((stage) => {
       this.stages.set(stage.name(), stage);
     });
@@ -119,10 +127,7 @@ export class StageOrchestrator {
   }
 
   private quarantine(jobDir: string) {
-    const quarantinedJobDir = path.join(
-      this.quarantineDir,
-      `${path.basename(jobDir)}-${Date.now()}`,
-    );
+    const quarantinedJobDir = path.join(this.quarantineDir, path.basename(jobDir));
     if (existsSync(quarantinedJobDir)) {
       rmdirSync(quarantinedJobDir, { recursive: true });
     }
@@ -137,7 +142,7 @@ export class StageOrchestrator {
   }
 
   private trash(jobDir: string) {
-    const trashedJobDir = path.join(this.trashDir, `${path.basename(jobDir)}-${Date.now()}`);
+    const trashedJobDir = path.join(this.trashDir, path.basename(jobDir));
     if (existsSync(trashedJobDir)) {
       rmdirSync(trashedJobDir, { recursive: true });
     }
@@ -152,7 +157,7 @@ export class StageOrchestrator {
   }
 
   private load(jobDir: string) {
-    const loadedJobDir = path.join(this.loadDir, `${path.basename(jobDir)}}`);
+    const loadedJobDir = path.join(this.loadDir, path.basename(jobDir));
     if (existsSync(loadedJobDir)) {
       rmdirSync(loadedJobDir, { recursive: true });
     }
@@ -177,11 +182,13 @@ export class StageOrchestrator {
     event: StagingFileEvent;
     stage: string;
   }) {
-    writeFileSync(
-      jobErrorPath,
-      JSON.stringify(this.parseError(error, event, stage), null, 2),
-      'utf8',
-    );
+    const content = JSON.stringify(this.parseError(error, event, stage), null, 2);
+    try {
+      writeFileSync(jobErrorPath, content, 'utf8');
+    } catch (saveError) {
+      this.logger.error('Error during saving error file:', saveError);
+      this.logger.warn('Previous error', error);
+    }
   }
 
   private parseError(

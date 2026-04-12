@@ -13,9 +13,15 @@ import { LlmStage } from './stage/stage-llm/LlmStage.js';
 
 export async function runTransform({
   stagingDir,
+  quarantineDir,
+  trashDir,
+  loadDir,
   logger,
 }: {
   stagingDir: string;
+  quarantineDir: string;
+  trashDir: string;
+  loadDir: string;
   logger: Logger;
 }): Promise<void> {
   let shuttingDown = false;
@@ -23,35 +29,50 @@ export async function runTransform({
   const orchestrator = new StageOrchestrator({
     logger,
     stagingDir,
+    quarantineDir,
+    trashDir,
+    loadDir,
     stages: [
       new CleanJsonStage({
         logger,
         stagingDir,
+        trashDir,
+        loadDir,
         transformations: CleanJsonStage.transformations(),
       }),
       new HtmlToJsonStage({
         logger,
         stagingDir,
+        trashDir,
+        loadDir,
         transformations: HtmlToJsonStage.transformations(),
       }),
       new CleanMetaStage({
         logger,
         stagingDir,
+        trashDir,
+        loadDir,
         transformations: CleanMetaStage.transformations(),
       }),
       new CleanHtmlStage({
         logger,
         stagingDir,
+        trashDir,
+        loadDir,
         transformations: CleanHtmlStage.transformations(),
       }),
       new HtmlToMdStage({
         logger,
         stagingDir,
+        trashDir,
+        loadDir,
         transformations: HtmlToMdStage.transformations(),
       }),
       new LlmStage({
         logger,
         stagingDir,
+        trashDir,
+        loadDir,
         transformations: LlmStage.transformations(),
       }),
     ],

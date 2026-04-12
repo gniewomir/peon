@@ -17,7 +17,7 @@ export async function smartSave(
     try {
       const existing = await fs.readFile(filePath, 'utf8');
       if (existing === newContent) {
-        logger.log(
+        logger.debug(
           ` 🚬 file content unchanged, skipping write: ${path.relative(process.cwd(), filePath)}`,
         );
         return false;
@@ -29,6 +29,6 @@ export async function smartSave(
 
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, newContent, 'utf8');
-  logger.log(` 💾 Saved file ${path.relative(process.cwd(), filePath)}`);
+  logger.debug(` 💾 Saved file ${path.relative(process.cwd(), filePath)}`);
   return true;
 }
