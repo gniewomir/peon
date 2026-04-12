@@ -37,7 +37,9 @@ export function registerTransformCommand(program: Command): void {
         await withLogger((logger: Logger) =>
           runTransform({
             stagingDir: path.resolve(opts.dir ?? path.join(root, defaultStagingDir)),
-            quarantineDir: path.resolve(opts.quarantineDir ?? path.join(root, defaultStagingDir)),
+            quarantineDir: path.resolve(
+              opts.quarantineDir ?? path.join(root, defaultQuarantineDir),
+            ),
             trashDir: path.resolve(opts.trashDir ?? path.join(root, defaultTrashDir)),
             loadDir: path.resolve(opts.loadDir ?? path.join(root, defaultLoadDir)),
             logger,
