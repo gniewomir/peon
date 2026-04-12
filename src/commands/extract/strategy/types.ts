@@ -13,20 +13,8 @@ export interface StrategySaveOptions {
   logger: Logger;
 }
 
-export interface StrategyStats {
-  listings_processed: number;
-  job_processed: number;
-  cache_hit: number;
-  cache_miss: number;
-  cache_writes: number;
-  unique: number;
-  writes: number;
-  errors: number;
-}
-
 export interface Strategy {
   slug: KnownStrategy;
-  stats: StrategyStats;
   ids: Set<string>;
   pageOpenOptions(): GoToOptions;
   jobListingsGenerator(): AsyncGenerator<Listing>;

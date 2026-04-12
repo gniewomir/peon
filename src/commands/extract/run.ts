@@ -41,7 +41,6 @@ async function runStrategy({
 
               if (await cache.hasCacheKey(cacheKey, logger)) {
                 content = await cache.readCache(cacheKey, logger);
-                strategy.stats.cache_hit += 1;
               } else {
                 logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
                 await using ctx = await pageContext(browser);
@@ -66,10 +65,7 @@ async function runStrategy({
                   throw new HttpException(` ⚠️  No <body> for ${url};`);
                 }
 
-                if (await cache.writeCache(cacheKey, content, logger)) {
-                  strategy.stats.cache_writes += 1;
-                }
-                strategy.stats.cache_miss += 1;
+                await cache.writeCache(cacheKey, content, logger);
 
                 const wait = getRandomNumber(1000, 5000);
                 logger.log(` 🕒 Waiting for ${Math.round(wait / 1000)}s`);
@@ -84,10 +80,7 @@ async function runStrategy({
                 content,
                 logger,
               });
-
-              strategy.stats.writes += 1;
             } catch (error) {
-              strategy.stats.errors += 1;
               if (error instanceof HttpException) {
                 logger.error(` ⚠️  Skipping because of error ${error.message}`);
                 return;
@@ -96,19 +89,12 @@ async function runStrategy({
               throw error;
             }
           });
-
-          strategy.stats.job_processed += 1;
         }
-
-        strategy.stats.unique = strategy.ids.size;
-        strategy.stats.listings_processed += 1;
       }
       logger.log(` ✅ Strategy ${strategy.slug} completed successfully. Done`);
     } catch (error) {
       logger.error(` ⚠️  Strategy ${strategy.slug} error:`, error);
       throw error;
-    } finally {
-      logger.log(` ℹ️  Stats for ${strategy.slug} ${JSON.stringify(strategy.stats)}`);
     }
   });
 }
@@ -142,9 +128,5 @@ export async function runExtract({
   } catch (error) {
     logger.error(' ⚠️  Strategy error forced process termination.', error);
     throw error;
-  } finally {
-    strategies.forEach((strategy) => {
-      logger.log(` 🔧 stats for ${strategy.slug} ${JSON.stringify(strategy.stats)}`);
-    });
   }
 }
