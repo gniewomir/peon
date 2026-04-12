@@ -35,6 +35,7 @@ export abstract class AbstractTransformation implements Transformation {
     assert(content, 'No input for artifact');
     content = content.replaceAll('<!-- -->', '');
     content = content.replaceAll('<!---->', '');
+    content = content.replaceAll('<!--$-->', '');
     return cheerio.load(content);
   }
 

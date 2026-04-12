@@ -14,6 +14,7 @@ export class HtmlCleanerNfj extends AbstractTransformation {
     const $sidebar = $('common-apply-box');
 
     $sidebar.remove('nfj-posting-similar');
+    $sidebar.remove('common-salary-match-inspect');
 
     $('*').each(function () {
       const $this = $(this);

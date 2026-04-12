@@ -83,7 +83,7 @@ export class StageOrchestrator {
         });
         this.directoryMutex.delete(jobDir);
         this.trash(jobDir);
-        this.logger.warn(`guard: Trashed ${stripRoot(jobDir)}`);
+        this.logger.warn(`guard: Trashed ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
       }
 
@@ -96,14 +96,16 @@ export class StageOrchestrator {
         });
         this.directoryMutex.delete(jobDir);
         this.quarantine(jobDir);
-        this.logger.warn(`guard: Quarantined ${stripRoot(jobDir)}`);
+        this.logger.warn(
+          `guard: Quarantined ${stripRoot(jobDir)} because of "${decision.message}"`,
+        );
         return;
       }
 
       if (decision instanceof GuardDecisionLoad) {
         this.directoryMutex.delete(jobDir);
         this.load(jobDir);
-        this.logger.log(`guard: Loaded ${stripRoot(jobDir)}`);
+        this.logger.log(`guard: Loaded ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
       }
     };

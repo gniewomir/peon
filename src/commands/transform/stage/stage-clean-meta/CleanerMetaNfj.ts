@@ -43,8 +43,9 @@ export class CleanerMetaNfj extends AbstractTransformation {
     if (!markdown) {
       return null;
     }
-    const matches = markdown.match(/^- Offer valid until: (.+)$/);
-    const match = matches && matches[0] ? matches[0].split(' ')?.shift() : null;
+    const matches = markdown.match(/^- Offer valid until: (.+)$/m);
+    const match =
+      matches && matches[0] ? matches[0].split(' ').filter((w) => w.includes('.'))[0] : null;
     return match ? normalizeDMYDateWtPeriodSep(match) : null;
   }
 
