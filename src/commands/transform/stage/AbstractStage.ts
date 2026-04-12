@@ -39,24 +39,31 @@ export abstract class AbstractStage {
     return artifactFilename(this.outputArtifact()).replaceAll('.', '-');
   }
 
-  public async run(event: StagingFileEvent): Promise<AbstractGuardDecision[]> {
+  public async run(event: StagingFileEvent): Promise<AbstractGuardDecision> {
     const jobDir = dirname(event.payload);
     try {
       if (!(await this.preconditionsMeet(event)))
-        return [new GuardDecisionAdvance('keep until preconditions met')];
+        return new GuardDecisionAdvance('keep until preconditions met');
+
       const result = await this.transform(event);
-      const guardDecisions = await Promise.all(this.guards().map((guard) => guard.guard(result)));
       await smartSave(
         path.join(jobDir, artifactFilename(this.outputArtifact())),
         result,
         false,
         this.logger,
       );
-      this.logger.log(`[${event.type}:${stripRoot(event.payload)}] processed`);
-      return guardDecisions;
+      for (const guard of this.guards()) {
+        const guardDecision = await guard.guard(result);
+        if (!(guardDecision instanceof GuardDecisionAdvance)) {
+          return guardDecision;
+        }
+      }
     } catch (error) {
-      return [new GuardDecisionQuarantine('quarantine because unhanded error', { cause: error })];
+      return new GuardDecisionQuarantine('quarantine because unhanded error', { cause: error });
+    } finally {
+      this.logger.log(`[${event.type}:${stripRoot(event.payload)}] processed`);
     }
+    return new GuardDecisionAdvance('advance because all guards passed');
   }
 
   protected abstract inputArtifacts(): Artifact[];

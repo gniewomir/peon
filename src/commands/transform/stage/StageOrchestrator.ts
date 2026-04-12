@@ -63,39 +63,39 @@ export class StageOrchestrator {
 
   private createPayload(jobDir: string, event: StagingFileEvent, stage: AbstractStage) {
     return async () => {
-      const decisions = await stage.run(event);
+      const decision = await stage.run(event);
 
-      for (const decision of decisions) {
-        if (decision instanceof GuardDecisionTrash) {
-          this.saveErrorChain({
-            jobErrorPath: path.join(jobDir, `errors.json`),
-            error: decision,
-            event,
-            stage: stage.name(),
-          });
-          this.directoryMutex.delete(jobDir);
-          this.trash(jobDir);
-          this.logger.warn(`guard: Trashed ${stripRoot(jobDir)}`);
-          break;
-        }
-        if (decision instanceof GuardDecisionQuarantine) {
-          this.saveErrorChain({
-            jobErrorPath: path.join(jobDir, `errors.json`),
-            error: decision,
-            event,
-            stage: stage.name(),
-          });
-          this.directoryMutex.delete(jobDir);
-          this.quarantine(jobDir);
-          this.logger.warn(`guard: Quarantined ${stripRoot(jobDir)}`);
-          break;
-        }
-        if (decision instanceof GuardDecisionLoad) {
-          this.directoryMutex.delete(jobDir);
-          this.load(jobDir);
-          this.logger.log(`guard: Loaded ${stripRoot(jobDir)}`);
-          break;
-        }
+      if (decision instanceof GuardDecisionTrash) {
+        this.saveErrorChain({
+          jobErrorPath: path.join(jobDir, `errors.json`),
+          error: decision,
+          event,
+          stage: stage.name(),
+        });
+        this.directoryMutex.delete(jobDir);
+        this.trash(jobDir);
+        this.logger.warn(`guard: Trashed ${stripRoot(jobDir)}`);
+        return;
+      }
+
+      if (decision instanceof GuardDecisionQuarantine) {
+        this.saveErrorChain({
+          jobErrorPath: path.join(jobDir, `errors.json`),
+          error: decision,
+          event,
+          stage: stage.name(),
+        });
+        this.directoryMutex.delete(jobDir);
+        this.quarantine(jobDir);
+        this.logger.warn(`guard: Quarantined ${stripRoot(jobDir)}`);
+        return;
+      }
+
+      if (decision instanceof GuardDecisionLoad) {
+        this.directoryMutex.delete(jobDir);
+        this.load(jobDir);
+        this.logger.log(`guard: Loaded ${stripRoot(jobDir)}`);
+        return;
       }
     };
   }

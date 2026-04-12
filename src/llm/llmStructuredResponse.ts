@@ -7,8 +7,8 @@ import { basicSystemPrompt, buildUserPrompt, fullSystemPrompt } from './prompt.j
 
 const llmDefaultProvider = process.env.LLM_PROVIDER || 'local-ollama';
 const llmDefaultModel = process.env.LLM_DEFAULT_MODEL || 'llama3.2:latest';
-const llmFallbackProvider = process.env.LLM_DEFAULT_PROVIDER || 'local-ollama';
-const llmFallbackModel = process.env.LLM_DEFAULT_MODEL || 'qwen2.5:7b';
+const llmFallbackProvider = process.env.LLM_FALLBACK_PROVIDER || 'local-ollama';
+const llmFallbackModel = process.env.LLM_FALLBACK_MODEL || 'qwen2.5:7b';
 
 export function llmStructuredResponse<OutputType>({
   fallback = false,

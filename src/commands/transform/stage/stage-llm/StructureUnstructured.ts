@@ -11,7 +11,7 @@ export class StructureUnstructured extends AbstractTransformation {
 
   async transform(input: Map<Artifact, string>): Promise<string> {
     const response = await llmStructuredResponse<TSchema>({
-      fallback: false,
+      fallback: true,
       input: input.get(KnownArtifactsEnum.LLM_MARKDOWN) || '',
     });
     return this.toString(response);
