@@ -11,6 +11,8 @@ import { z, ZodError } from 'zod';
 import { stripRoot } from '../../../lib/root.js';
 import assert from 'node:assert';
 import { statsAddToCounter } from '../../../lib/stats.js';
+import { GuardDecisionRemove } from './guards/decisions/GuardDecisionRemove.js';
+import type { InMemoryDirectoryTracker } from './InMemoryDirectoryTracker.js';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
@@ -21,6 +23,7 @@ export class StageOrchestrator {
   private readonly trashDir;
   private readonly loadDir;
   private readonly logger;
+  private readonly inMemoryDirectoryTracker: InMemoryDirectoryTracker;
 
   constructor({
     logger,
@@ -29,6 +32,7 @@ export class StageOrchestrator {
     trashDir,
     loadDir,
     stages,
+    inMemoryDirectoryTracker,
   }: {
     logger: Logger;
     stagingDir: string;
@@ -36,6 +40,7 @@ export class StageOrchestrator {
     trashDir: string;
     loadDir: string;
     stages: AbstractStage[];
+    inMemoryDirectoryTracker: InMemoryDirectoryTracker;
   }) {
     this.logger = logger.withSuffix('orchestrator');
     this.stagingDir = stagingDir;
@@ -46,6 +51,7 @@ export class StageOrchestrator {
       this.stages.set(stage.name(), stage);
     });
     assert(this.stages.size === stages.length, 'Duplicated stage names detected!');
+    this.inMemoryDirectoryTracker = inMemoryDirectoryTracker;
   }
 
   public handleStagingEvent(event: StagingFileEvent | undefined) {
@@ -75,7 +81,15 @@ export class StageOrchestrator {
     return async () => {
       const decision = await stage.run(event);
 
+      if (decision instanceof GuardDecisionRemove) {
+        this.inMemoryDirectoryTracker.moved(jobDir);
+        this.remove(jobDir);
+        this.logger.log(`guard: Removed ${stripRoot(jobDir)} because of "${decision.message}"`);
+        return;
+      }
+
       if (decision instanceof GuardDecisionTrash) {
+        this.inMemoryDirectoryTracker.moved(jobDir);
         this.saveErrorChain({
           jobErrorPath: path.join(jobDir, `errors.json`),
           error: decision,
@@ -88,6 +102,7 @@ export class StageOrchestrator {
       }
 
       if (decision instanceof GuardDecisionQuarantine) {
+        this.inMemoryDirectoryTracker.moved(jobDir);
         this.saveErrorChain({
           jobErrorPath: path.join(jobDir, `errors.json`),
           error: decision,
@@ -102,6 +117,7 @@ export class StageOrchestrator {
       }
 
       if (decision instanceof GuardDecisionLoad) {
+        this.inMemoryDirectoryTracker.moved(jobDir);
         this.load(jobDir);
         this.logger.log(`guard: Loaded ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
@@ -114,6 +130,12 @@ export class StageOrchestrator {
       this.logger.error(`Unhandled error during ${stage.name()}`, { error, event });
       return error;
     };
+  }
+
+  private remove(jobDir: string) {
+    if (!existsSync(jobDir)) return;
+    rmSync(jobDir, { recursive: true, force: true });
+    statsAddToCounter('jobs_removed');
   }
 
   private quarantine(jobDir: string) {

@@ -11,6 +11,7 @@ import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import { dirname } from 'node:path';
 import { stripRoot } from '../../../../lib/root.js';
 import { LlmSchemaQualityGuard } from './LlmSchemaQualityGuard.js';
+import type { InMemoryDirectoryTracker } from '../InMemoryDirectoryTracker.js';
 
 export class LlmStage extends AbstractStage {
   private readonly concurrencyLimiter;
@@ -27,6 +28,7 @@ export class LlmStage extends AbstractStage {
     trashDir: string;
     loadDir: string;
     transformations: Transformation[];
+    inMemoryDirectoryTracker: InMemoryDirectoryTracker;
   }) {
     super(args);
     this.concurrencyLimiter = createConcurrencyLimiter(1);

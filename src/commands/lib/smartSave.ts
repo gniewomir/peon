@@ -21,7 +21,7 @@ export async function smartSave(
         logger.debug(
           ` 🚬 file content unchanged, skipping write: ${path.relative(process.cwd(), filePath)}`,
         );
-        statsAddToCounter('files_unchanged');
+        statsAddToCounter('file_unchanged');
         return false;
       }
     } catch {
@@ -31,7 +31,7 @@ export async function smartSave(
 
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, newContent, 'utf8');
-  statsAddToCounter('files_written');
+  statsAddToCounter('file_written');
   logger.debug(` 💾 Saved file ${path.relative(process.cwd(), filePath)}`);
   return true;
 }

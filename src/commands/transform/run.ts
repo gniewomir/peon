@@ -12,6 +12,7 @@ import { HtmlToMdStage } from './stage/stage-html-to-md/HtmlToMdStage.js';
 import { LlmStage } from './stage/stage-llm/LlmStage.js';
 import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
 import { shutdownContext } from '../../lib/shutdown.js';
+import { InMemoryDirectoryTracker } from './stage/InMemoryDirectoryTracker.js';
 
 export async function runTransform({
   stagingDir,
@@ -28,6 +29,7 @@ export async function runTransform({
 }): Promise<void> {
   const statsCtx = statsContext();
   const shutdownCtx = shutdownContext(logger);
+  const inMemoryDirectoryTracker = new InMemoryDirectoryTracker(5000);
   return statsCtx.withStats(async () => {
     const orchestrator = new StageOrchestrator({
       logger,
@@ -35,6 +37,7 @@ export async function runTransform({
       quarantineDir,
       trashDir,
       loadDir,
+      inMemoryDirectoryTracker,
       stages: [
         new CleanJsonStage({
           logger,
@@ -42,6 +45,7 @@ export async function runTransform({
           trashDir,
           loadDir,
           transformations: CleanJsonStage.transformations(),
+          inMemoryDirectoryTracker,
         }),
         new HtmlToJsonStage({
           logger,
@@ -49,6 +53,7 @@ export async function runTransform({
           trashDir,
           loadDir,
           transformations: HtmlToJsonStage.transformations(),
+          inMemoryDirectoryTracker,
         }),
         new CleanMetaStage({
           logger,
@@ -56,6 +61,7 @@ export async function runTransform({
           trashDir,
           loadDir,
           transformations: CleanMetaStage.transformations(),
+          inMemoryDirectoryTracker,
         }),
         new CleanHtmlStage({
           logger,
@@ -63,6 +69,7 @@ export async function runTransform({
           trashDir,
           loadDir,
           transformations: CleanHtmlStage.transformations(),
+          inMemoryDirectoryTracker,
         }),
         new HtmlToMdStage({
           logger,
@@ -70,6 +77,7 @@ export async function runTransform({
           trashDir,
           loadDir,
           transformations: HtmlToMdStage.transformations(),
+          inMemoryDirectoryTracker,
         }),
         new LlmStage({
           logger,
@@ -77,6 +85,7 @@ export async function runTransform({
           trashDir,
           loadDir,
           transformations: LlmStage.transformations(),
+          inMemoryDirectoryTracker,
         }),
       ],
     });
@@ -85,6 +94,7 @@ export async function runTransform({
     const watcher = chokidar.watch(stagingDir, {
       ignoreInitial: false,
       persistent: true,
+      ignored: (val) => val.includes('.DS_Store'),
     });
     shutdownCtx.registerCleanup(() => watcher.close());
 
