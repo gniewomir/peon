@@ -43,7 +43,7 @@ export class EnrichLlmStage extends AbstractStage {
     return [
       KnownArtifactsEnum.CLEAN_MARKDOWN,
       KnownArtifactsEnum.CLEAN_JOB_META_JSON,
-      KnownArtifactsEnum.CLEAN_COMBINED_JSON,
+      KnownArtifactsEnum.CLEAN_COMBINE_JSON,
     ];
   }
 
