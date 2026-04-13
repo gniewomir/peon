@@ -9,7 +9,7 @@ import { CleanMetaStage } from './stage/stage-clean-meta/CleanMetaStage.js';
 import { CleanJsonStage } from './stage/stage-clean-job-json/CleanJsonStage.js';
 import { CleanHtmlStage } from './stage/stage-clean-html/CleanHtmlStage.js';
 import { CleanHtmlToMdStage } from './stage/stage-clean-html-to-md/CleanHtmlToMdStage.js';
-import { LlmStage } from './stage/stage-llm/LlmStage.js';
+import { EnrichLlmStage } from './stage/stage-enrich-llm/EnrichLlmStage.js';
 import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
 import { shutdownContext } from '../../lib/shutdown.js';
 import { InMemoryDirectoryTracker } from './stage/InMemoryDirectoryTracker.js';
@@ -79,12 +79,12 @@ export async function runTransform({
           transformations: CleanHtmlToMdStage.transformations(),
           inMemoryDirectoryTracker,
         }),
-        new LlmStage({
+        new EnrichLlmStage({
           logger,
           stagingDir,
           trashDir,
           loadDir,
-          transformations: LlmStage.transformations(),
+          transformations: EnrichLlmStage.transformations(),
           inMemoryDirectoryTracker,
         }),
       ],

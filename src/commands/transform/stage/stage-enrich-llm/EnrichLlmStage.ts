@@ -13,7 +13,7 @@ import { stripRoot } from '../../../../lib/root.js';
 import { LlmSchemaQualityGuard } from './LlmSchemaQualityGuard.js';
 import type { InMemoryDirectoryTracker } from '../InMemoryDirectoryTracker.js';
 
-export class LlmStage extends AbstractStage {
+export class EnrichLlmStage extends AbstractStage {
   private readonly concurrencyLimiter;
   private readonly minimumExecutionTimeLimiter;
 
