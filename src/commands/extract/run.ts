@@ -113,6 +113,14 @@ export async function runExtract({
   const shutdownCtx = shutdownContext(logger);
   await statsCtx.withStats(async () => {
     try {
+      void new Promise(() =>
+        setInterval(
+          () => {
+            logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
+          },
+          1000 * 60 * 1,
+        ),
+      );
       await Promise.all(
         strategies.map(async (strategy) =>
           runStrategy({
@@ -124,7 +132,7 @@ export async function runExtract({
         ),
       );
       logger.log(' ✅ All strategies finished successfully. Done');
-      logger.log(' 📊 Stats:', JSON.stringify(stats(), null, 2));
+      logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
     } catch (error) {
       logger.error(' ⚠️  Strategy error forced process termination.', error);
       throw error;

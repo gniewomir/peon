@@ -15,8 +15,10 @@ export class HtmlToMarkdownConverter extends AbstractTransformation {
       headingStyle: 'Atx',
       // @ts-expect-error workaround: TS2748: Cannot access ambient const enums when verbatimModuleSyntax is enabled
       codeBlockStyle: 'Backticks',
-      wrap: true,
-      wrapWidth: 100,
+      list_indent_type: 'tab',
+      whitespace_mode: 'normalized',
+      wrap: false,
+      strip_newlines: true,
     });
   }
 }

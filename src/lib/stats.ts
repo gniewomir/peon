@@ -89,7 +89,7 @@ export function statsContext(): StatsContext {
   let withStatsUsed = false;
 
   return {
-    async withStats<T>(fn: () => Promise<T>): Promise<T> {
+    async withStats<T>(payload: () => Promise<T>): Promise<T> {
       if (withStatsUsed) {
         throw new StatsError(
           'WITH_STATS_ALREADY_USED',
@@ -102,7 +102,7 @@ export function statsContext(): StatsContext {
       withStatsUsed = true;
       const store = emptyStore();
 
-      return await statsAls.run(store, fn);
+      return await statsAls.run(store, payload);
     },
   };
 }

@@ -13,6 +13,7 @@ import assert from 'node:assert';
 import { type Artifact, artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
 import { access, readFile } from 'fs/promises';
 import type { TMetaSchema } from '../../../schema/schema.meta.js';
+import { statsAddToCounter } from '../../../lib/stats.js';
 
 export abstract class AbstractStage {
   protected readonly transformations = new Map<string, Transformation>();
@@ -50,8 +51,14 @@ export abstract class AbstractStage {
   public async run(event: StagingFileEvent): Promise<AbstractGuardDecision> {
     const jobDir = path.resolve(dirname(event.payload));
     try {
-      if (!(await this.preconditionsMeet(event)))
+      if (!(await this.preconditionsMeet(event))) {
+        statsAddToCounter('stages_preconditions_not_met');
+        statsAddToCounter(`stages_preconditions_not_met_${this.name()}`);
         return new GuardDecisionAdvance('advance until preconditions met');
+      }
+
+      statsAddToCounter('stages_executed');
+      statsAddToCounter(`stages_executed_${this.name()}`);
 
       const result = await this.transform(event);
       /**

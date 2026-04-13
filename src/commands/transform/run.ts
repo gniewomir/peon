@@ -10,7 +10,7 @@ import { CleanJsonStage } from './stage/stage-clean-job-json/CleanJsonStage.js';
 import { CleanHtmlStage } from './stage/stage-clean-html/CleanHtmlStage.js';
 import { HtmlToMdStage } from './stage/stage-html-to-md/HtmlToMdStage.js';
 import { LlmStage } from './stage/stage-llm/LlmStage.js';
-import { statsAddToCounter, statsContext } from '../../lib/stats.js';
+import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
 import { shutdownContext } from '../../lib/shutdown.js';
 
 export async function runTransform({
@@ -28,7 +28,7 @@ export async function runTransform({
 }): Promise<void> {
   const statsCtx = statsContext();
   const shutdownCtx = shutdownContext(logger);
-  await statsCtx.withStats(async () => {
+  return statsCtx.withStats(async () => {
     const orchestrator = new StageOrchestrator({
       logger,
       stagingDir,
@@ -85,21 +85,27 @@ export async function runTransform({
     const watcher = chokidar.watch(stagingDir, {
       ignoreInitial: false,
       persistent: true,
-      ignored: (file) =>
-        !file.endsWith('.md') && !file.endsWith('.json') && !file.endsWith('.html'),
     });
     shutdownCtx.registerCleanup(() => watcher.close());
 
     watcher.on('add', (filePath) => {
-      statsAddToCounter('watcher_add_events');
-      logger.debug(`added: ${stripRoot(filePath)}`);
-      orchestrator.handleStagingEvent({ type: 'add', payload: filePath });
+      try {
+        statsAddToCounter('watcher_add_events');
+        logger.debug(`added: ${stripRoot(filePath)}`);
+        orchestrator.handleStagingEvent({ type: 'add', payload: filePath });
+      } catch (error) {
+        logger.error(`error: ${error}`);
+      }
     });
 
     watcher.on('change', (filePath) => {
-      statsAddToCounter('watcher_change_events');
-      logger.debug(`changed: ${stripRoot(filePath)}`);
-      orchestrator.handleStagingEvent({ type: 'change', payload: filePath });
+      try {
+        statsAddToCounter('watcher_change_events');
+        logger.debug(`changed: ${stripRoot(filePath)}`);
+        orchestrator.handleStagingEvent({ type: 'change', payload: filePath });
+      } catch (error) {
+        logger.error(`error: ${error}`);
+      }
     });
 
     watcher.on('error', (error) => {
@@ -109,6 +115,16 @@ export async function runTransform({
 
     logger.log(`Watching for changes in: ${stripRoot(stagingDir)}`);
 
-    await new Promise(() => {});
+    /**
+     * Keeps process alive until terminated.
+     */
+    await new Promise(() =>
+      setInterval(
+        () => {
+          logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
+        },
+        1000 * 60 * 1,
+      ),
+    );
   });
 }
