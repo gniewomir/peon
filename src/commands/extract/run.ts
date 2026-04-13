@@ -83,9 +83,13 @@ async function runStrategy({
               statsAddToCounter(`jobs_extracted_${strategy.slug}`);
             } catch (error) {
               if (error instanceof HttpException) {
+                statsAddToCounter('extract_job_handled_errors');
+                statsAddToCounter(`extract_job_handled_errors_${strategy.slug}`);
                 logger.error(` ⚠️  Skipping because of error ${error.message}`);
                 return;
               }
+              statsAddToCounter('extract_job_unhandled_errors');
+              statsAddToCounter(`extract_job_unhandled_errors_${strategy.slug}`);
 
               throw error;
             }
@@ -94,6 +98,8 @@ async function runStrategy({
       }
       logger.log(` ✅ Strategy ${strategy.slug} completed successfully. Done`);
     } catch (error) {
+      statsAddToCounter('extract_strategy_unhandled_errors');
+      statsAddToCounter(`extract_strategy_unhandled_errors_${strategy.slug}`);
       logger.error(` ⚠️  Strategy ${strategy.slug} error:`, error);
       throw error;
     }
