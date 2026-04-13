@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import chokidar from 'chokidar';
-import { type Logger } from '../lib/logger.js';
+import { type Logger } from '../../lib/logger.js';
 import { stripRoot } from '../../lib/root.js';
 import { StageOrchestrator } from './stage/StageOrchestrator.js';
 import { CleanHtmlToJsonStage } from './stage/stage-clean-html-to-json/CleanHtmlToJsonStage.js';

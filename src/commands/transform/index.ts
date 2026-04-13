@@ -2,7 +2,7 @@ import path from 'node:path';
 import type { Command } from 'commander';
 import { rootPath } from '../../lib/root.js';
 import { runTransform } from './run.js';
-import { type Logger, loggerContext } from '../lib/logger.js';
+import { type Logger, loggerContext } from '../../lib/logger.js';
 
 export function registerTransformCommand(program: Command): void {
   const root = rootPath();

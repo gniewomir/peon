@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import * as crypto from 'node:crypto';
-import { smartSave } from '../../lib/smartSave.js';
-import type { Logger } from '../../lib/logger.js';
+import { smartSave } from '../../../lib/smartSave.js';
+import type { Logger } from '../../../lib/logger.js';
 import { statsAddToCounter } from '../../../lib/stats.js';
 
 function getISOWeek(date: Date): number {

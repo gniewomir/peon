@@ -2,7 +2,7 @@ import path from 'node:path';
 import type { Command } from 'commander';
 import { rootPath } from '../../lib/root.js';
 import { runExtract } from './run.js';
-import { type Logger, loggerContext } from '../lib/logger.js';
+import { type Logger, loggerContext } from '../../lib/logger.js';
 import { isStrategySlug } from '../../lib/types.js';
 import assert from 'node:assert';
 import type { Strategy, StrategyOptions } from './strategy/types.js';

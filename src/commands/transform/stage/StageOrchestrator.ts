@@ -1,7 +1,7 @@
 import type { AbstractStage } from './AbstractStage.js';
 import type { StagingFileEvent } from '../types.js';
 import path, { dirname } from 'node:path';
-import type { Logger } from '../../lib/logger.js';
+import type { Logger } from '../../../lib/logger.js';
 import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
 import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
 import { GuardDecisionTrash } from './guards/decisions/GuardDecisionTrash.js';

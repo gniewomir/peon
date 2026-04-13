@@ -3,7 +3,7 @@ import * as path from 'node:path';
 
 import type { Logger } from './logger.js';
 import assert from 'node:assert';
-import { statsAddToCounter } from '../../lib/stats.js';
+import { statsAddToCounter } from './stats.js';
 
 export async function smartSave(
   filePath: string,

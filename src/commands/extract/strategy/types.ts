@@ -1,4 +1,4 @@
-import type { Logger } from '../../lib/logger.js';
+import type { Logger } from '../../../lib/logger.js';
 import type { CacheOperations } from '../lib/cache.js';
 import type { JobJson, Listing } from '../types.js';
 import type { KnownStrategy } from '../../../lib/types.js';

@@ -1,8 +1,8 @@
 import * as path from 'node:path';
-import { smartSave } from '../../lib/smartSave.js';
+import { smartSave } from '../../../lib/smartSave.js';
 import fs from 'node:fs/promises';
 import { metaSchema, nullMetaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
-import type { Logger } from '../../lib/logger.js';
+import type { Logger } from '../../../lib/logger.js';
 import type {
   Strategy,
   StrategyOptions,

@@ -1,7 +1,7 @@
 import puppeteer, { type Browser, type Page } from 'puppeteer';
 import { proxyContext } from './proxy.js';
 import { getRandomUserAgent } from './user-agent.js';
-import type { Logger } from '../../lib/logger.js';
+import type { Logger } from '../../../lib/logger.js';
 import type { ShutdownContext } from '../../../lib/shutdown.js';
 
 const baseLaunchArgs = [

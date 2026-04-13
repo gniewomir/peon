@@ -1,4 +1,4 @@
-import type { Logger } from '../commands/lib/logger.js';
+import type { Logger } from './logger.js';
 
 export interface ShutdownContext {
   registerCleanup(cb: () => Promise<void>): void;
