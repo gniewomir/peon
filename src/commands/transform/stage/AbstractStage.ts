@@ -64,7 +64,7 @@ export abstract class AbstractStage {
         return new GuardDecisionAdvance('advance until preconditions met');
       }
       statsAddToCounter('stage_executed');
-      statsAddToCounter(`stage_executed_${this.name()}`);
+      statsAddToCounter(`stage_executed_${this.name().replaceAll('-', '_')}`);
 
       const result = await this.transform(event);
       /**
@@ -102,7 +102,7 @@ export abstract class AbstractStage {
     const trashedJobDir = path.join(this.trashDir, basename(event.payload));
 
     if (event.type !== 'add' && event.type !== 'change') {
-      statsAddToCounter('stage_precondition_add_or_change_event');
+      statsAddToCounter('stage_precondition_event_unknown');
       this.logger.warn(`stage preconditions: unsupported event type '${event.type}'`);
       return false;
     }
@@ -112,13 +112,13 @@ export abstract class AbstractStage {
         .map((artifact) => artifactFilename(artifact))
         .some((artifactName) => event.payload.includes(artifactName))
     ) {
-      statsAddToCounter('stage_precondition_no_input_artifact');
+      statsAddToCounter('stage_precondition_event_no_input_artifact');
       this.logger.debug(`stage preconditions: event doesn't contain input artifact`);
       return false;
     }
 
     if (this.inMemoryDirectoryTracker.wasMoved(stagedJobDir)) {
-      statsAddToCounter('stage_precondition_job_directory_was_moved');
+      statsAddToCounter('stage_precondition_memory_directory_was_moved');
       this.logger.debug(
         `stage preconditions: job directory was moved already '${stripRoot(stagedJobDir)}'`,
       );
@@ -126,7 +126,7 @@ export abstract class AbstractStage {
     }
 
     if (!(await this.pathExists(stagedJobDir))) {
-      statsAddToCounter('stage_precondition_staging_dir_not_exists');
+      statsAddToCounter('stage_precondition_disk_staging_dir_not_exists');
       this.logger.debug(
         `stage preconditions: job directory does not exist '${stripRoot(stagedJobDir)}'`,
       );
@@ -134,7 +134,7 @@ export abstract class AbstractStage {
     }
 
     if (await this.pathExists(trashedJobDir)) {
-      statsAddToCounter('stage_precondition_trashed');
+      statsAddToCounter('stage_precondition_disk_trashed');
       this.logger.debug(`stage preconditions: job was trashed '${stripRoot(stagedJobDir)}'`);
       return false;
     }
@@ -142,22 +142,12 @@ export abstract class AbstractStage {
     for (const artifact of this.inputArtifacts()) {
       const inputArtifactPath = path.join(stagedJobDir, artifactFilename(artifact));
       if (!(await this.pathExists(inputArtifactPath))) {
-        statsAddToCounter('stage_precondition_input_artifact_missing');
+        statsAddToCounter('stage_precondition_disk_input_artifact_missing');
         this.logger.debug(
           `stage preconditions: artifact ${stripRoot(inputArtifactPath)} does not exist`,
         );
         return false;
       }
-    }
-
-    const outputArtifactPath = path.join(stagedJobDir, artifactFilename(this.outputArtifact()));
-
-    if ((await this.pathExists(outputArtifactPath)) && event.type !== 'change') {
-      statsAddToCounter('stage_precondition_output_artifact_already_exists');
-      this.logger.debug(
-        `stage preconditions: output artifact ${stripRoot(outputArtifactPath)} already exists`,
-      );
-      return false;
     }
     return true;
   }
