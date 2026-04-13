@@ -1,11 +1,11 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import { HtmlCleanerJji } from './HtmlCleanerJji.js';
 import { HtmlCleanerNfj } from './HtmlCleanerNfj.js';
 import { HtmlCleanerBdj } from './HtmlCleanerBdj.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
+import { NotEmptyCleanHtmlGuard } from './NotEmptyCleanHtmlGuard.js';
 
 export class CleanHtmlStage extends AbstractStage {
   public static transformations(): Transformation[] {
@@ -21,6 +21,6 @@ export class CleanHtmlStage extends AbstractStage {
   }
 
   protected guards(): AbstractGuard[] {
-    return [new NotEmptyGuard()];
+    return [new NotEmptyCleanHtmlGuard()];
   }
 }
