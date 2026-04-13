@@ -1,5 +1,8 @@
 export function normalizeSeniority(seniority: string): string {
   seniority = seniority.trim().toLowerCase();
+  if (seniority === 'trainee') {
+    return 'intern';
+  }
   if (seniority === 'medium') {
     return 'regular';
   }

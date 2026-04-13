@@ -97,15 +97,21 @@ function selectStrategies({
 
 export function registerExtractCommand(program: Command): void {
   const root = rootPath();
-  const defaultStagingDir = 'data/staging';
-  const defaultCacheDir = 'data/cache';
+  const relCacheDir = 'data/cache';
+  const relStagingDir = 'data/staging';
+  const relQuarantineDir = 'data/quarantine';
+  const relTrashDir = 'data/trash';
+  const relLoadDir = 'data/load';
   const command = 'extract';
   program
     .command(command)
     .description('Scrape job boards')
     .option('-v, --verbose', 'Enable debug logs')
-    .option('--stagingDir <dir>', `Staging directory (default: <repo>/${defaultStagingDir})`)
-    .option('--cacheDir <dir>', `Cache directory (default: <repo>/${defaultCacheDir})`)
+    .option('--cacheDir <dir>', `Cache directory (default: <repo>/${relCacheDir})`)
+    .option('--stagingDir <dir>', `Staging directory (default: <repo>/${relStagingDir})`)
+    .option('--quarantineDir <dir>', `Quarantine directory (default: <repo>/${relQuarantineDir})`)
+    .option('--trashDir <dir>', `Trashed directory (default: <repo>/${relTrashDir})`)
+    .option('--loadDir <dir>', `Load directory (default: <repo>/${relLoadDir})`)
     .option('--only <slugs>', `Comma-separated strategies to run`, 'all')
     .option('--limit <number>', `Limit the number of jobs to scrape for each strategy`)
     .action(
@@ -116,8 +122,11 @@ export function registerExtractCommand(program: Command): void {
         verbose,
         limit,
       }: {
-        stagingDir?: string;
         cacheDir?: string;
+        stagingDir?: string;
+        quarantineDir?: string;
+        trashDir?: string;
+        loadDir?: string;
         only?: string;
         verbose?: boolean;
         limit?: number;
@@ -126,13 +135,13 @@ export function registerExtractCommand(program: Command): void {
         await withLogger((logger) =>
           runExtract({
             logger,
-            cacheDir: path.resolve(cacheDir ?? path.join(root, defaultCacheDir)),
+            cacheDir: path.resolve(cacheDir ?? path.join(root, relCacheDir)),
             strategies: selectStrategies({
               only,
               logger,
               options: {
                 limit,
-                stagingDir: path.resolve(stagingDir ?? path.join(root, defaultStagingDir)),
+                stagingDir: path.resolve(stagingDir ?? path.join(root, relStagingDir)),
               },
             }),
           }),

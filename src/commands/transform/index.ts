@@ -6,28 +6,25 @@ import { type Logger, loggerContext } from '../lib/logger.js';
 
 export function registerTransformCommand(program: Command): void {
   const root = rootPath();
-  const defaultStagingDir = 'data/staging';
-  const defaultQuarantineDir = 'data/quarantine';
-  const defaultTrashDir = 'data/trash';
-  const defaultLoadDir = 'data/load';
+  const relCacheDir = 'data/cache';
+  const relStagingDir = 'data/staging';
+  const relQuarantineDir = 'data/quarantine';
+  const relTrashDir = 'data/trash';
+  const relLoadDir = 'data/load';
   const command = 'transform';
   program
     .command(command)
     .description('Watch staging directory and log file changes')
     .option('-v, --verbose', 'Enable debug logs')
-    .option('--dir <dir>', `Directory to watch (default: <repo>/${defaultStagingDir})`)
-    .option(
-      '--quarantineDir <dir>',
-      `Directory for quarantined items (default: <repo>/${defaultQuarantineDir})`,
-    )
-    .option('--trashDir <dir>', `Directory for trashed items (default: <repo>/${defaultTrashDir})`)
-    .option(
-      '--loadDir <dir>',
-      `Directory for items ready to load (default: <repo>/${defaultLoadDir})`,
-    )
+    .option('--cacheDir <dir>', `Cache directory (default: <repo>/${relCacheDir})`)
+    .option('--stagingDir <dir>', `Staging directory (default: <repo>/${relStagingDir})`)
+    .option('--quarantineDir <dir>', `Quarantine directory (default: <repo>/${relQuarantineDir})`)
+    .option('--trashDir <dir>', `Trashed directory (default: <repo>/${relTrashDir})`)
+    .option('--loadDir <dir>', `Load directory (default: <repo>/${relLoadDir})`)
     .action(
       async (opts: {
-        dir?: string;
+        cacheDir?: string;
+        stagingDir?: string;
         quarantineDir?: string;
         trashDir?: string;
         loadDir?: string;
@@ -36,12 +33,10 @@ export function registerTransformCommand(program: Command): void {
         const cx = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
         return cx.withLogger((logger: Logger) =>
           runTransform({
-            stagingDir: path.resolve(opts.dir ?? path.join(root, defaultStagingDir)),
-            quarantineDir: path.resolve(
-              opts.quarantineDir ?? path.join(root, defaultQuarantineDir),
-            ),
-            trashDir: path.resolve(opts.trashDir ?? path.join(root, defaultTrashDir)),
-            loadDir: path.resolve(opts.loadDir ?? path.join(root, defaultLoadDir)),
+            stagingDir: path.resolve(opts.stagingDir ?? path.join(root, relStagingDir)),
+            quarantineDir: path.resolve(opts.quarantineDir ?? path.join(root, relQuarantineDir)),
+            trashDir: path.resolve(opts.trashDir ?? path.join(root, relTrashDir)),
+            loadDir: path.resolve(opts.loadDir ?? path.join(root, relLoadDir)),
             logger,
           }),
         );
