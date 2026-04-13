@@ -1,13 +1,11 @@
 import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import { parseListingResponse } from './listing-parser.js';
-import type { Logger } from '../../../lib/logger.js';
+import { parseListingResponse } from './listingParser.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
 import { slugifyWtPolishTransliteration } from '../../lib/slugifyWtPolishTransliteration.js';
-import type { GoToOptions } from 'puppeteer';
 
 interface NFJListing extends Listing {
   meta: {
@@ -18,19 +16,6 @@ interface NFJListing extends Listing {
 export class NfjStrategy extends AbstractStrategy {
   public readonly slug: KnownStrategy = 'nfj';
 
-  constructor(logger: Logger) {
-    super({
-      logger,
-    });
-  }
-
-  pageOpenOptions(): GoToOptions {
-    return {
-      waitUntil: 'load',
-      timeout: 30000,
-    };
-  }
-
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
     for (const listing of listings) {
@@ -38,11 +23,7 @@ export class NfjStrategy extends AbstractStrategy {
     }
   }
 
-  async *jobGenerator(
-    listing: Listing,
-    logger: Logger,
-    cache: CacheOperations,
-  ): AsyncGenerator<JobJson> {
+  async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
     const nfjListing = listing as NFJListing;
     let currentPage = 1;
     let totalPages: number | null = null;
@@ -56,7 +37,9 @@ export class NfjStrategy extends AbstractStrategy {
     );
 
     while (true) {
-      logger.log(` 📖 Fetching NFJ page ${currentPage}${totalPages ? `/${totalPages}` : ''}...`);
+      this.logger.log(
+        ` 📖 Fetching NFJ page ${currentPage}${totalPages ? `/${totalPages}` : ''}...`,
+      );
 
       const urlObj = new URL(nfjListing.url);
       urlObj.searchParams.set('pageTo', currentPage.toString());
@@ -65,12 +48,12 @@ export class NfjStrategy extends AbstractStrategy {
       const cacheKey = cache.dailyCacheKey(url);
 
       let jsonText: string;
-      if (await cache.hasCacheKey(cacheKey, logger)) {
-        jsonText = await cache.readCache(cacheKey, logger);
+      if (await cache.hasCacheKey(cacheKey, this.logger)) {
+        jsonText = await cache.readCache(cacheKey, this.logger);
       } else {
         const response = await fetch(url, {
           method: 'POST',
-          signal: AbortSignal.timeout(60_000),
+          signal: AbortSignal.timeout(this.options.requestsTimeout),
           headers: {
             accept: 'application/json, text/plain, */*',
             'accept-language': 'en, en-gb;q=0.9, en-us;q=0.8, en;q=0.7',
@@ -84,13 +67,13 @@ export class NfjStrategy extends AbstractStrategy {
         });
 
         if (!response.ok) {
-          logger.error(' ⚠️  Error response', await response.json());
+          this.logger.error(' ⚠️  Error response', await response.json());
           throw new Error(` ⚠️  HTTP ${response.status}: ${response.statusText}`);
         }
 
         const content = await response.json();
         jsonText = JSON.stringify(content);
-        await cache.writeCache(cacheKey, jsonText, logger);
+        await cache.writeCache(cacheKey, jsonText, this.logger);
       }
 
       const parsed = parseListingResponse(jsonText);
@@ -104,7 +87,7 @@ export class NfjStrategy extends AbstractStrategy {
         } catch {
           /* ignore */
         }
-        logger.log(' ⚠️  Invalid content structure or no data found', keys);
+        this.logger.log(' ⚠️  Invalid content structure or no data found', keys);
         break;
       }
 
@@ -115,7 +98,7 @@ export class NfjStrategy extends AbstractStrategy {
       }
 
       if (jobs.length === 0) {
-        logger.log(' 👌 No more postings; NFJ API scraping complete.');
+        this.logger.log(' 👌 No more postings; NFJ API scraping complete.');
         break;
       }
 
@@ -124,18 +107,17 @@ export class NfjStrategy extends AbstractStrategy {
         const job = stack.pop();
         if (job) {
           assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
-          this.ids.add(job.id);
           yield job;
         }
       }
 
       if (totalPages === 0) {
-        logger.log(' 👌 totalPages=0; NFJ API scraping complete.');
+        this.logger.log(' 👌 totalPages=0; NFJ API scraping complete.');
         break;
       }
 
       if (totalPages !== null && totalPages > 0 && currentPage >= totalPages) {
-        logger.log(' 👌 Reached last page. NFJ API scraping complete.');
+        this.logger.log(' 👌 Reached last page. NFJ API scraping complete.');
         break;
       }
 

@@ -2,7 +2,7 @@ import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import { HtmlToJsonExtractor } from './HtmlToJsonExtractor.js';
 import type { Transformation } from '../AbstractTransformation.js';
-import { KnownArtifactsEnum } from '../../artifacts.js';
+import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 
 export class HtmlToJsonStage extends AbstractStage {
   public static transformations(): Transformation[] {

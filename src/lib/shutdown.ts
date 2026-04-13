@@ -1,6 +1,6 @@
-import type { Logger } from '../../lib/logger.js';
+import type { Logger } from '../commands/lib/logger.js';
 
-export interface ShutdownRegistry {
+export interface ShutdownContext {
   registerCleanup(cb: () => Promise<void>): void;
   deregisterCleanup(cb: () => Promise<void>): void;
   registerPid(pid: number): void;
@@ -9,12 +9,12 @@ export interface ShutdownRegistry {
 
 const SHUTDOWN_TIMEOUT_MS = 30_000;
 
-export function createShutdownRegistry(logger: Logger): ShutdownRegistry {
+export function shutdownContext(logger: Logger): ShutdownContext {
   const cleanups = new Set<() => Promise<void>>();
   const pids = new Set<number>();
   let shuttingDown = false;
 
-  const shutdown = async (signal: 'SIGINT' | 'SIGTERM'): Promise<void> => {
+  const shutdown = async (signal?: 'SIGINT' | 'SIGTERM'): Promise<void> => {
     if (shuttingDown) return;
     shuttingDown = true;
 
@@ -37,11 +37,14 @@ export function createShutdownRegistry(logger: Logger): ShutdownRegistry {
   process.once('SIGINT', () => shutdown('SIGINT'));
   process.once('SIGTERM', () => shutdown('SIGTERM'));
 
+  // NOTE: ONLY sync
   process.on('exit', () => {
     for (const pid of pids) {
       try {
         process.kill(pid, 'SIGKILL');
+        logger.log(`Sent SIGKILL to pid ${pid}`);
       } catch {
+        logger.log(`Pid ${pid} already dead`);
         // PID already dead — ignore
       }
     }

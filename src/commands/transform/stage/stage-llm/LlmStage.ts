@@ -2,7 +2,7 @@ import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { StructureUnstructured } from './StructureUnstructured.js';
-import { KnownArtifactsEnum } from '../../artifacts.js';
+import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import type { StagingFileEvent } from '../../types.js';
 import type { Logger } from '../../../lib/logger.js';
 import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecutionTimeLimiter.js';

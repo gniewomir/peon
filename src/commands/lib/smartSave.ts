@@ -3,6 +3,7 @@ import * as path from 'node:path';
 
 import type { Logger } from './logger.js';
 import assert from 'node:assert';
+import { statsAddToCounter } from '../../lib/stats.js';
 
 export async function smartSave(
   filePath: string,
@@ -20,6 +21,7 @@ export async function smartSave(
         logger.debug(
           ` 🚬 file content unchanged, skipping write: ${path.relative(process.cwd(), filePath)}`,
         );
+        statsAddToCounter('files_unchanged');
         return false;
       }
     } catch {
@@ -29,6 +31,7 @@ export async function smartSave(
 
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, newContent, 'utf8');
+  statsAddToCounter('files_written');
   logger.debug(` 💾 Saved file ${path.relative(process.cwd(), filePath)}`);
   return true;
 }

@@ -1,4 +1,4 @@
-import type { Artifact } from '../artifacts.js';
+import type { Artifact } from '../../../lib/artifacts.js';
 import type { CheerioAPI } from 'cheerio';
 import * as cheerio from 'cheerio';
 import assert from 'node:assert';

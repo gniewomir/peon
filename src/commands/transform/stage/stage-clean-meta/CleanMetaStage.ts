@@ -5,7 +5,7 @@ import { CleanerMetaBdj } from './CleanerMetaBdj.js';
 import { CleanerMetaJji } from './CleanerMetaJji.js';
 import { CleanerMetaNfj } from './CleanerMetaNfj.js';
 import type { Transformation } from '../AbstractTransformation.js';
-import { KnownArtifactsEnum } from '../../artifacts.js';
+import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { DedupByUrlGuard } from './DedupByUrlGuard.js';
 import { ExpirationGuard } from './ExpirationGuard.js';
 

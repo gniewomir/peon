@@ -10,7 +10,7 @@ import type { AbstractGuardDecision } from './guards/decisions/AbstractGuardDeci
 import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js';
 import type { Transformation } from './AbstractTransformation.js';
 import assert from 'node:assert';
-import { type Artifact, artifactFilename, KnownArtifactsEnum } from '../artifacts.js';
+import { type Artifact, artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
 import { access, readFile } from 'fs/promises';
 import type { TMetaSchema } from '../../../schema/schema.meta.js';
 

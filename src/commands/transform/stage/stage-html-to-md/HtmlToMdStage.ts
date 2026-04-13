@@ -3,7 +3,7 @@ import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { HtmlToMarkdownConverter } from './HtmlToMarkdownConverter.js';
-import { KnownArtifactsEnum } from '../../artifacts.js';
+import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 
 export class HtmlToMdStage extends AbstractStage {
   public static transformations(): Transformation[] {

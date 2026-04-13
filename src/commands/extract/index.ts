@@ -3,28 +3,68 @@ import type { Command } from 'commander';
 import { rootPath } from '../../lib/root.js';
 import { runExtract } from './run.js';
 import { type Logger, loggerContext } from '../lib/logger.js';
-import { createShutdownRegistry } from './lib/shutdown.js';
 import { isStrategySlug } from '../../lib/types.js';
 import assert from 'node:assert';
-import type { Strategy } from './strategy/types.js';
+import type { Strategy, StrategyOptions } from './strategy/types.js';
 import { BdjStrategy } from './strategy/bdj/BdjStrategy.js';
 import { JjiStrategy } from './strategy/jji/JjiStrategy.js';
 import { NfjStrategy } from './strategy/nfj/NfjStrategy.js';
 import type { AbstractStrategy } from './strategy/AbstractStrategy.js';
 
 const strategy_factories = [
-  (logger: Logger) => new BdjStrategy(logger),
-  (logger: Logger) => new JjiStrategy(logger),
-  (logger: Logger) => new NfjStrategy(logger),
+  (logger: Logger, options: Omit<StrategyOptions, 'requestsTimeout' | 'pageOpenOptions'>) =>
+    new BdjStrategy({
+      logger,
+      options: {
+        ...options,
+        requestsTimeout: 30_000,
+        pageOpenOptions: {
+          waitUntil: 'load',
+          timeout: 30_000,
+        },
+      },
+    }),
+  (logger: Logger, options: Omit<StrategyOptions, 'requestsTimeout' | 'pageOpenOptions'>) =>
+    new JjiStrategy({
+      logger,
+      options: {
+        ...options,
+        requestsTimeout: 30_000,
+        pageOpenOptions: {
+          waitUntil: 'networkidle0',
+          timeout: 60000,
+        },
+      },
+    }),
+  (logger: Logger, options: Omit<StrategyOptions, 'requestsTimeout' | 'pageOpenOptions'>) =>
+    new NfjStrategy({
+      logger,
+      options: {
+        ...options,
+        requestsTimeout: 30_000,
+        pageOpenOptions: {
+          waitUntil: 'load',
+          timeout: 30_000,
+        },
+      },
+    }),
 ] as const;
 
 let instantiated: null | Map<string, AbstractStrategy> = null;
 
-function selectStrategies(only: string | undefined, logger: Logger): Strategy[] {
+function selectStrategies({
+  only,
+  logger,
+  options,
+}: {
+  only: string | undefined;
+  logger: Logger;
+  options: Omit<StrategyOptions, 'requestsTimeout' | 'pageOpenOptions'>;
+}): Strategy[] {
   if (instantiated === null) {
     instantiated = new Map<string, AbstractStrategy>();
     strategy_factories
-      .map((e) => e(logger))
+      .map((e) => e(logger, options))
       .forEach((s) => {
         assert(instantiated);
         instantiated.set(s.slug, s);
@@ -64,22 +104,39 @@ export function registerExtractCommand(program: Command): void {
     .command(command)
     .description('Scrape job boards')
     .option('-v, --verbose', 'Enable debug logs')
-    .option('--out <dir>', `Staging directory (default: <repo>/${defaultStagingDir})`)
-    .option(
-      '--cache <dir>',
-      `Cache directory; each strategy uses <dir>/<slug>/ (default: <repo>/${defaultCacheDir})`,
-    )
-    .option('--only <slugs>', `Comma-separated strategies to run`)
-    .action(async (opts: { out?: string; cache?: string; only?: string; verbose?: boolean }) => {
-      const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
-      await withLogger((logger) =>
-        runExtract({
-          logger,
-          stagingDir: path.resolve(opts.out ?? path.join(root, defaultStagingDir)),
-          cacheDir: path.resolve(opts.cache ?? path.join(root, defaultCacheDir)),
-          strategies: selectStrategies(opts.only, logger),
-          registry: createShutdownRegistry(logger),
-        }),
-      );
-    });
+    .option('--stagingDir <dir>', `Staging directory (default: <repo>/${defaultStagingDir})`)
+    .option('--cacheDir <dir>', `Cache directory (default: <repo>/${defaultCacheDir})`)
+    .option('--only <slugs>', `Comma-separated strategies to run`, 'all')
+    .option('--limit <number>', `Limit the number of jobs to scrape for each strategy`)
+    .action(
+      async ({
+        stagingDir,
+        cacheDir,
+        only,
+        verbose,
+        limit,
+      }: {
+        stagingDir?: string;
+        cacheDir?: string;
+        only?: string;
+        verbose?: boolean;
+        limit?: number;
+      }) => {
+        const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(verbose) });
+        await withLogger((logger) =>
+          runExtract({
+            logger,
+            cacheDir: path.resolve(cacheDir ?? path.join(root, defaultCacheDir)),
+            strategies: selectStrategies({
+              only,
+              logger,
+              options: {
+                limit,
+                stagingDir: path.resolve(stagingDir ?? path.join(root, defaultStagingDir)),
+              },
+            }),
+          }),
+        );
+      },
+    );
 }

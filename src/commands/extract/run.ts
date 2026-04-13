@@ -5,67 +5,68 @@ import { type Logger } from '../lib/logger.js';
 import { browserContext, pageContext } from './lib/browser.js';
 import { getRandomNumber } from './lib/random.js';
 import { cacheContext } from './lib/cache.js';
-import { type ShutdownRegistry } from './lib/shutdown.js';
+import { shutdownContext, type ShutdownContext } from '../../lib/shutdown.js';
 import type { Strategy } from './strategy/types.js';
 import type { JobJson } from './types.js';
+import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
 
 class HttpException extends Error {}
 
 async function runStrategy({
   strategy,
-  stagingDir,
   cacheDir,
-  registry,
+  shutdownCtx,
   logger,
 }: {
   strategy: Strategy;
-  stagingDir: string;
   cacheDir: string;
-  registry: ShutdownRegistry;
+  shutdownCtx: ShutdownContext;
   logger: Logger;
 }): Promise<void> {
-  await cacheContext(path.join(cacheDir, strategy.slug)).withCache(async (cache) => {
-    await using ctx = await browserContext(logger, registry);
+  await using browserCtx = await browserContext(logger, shutdownCtx);
+  const cacheCtx = cacheContext(path.join(cacheDir, strategy.slug));
+
+  await cacheCtx.withCache(async (cache) => {
     try {
       for await (const listing of strategy.jobListingsGenerator()) {
         logger.log(
           ` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`,
         );
-        for await (const job of strategy.jobGenerator(listing, logger, cache)) {
-          await ctx.withBrowser(async (browser) => {
+        for await (const job of strategy.jobGenerator(listing, cache)) {
+          await browserCtx.withBrowser(async (browser) => {
             try {
               const url = strategy.jobToUrl(job as JobJson);
               const cacheKey = cache.weeklyCacheKey(url);
 
-              let content: string;
+              let html: string;
 
               if (await cache.hasCacheKey(cacheKey, logger)) {
-                content = await cache.readCache(cacheKey, logger);
+                html = await cache.readCache(cacheKey, logger);
+                statsAddToCounter('jobs_extracted_cached');
+                statsAddToCounter(`jobs_extracted_cached_${strategy.slug}`);
               } else {
                 logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
-                await using ctx = await pageContext(browser);
-                const res = await ctx.page.goto(url, strategy.pageOpenOptions());
+                await using pageCtx = await pageContext(browser);
+                const res = await pageCtx.page.goto(url, strategy.pageOpenOptions());
 
-                if (!res) {
-                  logger.warn(' ⚠️  No response received from puppeteer.');
-                }
-                if (res && res.status() < 400) {
-                  logger.log(`✅ Response status ${res.status()} for ${url}.`);
-                }
-                if (res && res.status() >= 400) {
+                if (res && (res.status() >= 300 || res.status() < 200)) {
                   throw new HttpException(` ⚠️  Response status: ${res.status()} for ${url}`);
+                } else if (res) {
+                  logger.log(`✅ Response status ${res.status()} for ${url}.`);
+                } else {
+                  throw new HttpException(' ⚠️  No response received from puppeteer.');
                 }
 
-                const bodyHandle = await ctx.page.$('body');
+                const bodyHandle = await pageCtx.page.$('body');
 
                 if (bodyHandle) {
-                  content = await ctx.page.evaluate((body) => body.innerHTML, bodyHandle);
+                  html = await pageCtx.page.evaluate((body) => body.innerHTML, bodyHandle);
                   await bodyHandle.dispose();
                 } else {
                   throw new HttpException(` ⚠️  No <body> for ${url};`);
                 }
 
-                await cache.writeCache(cacheKey, content, logger);
+                await cache.writeCache(cacheKey, html, logger);
 
                 const wait = getRandomNumber(1000, 5000);
                 logger.log(` 🕒 Waiting for ${Math.round(wait / 1000)}s`);
@@ -73,13 +74,13 @@ async function runStrategy({
               }
 
               await strategy.save({
-                outDir: stagingDir,
-                cached: cache.cacheFilePath(cacheKey),
-                job: job as JobJson,
+                cachePath: cache.cacheFilePath(cacheKey),
+                json: job as JobJson,
                 url,
-                content,
-                logger,
+                html,
               });
+              statsAddToCounter('jobs_extracted');
+              statsAddToCounter(`jobs_extracted_${strategy.slug}`);
             } catch (error) {
               if (error instanceof HttpException) {
                 logger.error(` ⚠️  Skipping because of error ${error.message}`);
@@ -100,33 +101,33 @@ async function runStrategy({
 }
 
 export async function runExtract({
-  stagingDir,
   cacheDir,
   strategies,
   logger,
-  registry,
 }: {
-  stagingDir: string;
   cacheDir: string;
   strategies: Strategy[];
   logger: Logger;
-  registry: ShutdownRegistry;
 }): Promise<void> {
-  try {
-    await Promise.all(
-      strategies.map(async (strategy) =>
-        runStrategy({
-          strategy,
-          stagingDir,
-          cacheDir,
-          registry,
-          logger: logger.withSuffix(strategy.slug),
-        }),
-      ),
-    );
-    logger.log(' ✅ All strategies finished successfully. Done');
-  } catch (error) {
-    logger.error(' ⚠️  Strategy error forced process termination.', error);
-    throw error;
-  }
+  const statsCtx = statsContext();
+  const shutdownCtx = shutdownContext(logger);
+  await statsCtx.withStats(async () => {
+    try {
+      await Promise.all(
+        strategies.map(async (strategy) =>
+          runStrategy({
+            strategy,
+            cacheDir,
+            shutdownCtx,
+            logger: logger.withSuffix(strategy.slug),
+          }),
+        ),
+      );
+      logger.log(' ✅ All strategies finished successfully. Done');
+      logger.log(' 📊 Stats:', JSON.stringify(stats(), null, 2));
+    } catch (error) {
+      logger.error(' ⚠️  Strategy error forced process termination.', error);
+      throw error;
+    }
+  });
 }

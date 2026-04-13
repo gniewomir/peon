@@ -3,6 +3,7 @@ import path from 'node:path';
 import * as crypto from 'node:crypto';
 import { smartSave } from '../../lib/smartSave.js';
 import type { Logger } from '../../lib/logger.js';
+import { statsAddToCounter } from '../../../lib/stats.js';
 
 function getISOWeek(date: Date): number {
   const d = new Date(date);
@@ -64,13 +65,20 @@ export function createCacheOperations(root: string): CacheOperations {
     },
 
     async writeCache(key: string, content: string, logger: Logger): Promise<boolean> {
-      return smartSave(cacheKeyToPath(key, basePath), content, false, logger);
+      statsAddToCounter('cache_writes');
+      return smartSave(cacheKeyToPath(key, basePath), content, false, logger).then((r) => {
+        statsAddToCounter('cache_written');
+        return r;
+      });
     },
 
     readCache(key: string, logger: Logger): Promise<string> {
       const cachePath = cacheKeyToPath(key, basePath);
       logger.debug(` 📖 reading cache ${relativeCachePath(cachePath, basePath)}`);
-      return fs.readFile(cachePath, { encoding: 'utf8' });
+      return fs.readFile(cachePath, { encoding: 'utf8' }).then((c) => {
+        statsAddToCounter('cache_reads');
+        return c;
+      });
     },
 
     dailyCacheKey,

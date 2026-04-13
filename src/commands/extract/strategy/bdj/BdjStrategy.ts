@@ -1,28 +1,13 @@
 import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import { parseListingResponse } from './listing-parser.js';
-import type { Logger } from '../../../lib/logger.js';
+import { parseListingResponse } from './listingParser.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
-import type { GoToOptions } from 'puppeteer';
 
 export class BdjStrategy extends AbstractStrategy {
   public slug: KnownStrategy = 'bdj';
-
-  constructor(logger: Logger) {
-    super({
-      logger,
-    });
-  }
-
-  pageOpenOptions(): GoToOptions {
-    return {
-      waitUntil: 'load',
-      timeout: 30000,
-    };
-  }
 
   private static listingPageUrl(baseListingUrl: string, page: number): string {
     assert(page >= 1, 'listing page must be >= 1');
@@ -39,24 +24,20 @@ export class BdjStrategy extends AbstractStrategy {
     }
   }
 
-  async *jobGenerator(
-    listing: Listing,
-    logger: Logger,
-    cache: CacheOperations,
-  ): AsyncGenerator<JobJson> {
+  async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
     let page = 1;
 
     while (true) {
       const url = BdjStrategy.listingPageUrl(listing.url, page);
-      logger.log(` 📖 Fetching Bulldog job listing page ${page}: ${url}`);
+      this.logger.log(` 📖 Fetching Bulldog job listing page ${page}: ${url}`);
 
       const cacheKey = cache.dailyCacheKey(url);
-      let html: string;
-      if (await cache.hasCacheKey(cacheKey, logger)) {
-        html = await cache.readCache(cacheKey, logger);
+      let listingHtml: string;
+      if (await cache.hasCacheKey(cacheKey, this.logger)) {
+        listingHtml = await cache.readCache(cacheKey, this.logger);
       } else {
         const response = await fetch(url, {
-          signal: AbortSignal.timeout(60_000),
+          signal: AbortSignal.timeout(this.options.requestsTimeout),
           headers: {
             accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'accept-language': 'pl,en;q=0.9',
@@ -65,32 +46,20 @@ export class BdjStrategy extends AbstractStrategy {
         if (!response.ok) {
           throw new Error(` ⚠️  HTTP ${response.status}: ${response.statusText} for ${url}`);
         }
-        html = await response.text();
-        await cache.writeCache(cacheKey, html, logger);
+        listingHtml = await response.text();
+        await cache.writeCache(cacheKey, listingHtml, this.logger);
       }
+      const { jobs } = parseListingResponse(listingHtml);
+      this.logger.log(`${jobs.length} on listing page ${page}: ${url}`);
 
-      const { jobs } = parseListingResponse(html);
       if (jobs.length === 0) {
-        logger.log(' 👌 No job links on listing page; Bulldog job listing complete.');
+        this.logger.log(' 👌 No job links on listing page; Bulldog job listing complete.');
         break;
       }
 
-      let yielded = 0;
       for (const job of jobs) {
         assert('id' in job && typeof job.id === 'string');
-        if (this.ids.has(job.id)) {
-          continue;
-        }
-        this.ids.add(job.id);
-        yield job;
-        yielded += 1;
-      }
-
-      if (yielded === 0) {
-        logger.log(
-          ' 👌 Listing page contained only jobs already seen; Bulldog job listing complete.',
-        );
-        break;
+        yield Promise.resolve(job);
       }
 
       page += 1;

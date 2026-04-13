@@ -33,8 +33,8 @@ export function registerTransformCommand(program: Command): void {
         loadDir?: string;
         verbose?: boolean;
       }) => {
-        const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
-        await withLogger((logger: Logger) =>
+        const cx = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
+        await cx.withLogger((logger: Logger) =>
           runTransform({
             stagingDir: path.resolve(opts.dir ?? path.join(root, defaultStagingDir)),
             quarantineDir: path.resolve(

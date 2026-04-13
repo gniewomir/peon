@@ -5,7 +5,7 @@ import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import { HtmlCleanerJji } from './HtmlCleanerJji.js';
 import { HtmlCleanerNfj } from './HtmlCleanerNfj.js';
 import { HtmlCleanerBdj } from './HtmlCleanerBdj.js';
-import { KnownArtifactsEnum } from '../../artifacts.js';
+import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 
 export class CleanHtmlStage extends AbstractStage {
   public static transformations(): Transformation[] {

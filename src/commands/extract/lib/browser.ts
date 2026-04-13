@@ -2,7 +2,7 @@ import puppeteer, { type Browser, type Page } from 'puppeteer';
 import { proxyContext } from './proxy.js';
 import { getRandomUserAgent } from './user-agent.js';
 import type { Logger } from '../../lib/logger.js';
-import type { ShutdownRegistry } from './shutdown.js';
+import type { ShutdownContext } from '../../../lib/shutdown.js';
 
 const baseLaunchArgs = [
   '--disable-dev-shm-usage',
@@ -36,6 +36,7 @@ export interface PageContext extends AsyncDisposable {
 }
 
 export async function pageContext(browser: Browser): Promise<PageContext> {
+  // TODO: limit number of open pages, make consumer wait until they are available
   const page = await browser.newPage();
   await page.setRequestInterception(true);
   page.on('request', async (request) => {
@@ -58,9 +59,9 @@ export async function pageContext(browser: Browser): Promise<PageContext> {
 
 export async function browserContext(
   logger: Logger,
-  registry?: ShutdownRegistry,
+  registry?: ShutdownContext,
 ): Promise<BrowserContext> {
-  const { withProxy } = await proxyContext(logger);
+  const proxyCtx = await proxyContext(logger);
   const proxiedBrowsers: Record<string, Browser> = {};
 
   const cleanup = async (): Promise<void> => {
@@ -82,7 +83,7 @@ export async function browserContext(
 
   return {
     withBrowser: async <T>(payload: (browser: Browser) => Promise<T>): Promise<T> => {
-      return withProxy(async (proxy: string) => {
+      return proxyCtx.withProxy(async (proxy: string) => {
         try {
           if (!proxiedBrowsers[proxy]) {
             await cleanup();

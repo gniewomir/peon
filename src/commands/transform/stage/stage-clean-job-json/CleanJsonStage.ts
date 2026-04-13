@@ -6,7 +6,7 @@ import type { Transformation } from '../AbstractTransformation.js';
 import { CleanerJji } from './CleanerJji.js';
 import { CleanerNfj } from './CleanerNfj.js';
 import { CleanerBdj } from './CleanerBdj.js';
-import { KnownArtifactsEnum } from '../../artifacts.js';
+import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { schema } from '../../../../schema/schema.js';
 
 export class CleanJsonStage extends AbstractStage {

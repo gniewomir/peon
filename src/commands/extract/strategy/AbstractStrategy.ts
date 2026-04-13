@@ -3,58 +3,80 @@ import { smartSave } from '../../lib/smartSave.js';
 import fs from 'node:fs/promises';
 import { metaSchema, nullMetaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
 import type { Logger } from '../../lib/logger.js';
-import type { Strategy, StrategySaveOptions } from './types.js';
+import type {
+  Strategy,
+  StrategyOptions,
+  StrategyParameters,
+  StrategySaveOptions,
+} from './types.js';
 import type { JobJson, Listing } from '../types.js';
 import type { CacheOperations } from '../lib/cache.js';
 import type { KnownStrategy } from '../../../lib/types.js';
 import type { GoToOptions } from 'puppeteer-core';
+import { artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
 
 export abstract class AbstractStrategy implements Strategy {
   public abstract readonly slug: KnownStrategy;
-  private readonly logger: Logger;
-  ids: Set<string>;
+  protected readonly logger: Logger;
+  protected readonly options: StrategyOptions;
+  protected ids: Set<string>;
 
-  protected constructor({ logger }: { logger: Logger }) {
+  public constructor({ logger, options }: StrategyParameters) {
     this.logger = logger;
+    this.options = {
+      ...options,
+    };
     this.ids = new Set<string>();
+  }
+
+  public pageOpenOptions(): GoToOptions {
+    return this.options.pageOpenOptions;
   }
 
   abstract jobListingsGenerator(): AsyncGenerator<Listing>;
 
-  abstract jobGenerator(
-    listing: Listing,
-    logger: Logger,
-    cache: CacheOperations,
-  ): AsyncGenerator<JobJson>;
-
-  abstract pageOpenOptions(): GoToOptions;
+  abstract jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson>;
 
   abstract jobToUrl(job: JobJson): string;
 
   abstract jobToId(job: JobJson): string;
 
-  async save(options: StrategySaveOptions): Promise<void> {
-    const { outDir, cached, job, url, content, logger } = options;
-    const jobId = this.jobToId(job);
-    const jobDir = path.join(outDir, `${this.slug}-${jobId}`);
+  async save({ cachePath, json, url, html }: StrategySaveOptions): Promise<void> {
+    const jobId = this.jobToId(json);
+    const jobStagingDir = path.join(this.options.stagingDir, `${this.slug}-${jobId}`);
 
     const meta = metaSchema.parse({
       ...nullMetaSchema(),
       offer: {
         ...nullMetaSchema().offer,
-        id: this.jobToId(job),
+        id: this.jobToId(json),
         url,
         source: this.slug,
-        cachePath: cached,
-        stagingPath: jobDir,
+        cachePath,
+        stagingPath: jobStagingDir,
       },
     } satisfies TMetaSchema);
 
-    await fs.mkdir(jobDir, { recursive: true });
+    await fs.mkdir(jobStagingDir, { recursive: true });
     await Promise.all([
-      smartSave(path.join(jobDir, `raw.meta.json`), meta, false, logger),
-      smartSave(path.join(jobDir, `raw.job.json`), job, false, logger),
-      smartSave(path.join(jobDir, `raw.job.html`), content, false, logger),
+      smartSave(
+        path.join(jobStagingDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META_JSON)),
+        meta,
+        false,
+        this.logger,
+      ),
+      smartSave(
+        path.join(jobStagingDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_JSON)),
+        json,
+        false,
+        this.logger,
+      ),
+      smartSave(
+        path.join(jobStagingDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_HTML)),
+        html,
+        false,
+        this.logger,
+      ),
     ]);
   }
 }

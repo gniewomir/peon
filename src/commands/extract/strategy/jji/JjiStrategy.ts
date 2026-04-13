@@ -1,28 +1,13 @@
 import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import { parseListingResponse } from './listing-parser.js';
-import type { Logger } from '../../../lib/logger.js';
+import { parseListingResponse } from './listingParser.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
-import type { GoToOptions } from 'puppeteer';
 
 export class JjiStrategy extends AbstractStrategy {
   public readonly slug: KnownStrategy = 'jji';
-
-  constructor(logger: Logger) {
-    super({
-      logger,
-    });
-  }
-
-  pageOpenOptions(): GoToOptions {
-    return {
-      waitUntil: 'networkidle0',
-      timeout: 60000,
-    };
-  }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
@@ -31,16 +16,12 @@ export class JjiStrategy extends AbstractStrategy {
     }
   }
 
-  async *jobGenerator(
-    listing: Listing,
-    logger: Logger,
-    cache: CacheOperations,
-  ): AsyncGenerator<JobJson> {
+  async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
     let currentCursor = 0;
     let pageNumber = 1;
 
     while (true) {
-      logger.log(` 📖 Fetching page ${pageNumber} (from=${currentCursor})...`);
+      this.logger.log(` 📖 Fetching page ${pageNumber} (from=${currentCursor})...`);
 
       const urlObj = new URL(listing.url);
       urlObj.searchParams.set('from', currentCursor.toString());
@@ -49,11 +30,11 @@ export class JjiStrategy extends AbstractStrategy {
       const cacheKey = cache.dailyCacheKey(url);
 
       let jsonText: string;
-      if (await cache.hasCacheKey(cacheKey, logger)) {
-        jsonText = await cache.readCache(cacheKey, logger);
+      if (await cache.hasCacheKey(cacheKey, this.logger)) {
+        jsonText = await cache.readCache(cacheKey, this.logger);
       } else {
         const response = await fetch(url, {
-          signal: AbortSignal.timeout(60_000),
+          signal: AbortSignal.timeout(this.options.requestsTimeout),
           headers: {
             accept: 'application/json, text/plain, */*',
             'accept-language': 'en, en-gb;q=0.9, en-us;q=0.8, en;q=0.7',
@@ -66,13 +47,13 @@ export class JjiStrategy extends AbstractStrategy {
         });
 
         if (!response.ok) {
-          logger.error(' ⚠️  Error response', await response.json());
+          this.logger.error(' ⚠️  Error response', await response.json());
           throw new Error(` ⚠️  HTTP ${response.status}: ${response.statusText}`);
         }
 
         const content = await response.json();
         jsonText = JSON.stringify(content);
-        await cache.writeCache(cacheKey, jsonText, logger);
+        await cache.writeCache(cacheKey, jsonText, this.logger);
       }
 
       const parsed = parseListingResponse(jsonText);
@@ -86,7 +67,7 @@ export class JjiStrategy extends AbstractStrategy {
         } catch {
           /* ignore */
         }
-        logger.log(' ⚠️  Invalid content structure or no data found', keys);
+        this.logger.log(' ⚠️  Invalid content structure or no data found', keys);
         break;
       }
 
@@ -96,6 +77,9 @@ export class JjiStrategy extends AbstractStrategy {
         const job = stack.pop();
         if (job) {
           assert('guid' in job && typeof job.guid === 'string', ' ⚠️  No guid in JJI job');
+          if (this.ids.has(job.guid)) {
+            continue;
+          }
           this.ids.add(job.guid);
           yield job;
         }
@@ -107,7 +91,7 @@ export class JjiStrategy extends AbstractStrategy {
         nextCursor === currentCursor ||
         parsed.jobs.length === 0
       ) {
-        logger.log(' 👌 Reached last page. API scraping complete.');
+        this.logger.log(' 👌 Reached last page. API scraping complete.');
         break;
       }
       currentCursor = nextCursor;

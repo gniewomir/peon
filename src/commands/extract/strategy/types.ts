@@ -4,21 +4,30 @@ import type { JobJson, Listing } from '../types.js';
 import type { KnownStrategy } from '../../../lib/types.js';
 import type { GoToOptions } from 'puppeteer-core';
 
-export interface StrategySaveOptions {
-  outDir: string;
-  cached: string;
-  job: JobJson;
-  url: string;
-  content: string;
+export interface StrategyParameters {
   logger: Logger;
+  options: StrategyOptions;
+}
+
+export interface StrategyOptions {
+  limit?: number;
+  stagingDir: string;
+  requestsTimeout: number;
+  pageOpenOptions: GoToOptions;
+}
+
+export interface StrategySaveOptions {
+  cachePath: string;
+  json: JobJson;
+  url: string;
+  html: string;
 }
 
 export interface Strategy {
   slug: KnownStrategy;
-  ids: Set<string>;
   pageOpenOptions(): GoToOptions;
   jobListingsGenerator(): AsyncGenerator<Listing>;
-  jobGenerator(listing: Listing, logger: Logger, cache: CacheOperations): AsyncGenerator<JobJson>;
+  jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson>;
   jobToUrl(job: JobJson): string;
   jobToId(job: JobJson): string;
   save(options: StrategySaveOptions): Promise<void>;
