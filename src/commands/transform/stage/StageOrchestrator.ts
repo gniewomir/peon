@@ -1,6 +1,5 @@
 import type { AbstractStage } from './AbstractStage.js';
 import type { StagingFileEvent } from '../types.js';
-import { HashMap } from '../lib/HashMap.js';
 import path, { dirname } from 'node:path';
 import type { Logger } from '../../lib/logger.js';
 import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
@@ -13,10 +12,11 @@ import assert from 'node:assert';
 import { statsAddToCounter } from '../../../lib/stats.js';
 import { GuardDecisionRemove } from './guards/decisions/GuardDecisionRemove.js';
 import type { InMemoryDirectoryTracker } from './InMemoryDirectoryTracker.js';
+import { LRUHashMap } from '../lib/LRUHashMap.js';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
-  private readonly directoryQueues = new HashMap<Promise<unknown>>();
+  private readonly directoryQueues = new LRUHashMap<Promise<unknown>>(5000);
   private listening = true;
   private readonly stagingDir;
   private readonly quarantineDir;
