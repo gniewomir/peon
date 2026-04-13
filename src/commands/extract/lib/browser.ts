@@ -24,6 +24,7 @@ const baseLaunchArgs = [
 ] as const;
 
 const BROWSER_CLOSE_SETTLE_MS = 150;
+const MAX_OPEN_PAGES = 10;
 
 export interface BrowserContext extends AsyncDisposable {
   withBrowser<T>(payload: (browser: Browser) => Promise<T>): Promise<T>;
@@ -35,24 +36,83 @@ export interface PageContext extends AsyncDisposable {
   page: Page;
 }
 
+type Semaphore = {
+  acquire(): Promise<void>;
+  release(): void;
+};
+
+function createSemaphore(initialAvailable: number): Semaphore {
+  let available = Math.max(0, initialAvailable);
+  const waiters: Array<() => void> = [];
+
+  return {
+    async acquire(): Promise<void> {
+      if (available > 0) {
+        available -= 1;
+        return;
+      }
+      await new Promise<void>((resolve) => {
+        waiters.push(resolve);
+      });
+    },
+    release(): void {
+      const next = waiters.shift();
+      if (next) next();
+      else available += 1;
+    },
+  };
+}
+
+const pageSemaphores = new WeakMap<Browser, Promise<Semaphore>>();
+
+async function getPageSemaphore(browser: Browser): Promise<Semaphore> {
+  const existing = pageSemaphores.get(browser);
+  if (existing) return existing;
+
+  const created = (async () => {
+    const currentOpen = (await browser.pages().catch(() => [])).length;
+    const initialAvailable = MAX_OPEN_PAGES - currentOpen;
+    return createSemaphore(initialAvailable);
+  })();
+
+  pageSemaphores.set(browser, created);
+  return created;
+}
+
 export async function pageContext(browser: Browser): Promise<PageContext> {
-  // TODO: limit number of open pages, make consumer wait until they are available
-  const page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on('request', async (request) => {
-    if (blockedResourceTypes.has(request.resourceType())) {
-      await request.abort();
-    } else {
-      await request.continue();
-    }
-  });
-  await page.setUserAgent({
-    userAgent: getRandomUserAgent(),
-  });
+  const semaphore = await getPageSemaphore(browser);
+  await semaphore.acquire();
+
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    semaphore.release();
+  };
+
+  let page: Page | undefined;
+  try {
+    page = await browser.newPage();
+    await page.setRequestInterception(true);
+    page.on('request', async (request) => {
+      if (blockedResourceTypes.has(request.resourceType())) {
+        await request.abort();
+      } else {
+        await request.continue();
+      }
+    });
+    await page.setUserAgent({
+      userAgent: getRandomUserAgent(),
+    });
+  } catch (error) {
+    release();
+    throw error;
+  }
   return {
     page,
     async [Symbol.asyncDispose]() {
-      await page.close().catch(() => {});
+      await page?.close().catch(() => {});
+      release();
     },
   };
 }
