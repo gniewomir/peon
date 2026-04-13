@@ -14,10 +14,8 @@ export enum KnownArtifactsEnum {
   CLEAN_JOB_HTML = 'CLEAN_JOB_HTML',
   CLEAN_JOB_META_JSON = 'CLEAN_JOB_META_JSON',
   CLEAN_MARKDOWN = 'CLEAN_MARKDOWN',
-  LLM_JSON = 'LLM_JSON',
-  COMBINED_JSON = 'COMBINED_JSON',
-  NORMALIZED_JSON = 'NORMALIZED_JSON',
-  VALIDATED_JSON = 'VALIDATED_JSON',
+  CLEAN_COMBINED_JSON = 'CLEAN_COMBINED_JSON',
+  ENRICH_LLM_JSON = 'ENRICH_LLM_JSON',
 }
 
 const artifactsRegistry: Record<KnownArtifactsEnum, ArtifactDescriptor> = {
@@ -45,17 +43,11 @@ const artifactsRegistry: Record<KnownArtifactsEnum, ArtifactDescriptor> = {
   [KnownArtifactsEnum.CLEAN_MARKDOWN]: {
     filename: 'clean.md',
   },
-  [KnownArtifactsEnum.LLM_JSON]: {
-    filename: 'llm.json',
+  [KnownArtifactsEnum.CLEAN_COMBINED_JSON]: {
+    filename: 'clean.combined.json',
   },
-  [KnownArtifactsEnum.COMBINED_JSON]: {
-    filename: 'combined.json',
-  },
-  [KnownArtifactsEnum.NORMALIZED_JSON]: {
-    filename: 'normalized.json',
-  },
-  [KnownArtifactsEnum.VALIDATED_JSON]: {
-    filename: 'validated.json',
+  [KnownArtifactsEnum.ENRICH_LLM_JSON]: {
+    filename: 'enrich.llm.json',
   },
 } as const;
 export type Artifact = keyof typeof artifactsRegistry;
