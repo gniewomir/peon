@@ -5,7 +5,7 @@ import type { Transformation } from '../AbstractTransformation.js';
 import { HtmlToMarkdownConverter } from './HtmlToMarkdownConverter.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 
-export class HtmlToMdStage extends AbstractStage {
+export class CleanHtmlToMdStage extends AbstractStage {
   public static transformations(): Transformation[] {
     return [new HtmlToMarkdownConverter()];
   }
@@ -15,7 +15,7 @@ export class HtmlToMdStage extends AbstractStage {
   }
 
   protected outputArtifact() {
-    return KnownArtifactsEnum.LLM_MARKDOWN;
+    return KnownArtifactsEnum.CLEAN_MARKDOWN;
   }
 
   protected guards(): AbstractGuard[] {

@@ -13,7 +13,7 @@ export enum KnownArtifactsEnum {
   CLEAN_JOB_JSON = 'CLEAN_JOB_JSON',
   CLEAN_JOB_HTML = 'CLEAN_JOB_HTML',
   CLEAN_JOB_META_JSON = 'CLEAN_JOB_META_JSON',
-  LLM_MARKDOWN = 'LLM_MARKDOWN',
+  CLEAN_MARKDOWN = 'CLEAN_MARKDOWN',
   LLM_JSON = 'LLM_JSON',
   COMBINED_JSON = 'COMBINED_JSON',
   NORMALIZED_JSON = 'NORMALIZED_JSON',
@@ -42,8 +42,8 @@ const artifactsRegistry: Record<KnownArtifactsEnum, ArtifactDescriptor> = {
   [KnownArtifactsEnum.CLEAN_JOB_META_JSON]: {
     filename: 'clean.meta.json',
   },
-  [KnownArtifactsEnum.LLM_MARKDOWN]: {
-    filename: 'llm.md',
+  [KnownArtifactsEnum.CLEAN_MARKDOWN]: {
+    filename: 'clean.md',
   },
   [KnownArtifactsEnum.LLM_JSON]: {
     filename: 'llm.json',

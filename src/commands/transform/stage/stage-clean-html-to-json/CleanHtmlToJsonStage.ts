@@ -4,7 +4,7 @@ import { HtmlToJsonExtractor } from './HtmlToJsonExtractor.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 
-export class HtmlToJsonStage extends AbstractStage {
+export class CleanHtmlToJsonStage extends AbstractStage {
   public static transformations(): Transformation[] {
     return [new HtmlToJsonExtractor()];
   }

@@ -12,7 +12,7 @@ export class StructureUnstructured extends AbstractTransformation {
   async transform(input: Map<Artifact, string>): Promise<string> {
     const response = await llmStructuredResponse<TSchema>({
       fallback: true,
-      input: input.get(KnownArtifactsEnum.LLM_MARKDOWN) || '',
+      input: input.get(KnownArtifactsEnum.CLEAN_MARKDOWN) || '',
     });
     return this.toString(response);
   }

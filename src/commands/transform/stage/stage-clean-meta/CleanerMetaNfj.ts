@@ -25,7 +25,7 @@ export class CleanerMetaNfj extends AbstractTransformation {
       merge(metaSchema.parse(meta), {
         offer: {
           publishedAt: nav.getPath('posted').toDateFromTimestamp().toISOString(),
-          expiresAt: this.findExpiration(input.get(KnownArtifactsEnum.LLM_MARKDOWN)),
+          expiresAt: this.findExpiration(input.get(KnownArtifactsEnum.CLEAN_MARKDOWN)),
           updatedAt: nav.getOptionalPath('renewed')?.toDateFromTimestamp().toISOString() ?? null,
           canonicalUrl:
             this.slugsToUrls(meta.offer.url || '', [this.establishCanonicalUrlSlug(nav)]).pop() ||

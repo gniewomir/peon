@@ -4,11 +4,11 @@ import chokidar from 'chokidar';
 import { type Logger } from '../lib/logger.js';
 import { stripRoot } from '../../lib/root.js';
 import { StageOrchestrator } from './stage/StageOrchestrator.js';
-import { HtmlToJsonStage } from './stage/stage-html-to-json/HtmlToJsonStage.js';
+import { CleanHtmlToJsonStage } from './stage/stage-clean-html-to-json/CleanHtmlToJsonStage.js';
 import { CleanMetaStage } from './stage/stage-clean-meta/CleanMetaStage.js';
 import { CleanJsonStage } from './stage/stage-clean-job-json/CleanJsonStage.js';
 import { CleanHtmlStage } from './stage/stage-clean-html/CleanHtmlStage.js';
-import { HtmlToMdStage } from './stage/stage-html-to-md/HtmlToMdStage.js';
+import { CleanHtmlToMdStage } from './stage/stage-clean-html-to-md/CleanHtmlToMdStage.js';
 import { LlmStage } from './stage/stage-llm/LlmStage.js';
 import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
 import { shutdownContext } from '../../lib/shutdown.js';
@@ -47,12 +47,12 @@ export async function runTransform({
           transformations: CleanJsonStage.transformations(),
           inMemoryDirectoryTracker,
         }),
-        new HtmlToJsonStage({
+        new CleanHtmlToJsonStage({
           logger,
           stagingDir,
           trashDir,
           loadDir,
-          transformations: HtmlToJsonStage.transformations(),
+          transformations: CleanHtmlToJsonStage.transformations(),
           inMemoryDirectoryTracker,
         }),
         new CleanMetaStage({
@@ -71,12 +71,12 @@ export async function runTransform({
           transformations: CleanHtmlStage.transformations(),
           inMemoryDirectoryTracker,
         }),
-        new HtmlToMdStage({
+        new CleanHtmlToMdStage({
           logger,
           stagingDir,
           trashDir,
           loadDir,
-          transformations: HtmlToMdStage.transformations(),
+          transformations: CleanHtmlToMdStage.transformations(),
           inMemoryDirectoryTracker,
         }),
         new LlmStage({
