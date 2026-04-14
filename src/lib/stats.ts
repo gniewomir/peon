@@ -19,11 +19,14 @@ export class StatsError extends Error {
 
 export type StatsSnapshot = {
   readonly timestamp: string;
+  readonly prefix: string;
   readonly values: Record<string, unknown>;
   readonly counters: Record<string, number>;
 };
 
 type StatsStore = {
+  timestamp: string;
+  prefix: string;
   values: Record<string, unknown>;
   counters: Record<string, number>;
 };
@@ -31,13 +34,14 @@ type StatsStore = {
 const statsAls = new AsyncLocalStorage<StatsStore>();
 
 function emptyStore(): StatsStore {
-  return { values: {}, counters: {} };
+  return { timestamp: new Date().toISOString(), prefix: '', values: {}, counters: {} };
 }
 
 function snapshotFromStore(store: StatsStore): StatsSnapshot {
   try {
     return {
-      timestamp: new Date().toISOString(),
+      timestamp: store.timestamp,
+      prefix: store.prefix,
       values: structuredClone(store.values),
       counters: structuredClone(store.counters),
     };
@@ -54,34 +58,40 @@ function requireStore(): StatsStore {
   return store;
 }
 
+function scopedKey(key: string, store: StatsStore): string {
+  return `${store.prefix}${key}`;
+}
+
 export function stats(): StatsSnapshot {
   return snapshotFromStore(requireStore());
 }
 
 export function statsGetValue(key: string): unknown {
   const store = requireStore();
-  if (!(key in store.values)) {
-    throw new StatsError('MISSING_VALUE', `Missing stats value for key: ${key}`);
+  const k = scopedKey(key, store);
+  if (!(k in store.values)) {
+    throw new StatsError('MISSING_VALUE', `Missing stats value for key: ${k}`);
   }
-  return store.values[key];
+  return store.values[k];
 }
 
 export function statsSetValue(key: string, value: unknown): void {
   const store = requireStore();
-  store.values[key] = value;
+  store.values[scopedKey(key, store)] = value;
 }
 
 export function statsAddToCounter(key: string, increment = 1): void {
   const store = requireStore();
-  const cur = store.counters[key] ?? 0;
-  store.counters[key] = cur + increment;
+  const k = scopedKey(key, store);
+  const cur = store.counters[k] ?? 0;
+  store.counters[k] = cur + increment;
 }
 
 export interface StatsContext {
   withStats<T>(fn: () => Promise<T>): Promise<T>;
 }
 
-export function statsContext(): StatsContext {
+export function statsContext(statsContext = ''): StatsContext {
   let withStatsUsed = false;
 
   return {
@@ -97,6 +107,7 @@ export function statsContext(): StatsContext {
       }
       withStatsUsed = true;
       const store = emptyStore();
+      store.prefix = statsContext;
 
       return await statsAls.run(store, payload);
     },
