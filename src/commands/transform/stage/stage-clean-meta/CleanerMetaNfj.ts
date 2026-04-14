@@ -43,6 +43,15 @@ export class CleanerMetaNfj extends AbstractTransformation {
     if (!markdown) {
       return null;
     }
+
+    const todayMatches = markdown.match(/^- Offer expires today$/m);
+    if (todayMatches && todayMatches[0]) {
+      const expirationDate = new Date();
+      expirationDate.setHours(23);
+      expirationDate.setMinutes(59);
+      return expirationDate.toISOString();
+    }
+
     const matches = markdown.match(/^- Offer valid until: (.+)$/m);
     const match =
       matches && matches[0] ? matches[0].split(' ').filter((w) => w.includes('.'))[0] : null;
