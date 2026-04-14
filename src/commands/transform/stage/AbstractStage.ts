@@ -71,12 +71,17 @@ export abstract class AbstractStage {
        * NOTE: saving the result before guards, so it is available for debugging
        *       in the quarantined / trashed job directory
        */
-      await smartSave(
+      const updated = await smartSave(
         path.join(jobDir, artifactFilename(this.outputArtifact())),
         result,
         false,
         this.logger,
       );
+      if (updated) {
+        this.logger.log(
+          `Artifact ${stripRoot(jobDir)}/${artifactFilename(this.outputArtifact())} was updated.`,
+        );
+      }
       for (const guard of this.guards()) {
         const guardDecision = await guard.guard(result);
         if (!(guardDecision instanceof GuardDecisionAdvance)) {
