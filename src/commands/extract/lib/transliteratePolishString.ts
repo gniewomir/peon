@@ -19,16 +19,10 @@ const polishToAscii: Record<string, string> = {
   Ż: 'z',
 };
 
-function transliteratePolish(s: string): string {
+export function transliteratePolishString(s: string): string {
   let out = '';
   for (const ch of s) {
     out += polishToAscii[ch] ?? ch;
   }
   return out;
-}
-
-export function lowercaseAndTransliterate(input: string): string {
-  const trimmed = input.trim();
-  const transliterated = transliteratePolish(trimmed);
-  return transliterated.toLowerCase();
 }

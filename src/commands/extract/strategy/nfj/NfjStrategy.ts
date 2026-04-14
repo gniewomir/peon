@@ -5,7 +5,9 @@ import { parseListingResponse } from './listingParser.js';
 import type { JobJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
-import { lowercaseAndTransliterate } from '../../lib/lowercaseAndTransliterate.js';
+import { JsonNavigator } from '../../../transform/lib/JsonNavigator.js';
+import { statsAddToCounter } from '../../../../lib/stats.js';
+import { transliteratePolishString } from '../../lib/transliteratePolishString.js';
 
 interface NFJListing extends Listing {
   meta: {
@@ -107,6 +109,14 @@ export class NfjStrategy extends AbstractStrategy {
         const job = stack.pop();
         if (job) {
           assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
+          if (this.isDuplicate(job)) {
+            statsAddToCounter('extract_nfj_duplicate');
+            this.logger.debug('Found nfj duplicate, skipping extraction', {
+              canonicalUrl: this.slugToUrl(this.establishCanonicalUrlSlug(new JsonNavigator(job))),
+              currentUrl: this.jobToUrl(job).trim().toLowerCase(),
+            });
+            continue;
+          }
           yield job;
         }
       }
@@ -127,11 +137,36 @@ export class NfjStrategy extends AbstractStrategy {
 
   jobToUrl(job: JobJson): string {
     assert('url' in job && typeof job.url === 'string', ' ⚠️  No url in NFJ job');
-    return `https://nofluffjobs.com/job/${job.url}`;
+    return this.slugToUrl(job.url);
   }
 
   jobToId(job: JobJson): string {
-    assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
-    return lowercaseAndTransliterate(job.id);
+    assert('id' in job && typeof job.id === 'string', ' ⚠️  No url in NFJ job');
+    return transliteratePolishString(job.id).trim().toLowerCase();
+  }
+
+  private slugToUrl(slug: string): string {
+    return `https://nofluffjobs.com/job/${slug}`;
+  }
+
+  private isDuplicate(job: JobJson): boolean {
+    return (
+      this.slugToUrl(this.establishCanonicalUrlSlug(new JsonNavigator(job))) !==
+      this.jobToUrl(job).trim().toLowerCase()
+    );
+  }
+
+  private establishCanonicalUrlSlug(nav: JsonNavigator): string {
+    const urls = nav
+      .getPath('location.places')
+      .toArray()
+      .map((place) => place.getPath('url').toString().toLowerCase().trim())
+      .sort((a, b) => a.length - b.length);
+    const urlIncludeRemote = urls.filter((url: string) => url.includes('remote'));
+    if (urlIncludeRemote.length > 0) {
+      return urlIncludeRemote[0];
+    }
+    assert(urls[0], 'Url cannot be undefined');
+    return urls[0];
   }
 }
