@@ -63,11 +63,14 @@ export class CleanerMetaNfj extends AbstractTransformation {
     const urls = nav
       .getPath('location.places')
       .toArray()
-      .map((place) => place.getPath('url').toString())
+      .map((place) => place.getPath('url').toString().toLowerCase().trim())
       .sort((a, b) => a.length - b.length);
-    const url = urls.shift();
-    assert(url, 'Url cannot be undefined');
-    return url;
+    const urlIncludeRemote = urls.filter((url: string) => url.includes('remote'));
+    if (urlIncludeRemote.length > 0) {
+      return urlIncludeRemote[0];
+    }
+    assert(urls[0], 'Url cannot be undefined');
+    return urls[0];
   }
 
   private establishAlternateUrlSlugs(nav: JsonNavigator): string[] {
