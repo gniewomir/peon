@@ -60,45 +60,14 @@ export class CleanerMetaNfj extends AbstractTransformation {
   }
 
   private establishCanonicalUrlSlug(nav: JsonNavigator): string {
-    const places = nav.getPath('location.places').toArray();
-    // check for remote
-    for (const place of places) {
-      const url = place.getPath('url').toString();
-      if (url.toLowerCase().includes('remote')) {
-        return url;
-      }
-    }
-    // check for important cities
-    for (const place of places) {
-      const url = place.getPath('url').toString();
-      if (url.toLowerCase().includes('warszawa')) {
-        return url;
-      }
-      if (url.toLowerCase().includes('krakow')) {
-        return url;
-      }
-      if (url.toLowerCase().includes('wroclaw')) {
-        return url;
-      }
-      if (url.toLowerCase().includes('gdansk')) {
-        return url;
-      }
-      if (url.toLowerCase().includes('poznan')) {
-        return url;
-      }
-    }
-    // choose shortest
-    let shortest = '';
-    for (const place of places) {
-      const url = place.getPath('url').toString();
-      if (!shortest.length) {
-        shortest = url;
-      }
-      if (shortest.length > url.length) {
-        shortest = url;
-      }
-    }
-    return shortest;
+    const urls = nav
+      .getPath('location.places')
+      .toArray()
+      .map((place) => place.getPath('url').toString())
+      .sort((a, b) => a.length - b.length);
+    const url = urls.shift();
+    assert(url, 'Url cannot be undefined');
+    return url;
   }
 
   private establishAlternateUrlSlugs(nav: JsonNavigator): string[] {

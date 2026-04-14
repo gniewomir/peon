@@ -27,12 +27,8 @@ function transliteratePolish(s: string): string {
   return out;
 }
 
-export function slugifyWtPolishTransliteration(input: string): string {
+export function lowercaseAndTransliterate(input: string): string {
   const trimmed = input.trim();
   const transliterated = transliteratePolish(trimmed);
-  const slugified = transliterated
-    .replace(/[^a-zA-Z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
-  return slugified.toLowerCase();
+  return transliterated.toLowerCase();
 }
