@@ -94,7 +94,7 @@ export async function runTransform({
     const watcher = chokidar.watch(stagingDir, {
       ignoreInitial: false,
       persistent: true,
-      ignored: (val) => val.includes('.DS_Store'),
+      ignored: (val) => val.includes('.DS_Store') || val.includes('error.json'),
     });
     shutdownCtx.registerCleanup(() => watcher.close());
 
