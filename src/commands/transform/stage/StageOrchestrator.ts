@@ -13,6 +13,9 @@ import { statsAddToCounter } from '../../../lib/stats.js';
 import { GuardDecisionRemove } from './guards/decisions/GuardDecisionRemove.js';
 import type { InMemoryDirectoryTracker } from './InMemoryDirectoryTracker.js';
 import { LRUHashMap } from '../lib/LRUHashMap.js';
+import { readFileSync } from 'fs';
+import { artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
+import { JsonNavigator } from '../lib/JsonNavigator.js';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
@@ -127,15 +130,36 @@ export class StageOrchestrator {
 
   private createErrorHandler(jobDir: string, event: StagingFileEvent, stage: AbstractStage) {
     return async (error: unknown) => {
-      this.logger.error(`Unhandled error during ${stage.name()}`, { error, event });
+      this.logger.error(`Unhandled error during ${stage.name()} for ${stripRoot(jobDir)}`, {
+        error,
+        event,
+        jobDir,
+      });
       return error;
     };
   }
 
   private remove(jobDir: string) {
     if (!existsSync(jobDir)) return;
-    rmSync(jobDir, { recursive: true, force: true });
-    statsAddToCounter('jobs_removed');
+    try {
+      const meta = JSON.parse(
+        readFileSync(
+          path.join(jobDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META_JSON)),
+          'utf8',
+        ),
+      );
+      const nav = new JsonNavigator(meta);
+      const cachePath = nav.getPath('offer.cachePath').toString();
+      rmSync(cachePath, { recursive: true, force: true });
+      statsAddToCounter('job_cache_cleared');
+      this.logger.log(`Cleared cache for ${stripRoot(jobDir)}`);
+    } catch (error) {
+      statsAddToCounter('job_cache_clear_failed');
+      this.logger.error(`Error when clearing cache for ${stripRoot(jobDir)}`, error);
+    } finally {
+      rmSync(jobDir, { recursive: true, force: true });
+      statsAddToCounter('jobs_removed');
+    }
   }
 
   private quarantine(jobDir: string) {
