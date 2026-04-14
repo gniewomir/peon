@@ -14,6 +14,9 @@ import type { CacheOperations } from '../lib/cache.js';
 import type { KnownStrategy } from '../../../lib/types.js';
 import type { GoToOptions } from 'puppeteer-core';
 import { artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
+import { access } from 'fs/promises';
+import { constants } from 'node:fs';
+import { statsAddToCounter } from '../../../lib/stats.js';
 
 export abstract class AbstractStrategy implements Strategy {
   public abstract readonly slug: KnownStrategy;
@@ -43,7 +46,30 @@ export abstract class AbstractStrategy implements Strategy {
 
   async save({ cachePath, json, url, html }: StrategySaveOptions): Promise<void> {
     const jobId = this.jobToId(json);
-    const jobStagingDir = path.join(this.options.stagingDir, `${this.slug}-${jobId}`);
+    const jobDir = `${this.slug}-${jobId}`;
+    const jobStagingDir = path.join(this.options.stagingDir, jobDir);
+    const jobQuarantineDir = path.join(this.options.quarantineDir, jobDir);
+    const jobTrashDir = path.join(this.options.trashDir, jobDir);
+
+    // If job is staged, then we still processing it, no point in triggering whole pipeline again until it is loaded
+    if (await this.pathExists(jobStagingDir)) {
+      statsAddToCounter('extract_job_already_staged');
+      return;
+    }
+
+    // If job is trashed, then we do not want to process it
+    if (await this.pathExists(jobTrashDir)) {
+      statsAddToCounter('extract_job_already_trashed');
+      return;
+    }
+
+    // If job is quarantined, then we do not want to process it until issue is investigated and resolved
+    if (await this.pathExists(jobQuarantineDir)) {
+      statsAddToCounter('extract_job_already_quarantined');
+      return;
+    }
+
+    statsAddToCounter('extract_stage_job');
 
     const meta = metaSchema.parse({
       ...nullMetaSchema(),
@@ -78,5 +104,14 @@ export abstract class AbstractStrategy implements Strategy {
         this.logger,
       ),
     ]);
+  }
+
+  private async pathExists(filePath: string): Promise<boolean> {
+    try {
+      await access(filePath, constants.F_OK);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

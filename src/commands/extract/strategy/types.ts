@@ -12,6 +12,9 @@ export interface StrategyParameters {
 export interface StrategyOptions {
   limit?: number;
   stagingDir: string;
+  quarantineDir: string;
+  trashDir: string;
+  loadDir: string;
   requestsTimeout: number;
   pageOpenOptions: GoToOptions;
 }

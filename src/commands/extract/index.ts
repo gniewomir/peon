@@ -115,13 +115,7 @@ export function registerExtractCommand(program: Command): void {
     .option('--only <slugs>', `Comma-separated strategies to run`, 'all')
     .option('--limit <number>', `Limit the number of jobs to scrape for each strategy`)
     .action(
-      async ({
-        stagingDir,
-        cacheDir,
-        only,
-        verbose,
-        limit,
-      }: {
+      async (opts: {
         cacheDir?: string;
         stagingDir?: string;
         quarantineDir?: string;
@@ -131,17 +125,22 @@ export function registerExtractCommand(program: Command): void {
         verbose?: boolean;
         limit?: number;
       }) => {
-        const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(verbose) });
+        const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
         await withLogger((logger) =>
           runExtract({
             logger,
-            cacheDir: path.resolve(cacheDir ?? path.join(root, relCacheDir)),
+            cacheDir: path.resolve(opts.cacheDir ?? path.join(root, relCacheDir)),
             strategies: selectStrategies({
-              only,
+              only: opts.only,
               logger,
               options: {
-                limit,
-                stagingDir: path.resolve(stagingDir ?? path.join(root, relStagingDir)),
+                limit: opts.limit,
+                stagingDir: path.resolve(opts.stagingDir ?? path.join(root, relStagingDir)),
+                quarantineDir: path.resolve(
+                  opts.quarantineDir ?? path.join(root, relQuarantineDir),
+                ),
+                trashDir: path.resolve(opts.trashDir ?? path.join(root, relTrashDir)),
+                loadDir: path.resolve(opts.loadDir ?? path.join(root, relLoadDir)),
               },
             }),
           }),
