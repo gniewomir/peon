@@ -4,7 +4,7 @@ import { HtmlToMdConverterAll } from './HtmlToMdConverterAll.js';
 
 export class HtmlToMdConverterBdj extends HtmlToMdConverterAll {
   strategy(): StrategySelector {
-    return 'jji';
+    return 'bdj';
   }
 
   async transform(input: Map<Artifact, string>): Promise<string> {
