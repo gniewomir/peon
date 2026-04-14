@@ -10,6 +10,13 @@ export class NoContentHtmlGuard extends AbstractGuard {
   }
 
   async guard(result: string): Promise<AbstractGuardDecision> {
+    if (
+      result.includes(
+        'Application error: a client-side exception has occurred while loading justjoin.it',
+      )
+    ) {
+      return new GuardDecisionRemove(`JJI application error - webpage was not fully rendered`);
+    }
     if (result.trim().length < this.minLength) {
       return new GuardDecisionRemove(
         `Result empty or shorter than ${this.minLength} - webpage was not fully rendered?`,
