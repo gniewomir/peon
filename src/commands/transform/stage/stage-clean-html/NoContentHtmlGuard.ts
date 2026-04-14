@@ -4,7 +4,7 @@ import { AbstractGuard } from '../guards/AbstractGuard.js';
 import { GuardDecisionRemove } from '../guards/decisions/GuardDecisionRemove.js';
 import { GuardDecisionQuarantine } from '../guards/decisions/GuardDecisionQuarantine.js';
 
-export class NotContentHtmlGuard extends AbstractGuard {
+export class NoContentHtmlGuard extends AbstractGuard {
   constructor(private readonly minLength: number = 100) {
     super();
   }
@@ -25,6 +25,6 @@ export class NotContentHtmlGuard extends AbstractGuard {
   }
 
   name(): string {
-    return 'not-empty-clean-html-guard';
+    return 'no-content-clean-html-guard';
   }
 }
