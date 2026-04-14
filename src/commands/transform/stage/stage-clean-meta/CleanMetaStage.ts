@@ -20,7 +20,7 @@ export class CleanMetaStage extends AbstractStage {
       KnownArtifactsEnum.RAW_JOB_JSON,
       KnownArtifactsEnum.CLEAN_MARKDOWN,
       KnownArtifactsEnum.CLEAN_JOB_HTML,
-      KnownArtifactsEnum.RAW_JOB_HTML_JSON,
+      KnownArtifactsEnum.CLEAN_JOB_HTML_JSON,
     ];
   }
 

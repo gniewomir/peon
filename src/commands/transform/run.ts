@@ -13,6 +13,7 @@ import { EnrichLlmStage } from './stage/stage-enrich-llm/EnrichLlmStage.js';
 import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
 import { shutdownContext } from '../../lib/shutdown.js';
 import { InMemoryDirectoryTracker } from './stage/InMemoryDirectoryTracker.js';
+import { CleanHtmlJsonStage } from './stage/stage-clean-html-json/CleanHtmlJsonStage.js';
 
 export async function runTransform({
   stagingDir,
@@ -53,6 +54,14 @@ export async function runTransform({
           trashDir,
           loadDir,
           transformations: CleanHtmlToJsonStage.transformations(),
+          inMemoryDirectoryTracker,
+        }),
+        new CleanHtmlJsonStage({
+          logger,
+          stagingDir,
+          trashDir,
+          loadDir,
+          transformations: CleanHtmlJsonStage.transformations(),
           inMemoryDirectoryTracker,
         }),
         new CleanMetaStage({
@@ -104,7 +113,8 @@ export async function runTransform({
         logger.debug(`added: ${stripRoot(filePath)}`);
         orchestrator.handleStagingEvent({ type: 'add', payload: filePath });
       } catch (error) {
-        logger.error(`error: ${error}`);
+        logger.error(`unhandled orchestrator error: ${error}`);
+        throw error;
       }
     });
 
@@ -114,20 +124,22 @@ export async function runTransform({
         logger.debug(`changed: ${stripRoot(filePath)}`);
         orchestrator.handleStagingEvent({ type: 'change', payload: filePath });
       } catch (error) {
-        logger.error(`error: ${error}`);
+        logger.error(`unhandled orchestrator error: ${error}`);
+        throw error;
       }
     });
 
     watcher.on('error', (error) => {
       statsAddToCounter('watcher_error_event');
       logger.error(`error: ${error}`);
+      throw error;
     });
 
     logger.log(` 🔍 Watching for changes in: ${stripRoot(stagingDir)}`);
 
-    await orchestrator.waitUntilIdle(1000 * 60 * 30);
-
-    logger.log(` ✅ Transformations completed. Done`);
-    logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
+    await orchestrator.waitUntilIdle(1000 * 60 * 30).then(() => {
+      logger.log(` ✅ Transformations completed. Done`);
+      logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
+    });
   });
 }

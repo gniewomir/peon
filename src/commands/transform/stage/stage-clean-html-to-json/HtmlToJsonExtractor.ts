@@ -1,6 +1,7 @@
 import { AbstractTransformation } from '../AbstractTransformation.js';
 import type { StrategySelector } from '../../../../lib/types.js';
 import { type Artifact, KnownArtifactsEnum } from '../../../../lib/artifacts.js';
+import type { THtmlJsonSchema } from '../../../../schema/schema.html-json.js';
 
 export class HtmlToJsonExtractor extends AbstractTransformation {
   strategy(): StrategySelector {
@@ -9,7 +10,7 @@ export class HtmlToJsonExtractor extends AbstractTransformation {
 
   async transform(input: Map<Artifact, string>): Promise<string> {
     const $ = this.toCheerio(KnownArtifactsEnum.RAW_JOB_HTML, input);
-    const ld = $('script[type="application/ld+json"]')
+    const ldJson = $('script[type="application/ld+json"]')
       .toArray()
       .map((el) => {
         try {
@@ -18,7 +19,7 @@ export class HtmlToJsonExtractor extends AbstractTransformation {
           return {};
         }
       });
-    const hydration = $('script[type="application/json"]')
+    const json = $('script[type="application/json"]')
       .toArray()
       .map((el) => {
         try {
@@ -29,8 +30,8 @@ export class HtmlToJsonExtractor extends AbstractTransformation {
       });
 
     return this.toString({
-      ld,
-      hydration,
-    });
+      ['application/ld+json']: ldJson,
+      ['application/json']: json,
+    } satisfies THtmlJsonSchema);
   }
 }

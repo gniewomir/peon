@@ -12,6 +12,7 @@ export enum KnownArtifactsEnum {
   RAW_JOB_HTML_JSON = 'RAW_JOB_HTML_JSON',
   CLEAN_JOB_JSON = 'CLEAN_JOB_JSON',
   CLEAN_JOB_HTML = 'CLEAN_JOB_HTML',
+  CLEAN_JOB_HTML_JSON = 'CLEAN_JOB_HTML_JSON',
   CLEAN_JOB_META_JSON = 'CLEAN_JOB_META_JSON',
   CLEAN_MARKDOWN = 'CLEAN_MARKDOWN',
   CLEAN_COMBINE_JSON = 'CLEAN_COMBINE_JSON',
@@ -29,7 +30,10 @@ const artifactsRegistry: Record<KnownArtifactsEnum, ArtifactDescriptor> = {
     filename: 'raw.meta.json',
   },
   [KnownArtifactsEnum.RAW_JOB_HTML_JSON]: {
-    filename: 'raw.html.json',
+    filename: 'raw.html-json.json',
+  },
+  [KnownArtifactsEnum.CLEAN_JOB_HTML_JSON]: {
+    filename: 'raw.html-json.json',
   },
   [KnownArtifactsEnum.CLEAN_JOB_JSON]: {
     filename: 'clean.job.json',

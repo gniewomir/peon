@@ -5,6 +5,7 @@ import type { StrategySelector } from '../../../../lib/types.js';
 import { type Artifact, KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { normalizeDMYDateWtPeriodSep } from '../lib/normalizeDMYDateWtPeriodSep.js';
 import { JsonNavigator } from '../../lib/JsonNavigator.js';
+import type { THtmlJsonSchema } from '../../../../schema/schema.html-json.js';
 
 export class CleanerMetaBdj extends AbstractTransformation {
   strategy(): StrategySelector {
@@ -17,7 +18,10 @@ export class CleanerMetaBdj extends AbstractTransformation {
       KnownArtifactsEnum.RAW_JOB_META_JSON,
       input,
     );
-    const htmlJson = this.objectFromJson(KnownArtifactsEnum.RAW_JOB_HTML_JSON, input);
+    const htmlJson = this.objectFromJson<THtmlJsonSchema>(
+      KnownArtifactsEnum.CLEAN_JOB_HTML_JSON,
+      input,
+    );
     const nav = new JsonNavigator(htmlJson);
     const fallbackExpiration = new Date(
       new Date().getTime() + 1000 * 60 * 60 * 24 * 31,
@@ -27,11 +31,12 @@ export class CleanerMetaBdj extends AbstractTransformation {
       merge(meta, {
         offer: {
           publishedAt:
-            nav.getOptionalPath('hydration.0.props.pageProps.data.job.publishedAt')?.toString() ||
-            null,
+            nav
+              .getOptionalPath('application/json.0.props.pageProps.data.job.publishedAt')
+              ?.toString() || null,
           expiresAt:
             this.findExpiration(input) ||
-            nav.getOptionalPath('hydration.0.props.pageProps.data.job.endsAt')?.toString() ||
+            nav.getOptionalPath('application/json.0.props.pageProps.data.job.endsAt')?.toString() ||
             fallbackExpiration,
           updatedAt: null,
           canonicalUrl: meta.offer.url,
