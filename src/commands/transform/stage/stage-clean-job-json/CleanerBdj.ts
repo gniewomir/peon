@@ -24,10 +24,11 @@ export class CleanerBdj extends AbstractTransformation {
         role: {
           title: nav.getPath('position').toString(),
           seniority: normalizeSeniority(nav.getPath('experienceLevel').toString()),
+          scope: nav.getPath('employmentType').toString().replaceAll('_', '-'),
         },
         workplace: {
           isRemote: nav.getPath('remote').toBool(),
-          cities: [nav.getPath('city').toString()],
+          cities: [nav.getPath('city').toString()].filter(Boolean),
         },
         contract: {
           type: normalizeStringArray([
