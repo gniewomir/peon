@@ -35,7 +35,15 @@ export class HtmlCleanerNfj extends AbstractTransformation {
             .split(' ')
             .map((c) => c.trim())
             .filter(Boolean)
-            .filter((c) => !(c.startsWith('tr-') || c.startsWith('mb-') || c.startsWith('ng-')))
+            .filter(
+              (c) =>
+                !(
+                  c.startsWith('tw-') ||
+                  c.startsWith('tr-') ||
+                  c.startsWith('mb-') ||
+                  c.startsWith('ng-')
+                ),
+            )
             .join(' ');
           $this.attr('class', cssClasses);
         }
