@@ -27,16 +27,18 @@ export class CleanerJji extends AbstractTransformation {
       merge(nullSchema(), {
         employer: {
           name: nav.getPath('companyName').toString(),
+          url: null,
           logo: nav.getPath('companyLogoThumbUrl').toString(),
+          type: null,
         },
         role: {
           title: nav.getPath('title').toString(),
           seniority: normalizeSeniority(nav.getOptionalPath('experienceLevel')?.toString() ?? ''),
         },
         workplace: {
-          isRemote: nav.getPath('workplaceType').toString().toLowerCase() === 'remote',
-          isHybrid: nav.getPath('workplaceType').toString().toLowerCase() === 'hybrid',
-          isOnsite: nav.getPath('workplaceType').toString().toLowerCase() === 'office',
+          isRemote: nav.getPath('workplaceType').toString().trim().toLowerCase() === 'remote',
+          isHybrid: nav.getPath('workplaceType').toString().trim().toLowerCase() === 'hybrid',
+          isOnsite: nav.getPath('workplaceType').toString().trim().toLowerCase() === 'office',
           cities: nav.getOptionalPath('multilocation')
             ? nav
                 .getPath('multilocation')

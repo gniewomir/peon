@@ -39,10 +39,17 @@ export class CleanerNfj extends AbstractTransformation {
       merge(nullSchema(), {
         employer: {
           name: nav.getPath('name').toString(),
+          type: null,
+          url: null,
+          logo: nav.getOptionalPath('logo.original')?.isNull()
+            ? null
+            : `https://static.nofluffjobs.com/${nav.getPath('logo.original').toString()}`,
         },
         role: {
           title: nav.getPath('title').toString(),
           seniority: normalizeSeniority(this.normalizeSeniority(nav)),
+          scope: null,
+          specialization: null,
         },
         workplace: {
           isRemote: this.normalizeIsRemote(nav),
