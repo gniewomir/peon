@@ -52,11 +52,6 @@ export class HtmlCleanerJji extends AbstractTransformation {
         $this.removeAttr(attr);
       });
     });
-
-    if ($('p').length === 0) {
-      throw new Error('No paragraphs in html - website might not be rendered fully');
-    }
-
     return $.html();
   }
 }
