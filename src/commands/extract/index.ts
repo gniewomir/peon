@@ -5,11 +5,18 @@ import { runExtract } from './run.js';
 import { type Logger, loggerContext } from '../../lib/logger.js';
 import { isStrategySlug } from '../../lib/types.js';
 import assert from 'node:assert';
-import type { Strategy, StrategyOptions } from './strategy/types.js';
+import type { CacheScope, Strategy, StrategyOptions } from './strategy/types.js';
 import { BdjStrategy } from './strategy/bdj/BdjStrategy.js';
 import { JjiStrategy } from './strategy/jji/JjiStrategy.js';
 import { NfjStrategy } from './strategy/nfj/NfjStrategy.js';
 import type { AbstractStrategy } from './strategy/AbstractStrategy.js';
+
+function parseCacheScope(val: unknown): CacheScope {
+  if (val === 'listings' || val === 'jobs' || val === 'all') {
+    return val;
+  }
+  throw new Error(`Invalid --cache value "${String(val)}" (expected: listings|jobs|all)`);
+}
 
 const strategy_factories = [
   (logger: Logger, options: Omit<StrategyOptions, 'requestsTimeout' | 'pageOpenOptions'>) =>
@@ -112,6 +119,7 @@ export function registerExtractCommand(program: Command): void {
     .option('--quarantineDir <dir>', `Quarantine directory (default: <repo>/${relQuarantineDir})`)
     .option('--trashDir <dir>', `Trashed directory (default: <repo>/${relTrashDir})`)
     .option('--loadDir <dir>', `Load directory (default: <repo>/${relLoadDir})`)
+    .option('--cache <scope>', `Cache read scope: listings|jobs|all`, 'all')
     .option('--only <slugs>', `Comma-separated strategies to run`, 'all')
     .option('--limit <number>', `Limit the number of jobs to scrape for each strategy`)
     .action(
@@ -121,11 +129,13 @@ export function registerExtractCommand(program: Command): void {
         quarantineDir?: string;
         trashDir?: string;
         loadDir?: string;
+        cache?: CacheScope;
         only?: string;
         verbose?: boolean;
         limit?: number;
       }) => {
         const loggerCtx = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
+        const cacheScope = parseCacheScope(opts.cache ?? 'all');
         return loggerCtx.withLogger((logger) =>
           runExtract({
             logger,
@@ -141,6 +151,7 @@ export function registerExtractCommand(program: Command): void {
                 ),
                 trashDir: path.resolve(opts.trashDir ?? path.join(root, relTrashDir)),
                 loadDir: path.resolve(opts.loadDir ?? path.join(root, relLoadDir)),
+                cache: cacheScope,
               },
             }),
           }),

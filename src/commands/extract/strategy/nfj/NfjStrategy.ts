@@ -50,7 +50,7 @@ export class NfjStrategy extends AbstractStrategy {
       const cacheKey = cache.dailyCacheKey(url);
 
       let jsonText: string;
-      if (await cache.hasCacheKey(cacheKey, this.logger)) {
+      if (this.options.cache !== 'jobs' && (await cache.hasCacheKey(cacheKey, this.logger))) {
         jsonText = await cache.readCache(cacheKey, this.logger);
       } else {
         const response = await fetch(url, {

@@ -36,6 +36,10 @@ export abstract class AbstractStrategy implements Strategy {
     return this.options.pageOpenOptions;
   }
 
+  public cacheScope(): StrategyOptions['cache'] {
+    return this.options.cache;
+  }
+
   abstract jobListingsGenerator(): AsyncGenerator<Listing>;
 
   abstract jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson>;

@@ -33,7 +33,7 @@ export class BdjStrategy extends AbstractStrategy {
 
       const cacheKey = cache.dailyCacheKey(url);
       let listingHtml: string;
-      if (await cache.hasCacheKey(cacheKey, this.logger)) {
+      if (this.options.cache !== 'jobs' && (await cache.hasCacheKey(cacheKey, this.logger))) {
         listingHtml = await cache.readCache(cacheKey, this.logger);
       } else {
         const response = await fetch(url, {

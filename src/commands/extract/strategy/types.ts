@@ -4,6 +4,8 @@ import type { JobJson, Listing } from '../types.js';
 import type { KnownStrategy } from '../../../lib/types.js';
 import type { GoToOptions } from 'puppeteer-core';
 
+export type CacheScope = 'listings' | 'jobs' | 'all';
+
 export interface StrategyParameters {
   logger: Logger;
   options: StrategyOptions;
@@ -15,6 +17,7 @@ export interface StrategyOptions {
   quarantineDir: string;
   trashDir: string;
   loadDir: string;
+  cache: CacheScope;
   requestsTimeout: number;
   pageOpenOptions: GoToOptions;
 }
@@ -28,6 +31,7 @@ export interface StrategySaveOptions {
 
 export interface Strategy {
   slug: KnownStrategy;
+  cacheScope(): CacheScope;
   pageOpenOptions(): GoToOptions;
   jobListingsGenerator(): AsyncGenerator<Listing>;
   jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson>;

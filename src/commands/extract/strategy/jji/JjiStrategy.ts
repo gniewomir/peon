@@ -30,7 +30,7 @@ export class JjiStrategy extends AbstractStrategy {
       const cacheKey = cache.dailyCacheKey(url);
 
       let jsonText: string;
-      if (await cache.hasCacheKey(cacheKey, this.logger)) {
+      if (this.options.cache !== 'jobs' && (await cache.hasCacheKey(cacheKey, this.logger))) {
         jsonText = await cache.readCache(cacheKey, this.logger);
       } else {
         const response = await fetch(url, {
@@ -91,7 +91,7 @@ export class JjiStrategy extends AbstractStrategy {
         nextCursor === currentCursor ||
         parsed.jobs.length === 0
       ) {
-        this.logger.log(' 👌 Reached last page. API scraping complete.');
+        this.logger.log(' 👌 Reached last page. JJI API scraping complete.');
         break;
       }
       currentCursor = nextCursor;
