@@ -18,6 +18,7 @@ export class StatsError extends Error {
 }
 
 export type StatsSnapshot = {
+  readonly timestamp: string;
   readonly values: Record<string, unknown>;
   readonly counters: Record<string, number>;
 };
@@ -36,6 +37,7 @@ function emptyStore(): StatsStore {
 function snapshotFromStore(store: StatsStore): StatsSnapshot {
   try {
     return {
+      timestamp: new Date().toISOString(),
       values: structuredClone(store.values),
       counters: structuredClone(store.counters),
     };
@@ -73,12 +75,6 @@ export function statsAddToCounter(key: string, increment = 1): void {
   const store = requireStore();
   const cur = store.counters[key] ?? 0;
   store.counters[key] = cur + increment;
-}
-
-export function statsSubtractFromCounter(key: string, decrement = 1): void {
-  const store = requireStore();
-  const cur = store.counters[key] ?? 0;
-  store.counters[key] = cur - decrement;
 }
 
 export interface StatsContext {
