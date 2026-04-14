@@ -23,7 +23,9 @@ export class CleanerMetaBdj extends AbstractTransformation {
     return this.toString(
       merge(meta, {
         offer: {
-          publishedAt: nav.getPath('hydration.0.props.pageProps.data.job.publishedAt').toString(),
+          publishedAt:
+            nav.getOptionalPath('hydration.0.props.pageProps.data.job.publishedAt')?.toString() ||
+            null,
           expiresAt:
             this.findExpiration(input) ||
             nav.getPath('hydration.0.props.pageProps.data.job.endsAt').toString(),

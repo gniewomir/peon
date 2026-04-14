@@ -65,10 +65,10 @@ export class CleanerJji extends AbstractTransformation {
 
   private normalizeSalary(entry: JsonNavigator): DeepPartial<TSchema['salaryB2B']> {
     return {
-      from: entry.getPath('from').toNumber().toString(),
-      to: entry.getPath('to').toNumber().toString(),
-      currency: entry.getPath('currency').toString(),
-      unit: entry.getPath('unit').toString().toLowerCase(),
+      from: entry.getPath('from').isNull() ? null : entry.getPath('from').toNumber().toString(),
+      to: entry.getPath('to').isNull() ? null : entry.getPath('to').toNumber().toString(),
+      currency: entry.getPath('currency').isNull() ? null : entry.getPath('currency').toString(),
+      unit: entry.getPath('unit').isNull() ? null : entry.getPath('unit').toString().toLowerCase(),
     };
   }
 

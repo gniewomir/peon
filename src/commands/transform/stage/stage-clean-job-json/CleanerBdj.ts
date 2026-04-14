@@ -15,6 +15,18 @@ export class CleanerBdj extends AbstractTransformation {
   async transform(input: Map<Artifact, string>): Promise<string> {
     const nav = new JsonNavigator(this.objectFromJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
 
+    let scope: string | null = nav
+      .getPath('employmentType')
+      .toString()
+      .toLowerCase()
+      .replaceAll('_', '-');
+    if (scope === 'contractor' && nav.getPath('contractOther').toOptionalBool()) {
+      scope = null;
+    }
+    if (scope === 'contractor' && !nav.getPath('contractOther').toOptionalBool()) {
+      scope = 'b2b';
+    }
+
     return this.toString(
       merge(nullSchema(), {
         employer: {
@@ -24,7 +36,7 @@ export class CleanerBdj extends AbstractTransformation {
         role: {
           title: nav.getPath('position').toString(),
           seniority: normalizeSeniority(nav.getPath('experienceLevel').toString()),
-          scope: nav.getPath('employmentType').toString().replaceAll('_', '-'),
+          scope,
         },
         workplace: {
           isRemote: nav.getPath('remote').toBool(),
