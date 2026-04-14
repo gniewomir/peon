@@ -27,6 +27,7 @@ export class StageOrchestrator {
   private readonly loadDir;
   private readonly logger;
   private readonly inMemoryDirectoryTracker: InMemoryDirectoryTracker;
+  private lastActivityTimestamp: number;
 
   constructor({
     logger,
@@ -55,11 +56,36 @@ export class StageOrchestrator {
     });
     assert(this.stages.size === stages.length, 'Duplicated stage names detected!');
     this.inMemoryDirectoryTracker = inMemoryDirectoryTracker;
+    this.lastActivityTimestamp = new Date().getTime();
+  }
+
+  public async waitUntilIdle(idleMs: number): Promise<void> {
+    const checkEveryMs = 1000 * 60;
+    assert(
+      idleMs >= checkEveryMs && Number.isInteger(idleMs),
+      `Idle time must be a positive integer above or equal ${checkEveryMs}`,
+    );
+    while (true) {
+      const now = new Date().getTime();
+      if (now > this.lastActivityTimestamp + idleMs) {
+        this.logger.log(` ⏳ Idle for more than ${Math.round(idleMs / 1000)}s.`, {
+          idleMs,
+          now,
+          lastActivityTimestamp: this.lastActivityTimestamp,
+        });
+        return;
+      }
+      if (now - this.lastActivityTimestamp > checkEveryMs) {
+        this.logger.log(` ⏳ Idle for ${Math.round((now - this.lastActivityTimestamp) / 1000)}s`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, checkEveryMs));
+    }
   }
 
   public handleStagingEvent(event: StagingFileEvent | undefined) {
     if (!this.listening) return;
     if (!event) return;
+    this.lastActivityTimestamp = new Date().getTime();
 
     const jobDir = dirname(event.payload);
 

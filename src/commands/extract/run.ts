@@ -121,16 +121,6 @@ export async function runExtract({
   const statsCtx = statsContext('extract_');
   const shutdownCtx = shutdownContext(logger);
   return statsCtx.withStats(async () => {
-    const { cleanupReporter } = (() => {
-      const reporter = setInterval(
-        () => {
-          logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
-        },
-        1000 * 60 * 2,
-      );
-      return { cleanupReporter: async () => clearInterval(reporter) };
-    })();
-    shutdownCtx.registerCleanup(cleanupReporter);
     try {
       await Promise.all(
         strategies.map(async (strategy) =>
@@ -147,9 +137,6 @@ export async function runExtract({
     } catch (error) {
       logger.error(' ⚠️  Strategy error forced process termination.', error);
       throw error;
-    } finally {
-      shutdownCtx.deregisterCleanup(cleanupReporter);
-      await cleanupReporter();
     }
   });
 }

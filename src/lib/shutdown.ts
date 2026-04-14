@@ -5,6 +5,7 @@ export interface ShutdownContext {
   deregisterCleanup(cb: () => Promise<void>): void;
   registerPid(pid: number): void;
   deregisterPid(pid: number): void;
+  [Symbol.asyncDispose]: () => Promise<void>;
 }
 
 const SHUTDOWN_TIMEOUT_MS = 30_000;
@@ -18,19 +19,19 @@ export function shutdownContext(logger: Logger): ShutdownContext {
     if (shuttingDown) return;
     shuttingDown = true;
 
-    const exitCode = signal === 'SIGINT' ? 130 : 143;
+    const exitCode = signal ? (signal === 'SIGINT' ? 130 : 143) : 0;
 
-    logger.log('gracefully shutting down...');
+    logger.log(' 🧹 Cleaning up...');
 
     const timeout = setTimeout(() => {
-      logger.warn(`shutdown timeout (${SHUTDOWN_TIMEOUT_MS / 1000}s) forcing exit...`);
+      logger.warn(` 🔪 Cleanup timeout (${SHUTDOWN_TIMEOUT_MS / 1000}s). Forcing exit...`);
       process.exit(1);
     }, SHUTDOWN_TIMEOUT_MS);
 
     await Promise.allSettled([...cleanups].map((cb) => cb()));
 
     clearTimeout(timeout);
-    logger.log('cleanup complete');
+    logger.log(' 🧹 Cleanup complete. Exiting...');
     process.exit(exitCode);
   };
 
@@ -42,9 +43,9 @@ export function shutdownContext(logger: Logger): ShutdownContext {
     for (const pid of pids) {
       try {
         process.kill(pid, 'SIGKILL');
-        logger.log(`Sent SIGKILL to pid ${pid}`);
+        logger.log(` 🔪 Sent SIGKILL to pid ${pid}`);
       } catch {
-        logger.log(`Pid ${pid} already dead`);
+        logger.log(` 🔪 Pid ${pid} already dead`);
         // PID already dead — ignore
       }
     }
@@ -62,6 +63,9 @@ export function shutdownContext(logger: Logger): ShutdownContext {
     },
     deregisterPid(pid) {
       pids.delete(pid);
+    },
+    [Symbol.asyncDispose]() {
+      return shutdown();
     },
   };
 }

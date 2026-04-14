@@ -27,10 +27,10 @@ export async function runTransform({
   loadDir: string;
   logger: Logger;
 }): Promise<void> {
+  await using shutdownCtx = shutdownContext(logger);
   const statsCtx = statsContext('transform_');
-  const shutdownCtx = shutdownContext(logger);
   const inMemoryDirectoryTracker = new InMemoryDirectoryTracker(5000);
-  return statsCtx.withStats(async () => {
+  await statsCtx.withStats(async () => {
     const orchestrator = new StageOrchestrator({
       logger,
       stagingDir,
@@ -123,18 +123,11 @@ export async function runTransform({
       logger.error(`error: ${error}`);
     });
 
-    logger.log(`Watching for changes in: ${stripRoot(stagingDir)}`);
+    logger.log(` 🔍 Watching for changes in: ${stripRoot(stagingDir)}`);
 
-    /**
-     * Keeps process alive until terminated.
-     */
-    await new Promise(() =>
-      setInterval(
-        () => {
-          logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
-        },
-        1000 * 60 * 1,
-      ),
-    );
+    await orchestrator.waitUntilIdle(1000 * 60 * 5);
+
+    logger.log(` ✅ Transformations completed. Done`);
+    logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
   });
 }
