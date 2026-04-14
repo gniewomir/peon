@@ -1,10 +1,6 @@
 [
   {
-    "url": "https://bulldogjob.pl/companies/jobs/s/withSalary,true/city,Remote,Krak%C3%B3w",
-    "description": "BDJ, IT offers filtered by wt Salary, Kraków or Remote"
-  },
-  {
-    "url": "https://bulldogjob.pl/companies/jobs/s/withSalary,true/city,Remote",
-    "description": "BDJ, IT offers filtered by wt Salary, Remote"
+    "url": "https://bulldogjob.pl/companies/jobs/s/order,published,desc",
+    "description": "BDJ, All, fresh first"
   }
 ]

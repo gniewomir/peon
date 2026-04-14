@@ -9,12 +9,9 @@ import type { KnownStrategy } from '../../../../lib/types.js';
 export class BdjStrategy extends AbstractStrategy {
   public slug: KnownStrategy = 'bdj';
 
-  private static listingPageUrl(baseListingUrl: string, page: number): string {
+  private listingPageUrl(baseListingUrl: string, page: number): string {
     assert(page >= 1, 'listing page must be >= 1');
-    if (page === 1) {
-      return baseListingUrl;
-    }
-    return `${baseListingUrl.replace(/\/$/, '')}/page,${page}`;
+    return `${baseListingUrl}/page,${page}`;
   }
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
@@ -28,7 +25,7 @@ export class BdjStrategy extends AbstractStrategy {
     let page = 1;
 
     while (true) {
-      const url = BdjStrategy.listingPageUrl(listing.url, page);
+      const url = this.listingPageUrl(listing.url, page);
       this.logger.log(` 📖 Fetching Bulldog job listing page ${page}: ${url}`);
 
       const cacheKey = cache.dailyCacheKey(url);

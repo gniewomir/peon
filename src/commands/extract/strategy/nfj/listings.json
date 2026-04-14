@@ -1,72 +1,9 @@
 [
   {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, Remote, b2b/UOP, Mid/Senior/Expert, TS, 20k+",
+    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&sort=newest&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
+    "description": "NFJ, All, fresh first",
     "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"remote\",\"remote\"],\"more\":[],\"employment\":[\"b2b\",\"permanent\"],\"requirement\":[\"TypeScript\"],\"salary\":[{\"period\":\"m\",\"currency\":\"pln\",\"greaterThan\":2000}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "Testing",
-    "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"hybrid\",\"fieldwork\"],\"more\":[],\"employment\":[],\"requirement\":[],\"salary\":[{\"period\":\"m\",\"currency\":\"pln\",\"greaterThan\":\"14000\"}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, Remote, b2b/UOP, Mid/Senior/Expert, JS, 20k+",
-    "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"remote\"],\"more\":[],\"employment\":[\"b2b\",\"permanent\"],\"requirement\":[\"JavaScript\"],\"salary\":[{\"greaterThan\":2000,\"period\":\"m\",\"currency\":\"pln\"}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, Remote, b2b/UOP, Mid/Senior/Expert, PHP, 20k+",
-    "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"remote\"],\"more\":[],\"employment\":[\"b2b\",\"permanent\"],\"requirement\":[\"PHP\"],\"salary\":[{\"greaterThan\":2000,\"period\":\"m\",\"currency\":\"pln\"}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, Hybrid, Kraków, b2b/UOP, Mid/Senior/Expert, JS, 20k+",
-    "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"hybrid\",\"krakow\"],\"more\":[],\"employment\":[\"b2b\",\"permanent\"],\"requirement\":[\"JavaScript\"],\"salary\":[{\"period\":\"m\",\"currency\":\"pln\",\"greaterThan\":2000}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, Hybrid, Kraków, b2b/UOP, Mid/Senior/Expert, TS, 20k+",
-    "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"hybrid\",\"hybrid\",\"krakow\"],\"more\":[],\"employment\":[\"b2b\",\"permanent\"],\"requirement\":[\"TypeScript\"],\"salary\":[{\"period\":\"m\",\"currency\":\"pln\",\"greaterThan\":2000}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, Hybrid, Kraków, b2b/UOP, Mid/Senior/Expert, PHP, 20k+",
-    "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[\"hybrid\",\"hybrid\",\"krakow\"],\"more\":[],\"employment\":[\"b2b\",\"permanent\"],\"requirement\":[\"PHP\"],\"salary\":[{\"period\":\"m\",\"currency\":\"pln\",\"greaterThan\":2000}],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[\"mid\",\"senior\",\"expert\"]},\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?withSalaryMatch=true&pageTo=3&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, JS",
-    "meta": {
-      "rawBody": "{\"criteria\":\"\",\"url\":{\"searchParam\":\"JavaScript\"},\"rawSearch\":\"JavaScript\",\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, TS",
-    "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[],\"more\":[],\"employment\":[],\"requirement\":[\"TypeScript\"],\"salary\":[],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[]},\"pageSize\":20,\"withSalaryMatch\":true}"
-    }
-  },
-  {
-    "url": "https://nofluffjobs.com/api/search/posting?pageFrom=1&withSalaryMatch=true&pageTo=1&pageSize=20&salaryCurrency=PLN&salaryPeriod=month&region=pl&language=en-GB",
-    "description": "NFJ, PHP",
-    "meta": {
-      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[],\"more\":[],\"employment\":[],\"requirement\":[\"PHP\"],\"salary\":[],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[]},\"pageSize\":20,\"withSalaryMatch\":true}"
+      "rawBody": "{\"criteriaSearch\":{\"country\":[],\"withSalaryMatch\":[],\"city\":[],\"more\":[],\"employment\":[],\"requirement\":[],\"salary\":[],\"jobPosition\":[],\"applicationStatus\":[],\"province\":[],\"company\":[],\"id\":[],\"category\":[],\"keyword\":[],\"jobLanguage\":[],\"seniority\":[]},\"pageSize\":20,\"withSalaryMatch\":true}"
     }
   }
 ]

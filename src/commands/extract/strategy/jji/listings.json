@@ -1,37 +1,7 @@
 [
   {
-    "url": "https://justjoin.it/api/candidate-api/offers?from=0&itemsCount=100&categories=javascript&cityRadius=30&remoteWorkOptions=office&workingTimes=full_time&minSalary=20000&maxSalary=500000&withSalary=true&currency=pln&experienceLevels=mid&experienceLevels=senior&orderBy=descending&sortBy=publishedAt&keywordType=any",
-    "description": "JJI, Office",
-    "meta": {}
-  },
-  {
-    "url": "https://api.justjoin.it/v2/user-panel/offers/by-cursor?categories[]=1&currency=pln&employmentTypes[]=b2b&employmentTypes[]=permanent&experienceLevels[]=mid&experienceLevels[]=senior&from=100&itemsCount=100&orderBy=DESC&remoteWorkOptions[]=remote&salaryMax=500000&salaryMin=20000&sortBy=published&withSalary=true&workingTimes[]=full_time",
-    "description": "JJI, Remote, B2b/UOP, Full-time, Mid/Senior, JS/TS, 20k+, w/t salary",
-    "meta": {}
-  },
-  {
-    "url": "https://api.justjoin.it/v2/user-panel/offers/by-cursor?categories[]=1&city=Krak%C3%B3w&currency=pln&employmentTypes[]=b2b&employmentTypes[]=permanent&experienceLevels[]=mid&experienceLevels[]=senior&from=0&itemsCount=100&orderBy=DESC&remoteWorkOptions[]=hybrid&salaryMax=500000&salaryMin=20000&sortBy=published&withSalary=true&workingTimes[]=full_time",
-    "description": "JJI, Hybrid, Kraków, B2b/UOP, Full-time, Mid/Senior, JS/TS, 20k+, w/t salary",
-    "meta": {}
-  },
-  {
-    "url": "https://api.justjoin.it/v2/user-panel/offers/by-cursor?categories[]=3&currency=pln&employmentTypes[]=b2b&employmentTypes[]=permanent&experienceLevels[]=mid&experienceLevels[]=senior&from=100&itemsCount=100&orderBy=DESC&remoteWorkOptions[]=remote&salaryMax=500000&salaryMin=20000&sortBy=published&withSalary=true&workingTimes[]=full_time",
-    "description": "JJI, Remote, B2b/UOP, Full-time, Mid/Senior, PHP, 20k+, w/t salary",
-    "meta": {}
-  },
-  {
-    "url": "https://api.justjoin.it/v2/user-panel/offers/by-cursor?categories[]=3&city=Krak%C3%B3w&currency=pln&employmentTypes[]=b2b&employmentTypes[]=permanent&experienceLevels[]=mid&experienceLevels[]=senior&from=0&itemsCount=100&orderBy=DESC&remoteWorkOptions[]=hybrid&salaryMax=500000&salaryMin=20000&sortBy=published&withSalary=true&workingTimes[]=full_time",
-    "description": "JJI, Hybrid, Kraków, B2b/UOP, Full-time, Mid/Senior, PHP, 20k+, w/t salary",
-    "meta": {}
-  },
-  {
-    "url": "https://api.justjoin.it/v2/user-panel/offers/by-cursor?categories[]=1&currency=pln&from=0&itemsCount=100&orderBy=DESC&sortBy=published&withSalary=true",
-    "description": "JJI, JS, w/t salary",
-    "meta": {}
-  },
-  {
-    "url": "https://api.justjoin.it/v2/user-panel/offers/by-cursor?categories[]=3&currency=pln&from=0&itemsCount=100&orderBy=DESC&sortBy=published&withSalary=true",
-    "description": "JJI, PHP, w/t salary",
+    "url": "https://justjoin.it/api/candidate-api/offers?from=0&itemsCount=100",
+    "description": "JJI, All, fresh first",
     "meta": {}
   }
 ]
