@@ -122,6 +122,7 @@ export async function browserContext(
   registry?: ShutdownContext,
 ): Promise<BrowserContext> {
   const proxyCtx = await proxyContext(logger);
+
   const proxiedBrowsers: Record<string, Browser> = {};
 
   const cleanup = async (): Promise<void> => {

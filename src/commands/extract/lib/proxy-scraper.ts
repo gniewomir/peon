@@ -8,6 +8,8 @@ interface ProxyData {
   https?: string;
 }
 
+let inFlightFindProxies: Promise<string[]> | null = null;
+
 function parseProxyTable(html: string, logger: Logger): ProxyData[] {
   try {
     const tableMatch = html.match(/<table[^>]*>[\s\S]*?<\/table>/gi);
@@ -70,29 +72,118 @@ function parseProxyTable(html: string, logger: Logger): ProxyData[] {
         proxies.push(row);
       }
     }
-
-    logger.log(` ✅ Extracted ${proxies.length} proxy entries`);
     return proxies;
   } catch (error) {
     logger.error(` ❌ Failed to parse HTML table: ${(error as Error).message}`);
-    throw error;
+    return [];
   }
 }
 
 export async function findProxies(logger: Logger): Promise<string[]> {
-  const proxies = new Set<string>([]);
-  for (const url of [
-    'https://free-proxy-list.net/pl/',
-    'https://free-proxy-list.net/en/ssl-proxy.html',
-  ]) {
-    const response = await fetch(url);
-    const parsed = parseProxyTable(await response.text(), logger);
-    parsed
-      .filter((proxy) => proxy.https === 'yes')
-      .forEach((proxy) => {
-        proxies.add(`${proxy.ip_address}:${proxy.port}`);
-      });
+  if (inFlightFindProxies) {
+    return inFlightFindProxies;
   }
-  logger.log(` ✅ Found ${proxies.size} https proxies.`);
-  return Array.from(proxies);
+
+  inFlightFindProxies = (async () => {
+    const FETCH_TIMEOUT_MS = 30_000;
+    const proxies = new Set<string>([]);
+    const sources = [
+      {
+        url: 'https://free-proxy-list.net/pl/',
+        description: 'Free Proxy List (PL)',
+        parser: async (response: Response) => {
+          const html = await response.text();
+          const parsed = parseProxyTable(html, logger);
+          return parsed
+            .filter((proxy) => proxy.https === 'yes')
+            .map((proxy) => `${proxy.ip_address}:${proxy.port}`);
+        },
+      },
+      {
+        url: 'https://free-proxy-list.net/en/ssl-proxy.html',
+        description: 'Free Proxy List (EN)',
+        parser: async (response: Response) => {
+          const html = await response.text();
+          const parsed = parseProxyTable(html, logger);
+          return parsed
+            .filter((proxy) => proxy.https === 'yes')
+            .map((proxy) => `${proxy.ip_address}:${proxy.port}`);
+        },
+      },
+      {
+        url: 'https://api.proxyscrape.com/v2/?request=getproxies&protocol=https&timeout=10000&country=PL&ssl=yes&anonymity=all&simplified=true',
+        description: 'ProxyScrape (PL, API, plain text)',
+        parser: async (response: Response) => {
+          const text = await response.text();
+          return text.split('\n').filter((line) => line.trim() !== '');
+        },
+      },
+      {
+        url: 'https://api.proxyscrape.com/v2/?request=getproxies&protocol=https&timeout=10000&country=DE&ssl=yes&anonymity=all&simplified=true',
+        description: 'ProxyScrape (DE, API, plain text)',
+        parser: async (response: Response) => {
+          const text = await response.text();
+          return text.split('\n').filter((line) => line.trim() !== '');
+        },
+      },
+      {
+        url: 'https://api.proxyscrape.com/v2/?request=getproxies&protocol=https&timeout=10000&country=GB&ssl=yes&anonymity=all&simplified=true',
+        description: 'ProxyScrape (GB, API, plain text)',
+        parser: async (response: Response) => {
+          const text = await response.text();
+          return text.split('\n').filter((line) => line.trim() !== '');
+        },
+      },
+    ];
+
+    const tasks = sources.map(async (source) => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      try {
+        logger.log(` 🕒 Fetching proxies from ${source.description} (${source.url})...`);
+        const response = await fetch(source.url, { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch proxy list (${response.status} ${response.statusText})`);
+        }
+
+        const extracted = await source.parser(response);
+        logger.log(
+          ` ✅ Extracted ${extracted.length} proxy entries from ${source.description} (${source.url})`,
+        );
+        return extracted;
+      } finally {
+        clearTimeout(timeout);
+      }
+    });
+
+    const settled = await Promise.allSettled(tasks);
+    settled.forEach((result, index) => {
+      const source = sources[index];
+      if (result.status === 'fulfilled') {
+        result.value.forEach((proxy) => proxies.add(proxy));
+        return;
+      }
+
+      const error = result.reason;
+      const message = error instanceof Error ? error.message : String(error);
+      const isAbort =
+        (error instanceof Error && error.name === 'AbortError') || /aborted|abort/i.test(message);
+      if (isAbort) {
+        logger.error(
+          ` ⏱️ Timed out after ${FETCH_TIMEOUT_MS}ms fetching proxies from ${source.description} (${source.url})`,
+        );
+      } else {
+        logger.error(
+          ` ❌ Error fetching/parsing proxies from ${source.description} (${source.url}): ${message}`,
+        );
+      }
+    });
+
+    logger.log(` ✅ Found ${proxies.size} https proxies.`);
+    return Array.from(proxies);
+  })().finally(() => {
+    inFlightFindProxies = null;
+  });
+
+  return inFlightFindProxies;
 }
