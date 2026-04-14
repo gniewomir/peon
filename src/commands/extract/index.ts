@@ -125,8 +125,8 @@ export function registerExtractCommand(program: Command): void {
         verbose?: boolean;
         limit?: number;
       }) => {
-        const { withLogger } = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
-        await withLogger((logger) =>
+        const loggerCtx = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
+        return loggerCtx.withLogger((logger) =>
           runExtract({
             logger,
             cacheDir: path.resolve(opts.cacheDir ?? path.join(root, relCacheDir)),
