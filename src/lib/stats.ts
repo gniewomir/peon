@@ -91,7 +91,7 @@ export interface StatsContext {
   withStats<T>(fn: () => Promise<T>): Promise<T>;
 }
 
-export function statsContext(statsContext = ''): StatsContext {
+export function statsContext(prefix = ''): StatsContext {
   let withStatsUsed = false;
 
   return {
@@ -107,7 +107,7 @@ export function statsContext(statsContext = ''): StatsContext {
       }
       withStatsUsed = true;
       const store = emptyStore();
-      store.prefix = statsContext;
+      store.prefix = prefix;
 
       return await statsAls.run(store, payload);
     },
