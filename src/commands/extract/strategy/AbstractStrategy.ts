@@ -54,6 +54,7 @@ export abstract class AbstractStrategy implements Strategy {
     // If job is staged, then we still processing it, no point in triggering whole pipeline again until it is loaded
     if (await this.pathExists(jobStagingDir)) {
       statsAddToCounter('extract_job_already_staged');
+      statsAddToCounter(`extract_job_already_staged_${this.slug}`);
       this.logger.debug(`job ${jobId} already staged`);
       return;
     }
@@ -61,6 +62,7 @@ export abstract class AbstractStrategy implements Strategy {
     // If job is trashed, then we do not want to process it
     if (await this.pathExists(jobTrashDir)) {
       statsAddToCounter('extract_job_already_trashed');
+      statsAddToCounter(`extract_job_already_trashed_${this.slug}`);
       this.logger.debug(`job ${jobId} already trashed`);
       return;
     }
@@ -68,12 +70,10 @@ export abstract class AbstractStrategy implements Strategy {
     // If job is quarantined, then we do not want to process it until issue is investigated and resolved
     if (await this.pathExists(jobQuarantineDir)) {
       statsAddToCounter('extract_job_already_quarantined');
+      statsAddToCounter(`extract_job_already_quarantined_${this.slug}`);
       this.logger.debug(`job ${jobId} was quarantined`);
       return;
     }
-
-    statsAddToCounter('extract_stage_job');
-
     const meta = metaSchema.parse({
       ...nullMetaSchema(),
       offer: {
@@ -107,6 +107,9 @@ export abstract class AbstractStrategy implements Strategy {
         this.logger,
       ),
     ]);
+
+    statsAddToCounter('jobs_extracted_staged');
+    statsAddToCounter(`jobs_extracted_staged_${this.slug}`);
   }
 
   private async pathExists(filePath: string): Promise<boolean> {
