@@ -63,8 +63,8 @@ export abstract class AbstractStage {
         );
         return new GuardDecisionAdvance('advance until preconditions met');
       }
-      statsAddToCounter('stage_executed');
-      statsAddToCounter(`stage_executed_${this.name().replaceAll('-', '_')}`);
+      statsAddToCounter('stage');
+      statsAddToCounter(`stage_${this.name().replaceAll('-', '_')}`);
 
       const result = await this.transform(event);
       /**

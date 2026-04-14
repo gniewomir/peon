@@ -158,7 +158,7 @@ export class StageOrchestrator {
       this.logger.error(`Error when clearing cache for ${stripRoot(jobDir)}`, error);
     } finally {
       rmSync(jobDir, { recursive: true, force: true });
-      statsAddToCounter('jobs_removed');
+      statsAddToCounter('job_removed');
     }
   }
 
@@ -171,7 +171,7 @@ export class StageOrchestrator {
     mkdirSync(quarantinedJobDir, { recursive: true });
     try {
       renameSync(jobDir, quarantinedJobDir);
-      statsAddToCounter('jobs_quarantined');
+      statsAddToCounter('job_quarantined');
     } catch {
       cpSync(jobDir, quarantinedJobDir, { recursive: true });
       rmSync(jobDir, { recursive: true, force: true });
@@ -187,7 +187,7 @@ export class StageOrchestrator {
     mkdirSync(trashedJobDir, { recursive: true });
     try {
       renameSync(jobDir, trashedJobDir);
-      statsAddToCounter('jobs_trashed');
+      statsAddToCounter('job_trashed');
     } catch {
       cpSync(jobDir, trashedJobDir, { recursive: true });
       rmSync(jobDir, { recursive: true, force: true });
@@ -203,7 +203,7 @@ export class StageOrchestrator {
     mkdirSync(loadedJobDir, { recursive: true });
     try {
       renameSync(jobDir, loadedJobDir);
-      statsAddToCounter('jobs_loaded');
+      statsAddToCounter('job_loaded');
     } catch {
       cpSync(jobDir, loadedJobDir, { recursive: true });
       rmSync(jobDir, { recursive: true, force: true });

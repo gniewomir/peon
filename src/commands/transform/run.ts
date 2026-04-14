@@ -27,7 +27,7 @@ export async function runTransform({
   loadDir: string;
   logger: Logger;
 }): Promise<void> {
-  const statsCtx = statsContext();
+  const statsCtx = statsContext('transform_');
   const shutdownCtx = shutdownContext(logger);
   const inMemoryDirectoryTracker = new InMemoryDirectoryTracker(5000);
   return statsCtx.withStats(async () => {
@@ -100,7 +100,7 @@ export async function runTransform({
 
     watcher.on('add', (filePath) => {
       try {
-        statsAddToCounter('watcher_add_events');
+        statsAddToCounter('watcher_add_event');
         logger.debug(`added: ${stripRoot(filePath)}`);
         orchestrator.handleStagingEvent({ type: 'add', payload: filePath });
       } catch (error) {
@@ -110,7 +110,7 @@ export async function runTransform({
 
     watcher.on('change', (filePath) => {
       try {
-        statsAddToCounter('watcher_change_events');
+        statsAddToCounter('watcher_change_event');
         logger.debug(`changed: ${stripRoot(filePath)}`);
         orchestrator.handleStagingEvent({ type: 'change', payload: filePath });
       } catch (error) {
@@ -119,7 +119,7 @@ export async function runTransform({
     });
 
     watcher.on('error', (error) => {
-      statsAddToCounter('watcher_error_events');
+      statsAddToCounter('watcher_error_event');
       logger.error(`error: ${error}`);
     });
 
