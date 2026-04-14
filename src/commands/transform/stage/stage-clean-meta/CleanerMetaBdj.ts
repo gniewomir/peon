@@ -19,6 +19,9 @@ export class CleanerMetaBdj extends AbstractTransformation {
     );
     const htmlJson = this.objectFromJson(KnownArtifactsEnum.RAW_JOB_HTML_JSON, input);
     const nav = new JsonNavigator(htmlJson);
+    const fallbackExpiration = new Date(
+      new Date().getTime() + 1000 * 60 * 60 * 24 * 31,
+    ).toISOString();
 
     return this.toString(
       merge(meta, {
@@ -28,7 +31,8 @@ export class CleanerMetaBdj extends AbstractTransformation {
             null,
           expiresAt:
             this.findExpiration(input) ||
-            nav.getPath('hydration.0.props.pageProps.data.job.endsAt').toString(),
+            nav.getOptionalPath('hydration.0.props.pageProps.data.job.endsAt')?.toString() ||
+            fallbackExpiration,
           updatedAt: null,
           canonicalUrl: meta.offer.url,
           alternateUrls: [],

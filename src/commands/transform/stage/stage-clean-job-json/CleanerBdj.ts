@@ -21,10 +21,13 @@ export class CleanerBdj extends AbstractTransformation {
       .toLowerCase()
       .replaceAll('_', '-');
     if (scope === 'contractor' && nav.getPath('contractOther').toOptionalBool()) {
-      scope = null;
+      scope = 'project';
     }
     if (scope === 'contractor' && !nav.getPath('contractOther').toOptionalBool()) {
-      scope = 'b2b';
+      scope = 'full-time';
+    }
+    if (scope === 'freelance') {
+      scope = 'project';
     }
 
     return this.toString(
@@ -57,9 +60,9 @@ export class CleanerBdj extends AbstractTransformation {
           : nullSchema().salaryB2B,
         reqTechnology: normalizeStringArray(
           nav
-            .getPath('technologyTags')
-            .toArray()
-            .map((t) => t.toString()),
+            .getOptionalPath('technologyTags')
+            ?.toArray()
+            .map((t) => t.toString()) || [],
         ),
       } satisfies DeepPartial<TSchema>),
     );

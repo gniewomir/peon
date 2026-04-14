@@ -109,6 +109,10 @@ export class NfjStrategy extends AbstractStrategy {
         const job = stack.pop();
         if (job) {
           assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
+          if ('name' in job && typeof job.name === 'string' && job.name.includes('Żabka Polska')) {
+            statsAddToCounter('job_skipped_extraction_zabka_marketing_nfj');
+            continue;
+          }
           if (this.isDuplicate(job)) {
             statsAddToCounter('job_skipped_extraction_duplicate_nfj');
             this.logger.debug('Found nfj duplicate, skipping extraction', {
