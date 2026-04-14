@@ -164,9 +164,6 @@ export abstract class AbstractStage {
         await readFile(path.join(stagedJobDir, artifactFilename(artifact)), 'utf8'),
       );
     }
-    if (this.transformations.size === 1 && this.transformations.has('all')) {
-      return this.transformations.get('all')?.transform(input) || '';
-    }
     const transformation = this.transformations.get(source);
     if (!transformation && this.transformations.has('all')) {
       return this.transformations.get('all')?.transform(input) || '';

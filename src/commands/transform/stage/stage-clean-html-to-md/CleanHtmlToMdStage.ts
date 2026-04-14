@@ -2,12 +2,14 @@ import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import type { Transformation } from '../AbstractTransformation.js';
-import { HtmlToMarkdownConverter } from './HtmlToMarkdownConverter.js';
+import { HtmlToMdConverterAll } from './HtmlToMdConverterAll.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
+import { HtmlToMdConverterBdj } from './HtmlToMdConverterBdj.js';
+import { HtmlToMdConverterJji } from './HtmlToMdConverterJji.js';
 
 export class CleanHtmlToMdStage extends AbstractStage {
   public static transformations(): Transformation[] {
-    return [new HtmlToMarkdownConverter()];
+    return [new HtmlToMdConverterBdj(), new HtmlToMdConverterJji(), new HtmlToMdConverterAll()];
   }
 
   protected inputArtifacts() {
