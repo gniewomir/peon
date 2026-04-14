@@ -125,7 +125,7 @@ export async function runTransform({
 
     logger.log(` 🔍 Watching for changes in: ${stripRoot(stagingDir)}`);
 
-    await orchestrator.waitUntilIdle(1000 * 60 * 5);
+    await orchestrator.waitUntilIdle(1000 * 60 * 30);
 
     logger.log(` ✅ Transformations completed. Done`);
     logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
