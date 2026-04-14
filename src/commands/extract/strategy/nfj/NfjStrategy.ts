@@ -110,7 +110,7 @@ export class NfjStrategy extends AbstractStrategy {
         if (job) {
           assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
           if (this.isDuplicate(job)) {
-            statsAddToCounter('extract_nfj_duplicate');
+            statsAddToCounter('job_skipped_extraction_duplicate_nfj');
             this.logger.debug('Found nfj duplicate, skipping extraction', {
               canonicalUrl: this.slugToUrl(this.establishCanonicalUrlSlug(new JsonNavigator(job))),
               currentUrl: this.jobToUrl(job).trim().toLowerCase(),

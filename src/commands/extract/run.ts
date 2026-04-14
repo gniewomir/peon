@@ -42,8 +42,8 @@ async function runStrategy({
 
               if (await cache.hasCacheKey(cacheKey, logger)) {
                 html = await cache.readCache(cacheKey, logger);
-                statsAddToCounter('jobs_extracted_cached');
-                statsAddToCounter(`jobs_extracted_cached_${strategy.slug}`);
+                statsAddToCounter('jobs_from_cache');
+                statsAddToCounter(`jobs_from_cache_${strategy.slug}`);
               } else {
                 logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
                 await using pageCtx = await pageContext(browser);
@@ -66,6 +66,9 @@ async function runStrategy({
                   throw new HttpException(` ⚠️  No <body> for ${url};`);
                 }
 
+                statsAddToCounter('job_from_browser');
+                statsAddToCounter(`job_from_browser_${strategy.slug}`);
+
                 await cache.writeCache(cacheKey, html, logger);
 
                 const wait = getRandomNumber(1000, 5000);
@@ -79,17 +82,17 @@ async function runStrategy({
                 url,
                 html,
               });
-              statsAddToCounter('jobs_extracted');
-              statsAddToCounter(`jobs_extracted_${strategy.slug}`);
+              statsAddToCounter('job');
+              statsAddToCounter(`job_${strategy.slug}`);
             } catch (error) {
               if (error instanceof HttpException) {
-                statsAddToCounter('extract_job_handled_errors');
-                statsAddToCounter(`extract_job_handled_errors_${strategy.slug}`);
+                statsAddToCounter('job_handled_errors');
+                statsAddToCounter(`job_handled_errors_${strategy.slug}`);
                 logger.error(` ⚠️  Skipping because of error ${error.message}`);
                 return;
               }
-              statsAddToCounter('extract_job_unhandled_errors');
-              statsAddToCounter(`extract_job_unhandled_errors_${strategy.slug}`);
+              statsAddToCounter('job_unhandled_errors');
+              statsAddToCounter(`job_unhandled_errors_${strategy.slug}`);
 
               throw error;
             }
@@ -98,8 +101,8 @@ async function runStrategy({
       }
       logger.log(` ✅ Strategy ${strategy.slug} completed successfully. Done`);
     } catch (error) {
-      statsAddToCounter('extract_strategy_unhandled_errors');
-      statsAddToCounter(`extract_strategy_unhandled_errors_${strategy.slug}`);
+      statsAddToCounter('strategy_unhandled_errors');
+      statsAddToCounter(`strategy_unhandled_errors_${strategy.slug}`);
       logger.error(` ⚠️  Strategy ${strategy.slug} error:`, error);
       throw error;
     }
@@ -115,7 +118,7 @@ export async function runExtract({
   strategies: Strategy[];
   logger: Logger;
 }): Promise<void> {
-  const statsCtx = statsContext();
+  const statsCtx = statsContext('extract_');
   const shutdownCtx = shutdownContext(logger);
   return statsCtx.withStats(async () => {
     const { cleanupReporter } = (() => {

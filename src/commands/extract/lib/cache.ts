@@ -66,7 +66,7 @@ export function createCacheOperations(root: string): CacheOperations {
 
     async writeCache(key: string, content: string, logger: Logger): Promise<boolean> {
       const saved = await smartSave(cacheKeyToPath(key, basePath), content, false, logger);
-      statsAddToCounter('cache_written');
+      statsAddToCounter('cache_write');
       return saved;
     },
 
@@ -74,7 +74,7 @@ export function createCacheOperations(root: string): CacheOperations {
       const cachePath = cacheKeyToPath(key, basePath);
       logger.debug(` 📖 reading cache ${relativeCachePath(cachePath, basePath)}`);
       const content = await fs.readFile(cachePath, { encoding: 'utf8' });
-      statsAddToCounter('cache_reads');
+      statsAddToCounter('cache_read');
       return content;
     },
 
