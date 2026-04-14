@@ -54,18 +54,21 @@ export abstract class AbstractStrategy implements Strategy {
     // If job is staged, then we still processing it, no point in triggering whole pipeline again until it is loaded
     if (await this.pathExists(jobStagingDir)) {
       statsAddToCounter('extract_job_already_staged');
+      this.logger.debug(`job ${jobId} already staged`);
       return;
     }
 
     // If job is trashed, then we do not want to process it
     if (await this.pathExists(jobTrashDir)) {
       statsAddToCounter('extract_job_already_trashed');
+      this.logger.debug(`job ${jobId} already trashed`);
       return;
     }
 
     // If job is quarantined, then we do not want to process it until issue is investigated and resolved
     if (await this.pathExists(jobQuarantineDir)) {
       statsAddToCounter('extract_job_already_quarantined');
+      this.logger.debug(`job ${jobId} was quarantined`);
       return;
     }
 
