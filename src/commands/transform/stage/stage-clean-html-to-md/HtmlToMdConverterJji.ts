@@ -20,6 +20,10 @@ export class HtmlToMdConverterJji extends HtmlToMdConverterAll {
     markdown = markdown.replaceAll('Save\n', '');
     markdown = markdown.replaceAll('Apply\n', '');
     markdown = markdown.replaceAll('Applied -\n', '');
+
+    // Collapse multiple whitespace-only blank lines to a single blank line.
+    markdown = markdown.replace(/(\n[ \t]*\n)(?:[ \t]*\n)+/g, '$1');
+
     return markdown;
   }
 }
