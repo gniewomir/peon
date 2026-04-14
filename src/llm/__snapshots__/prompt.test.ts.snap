@@ -60,8 +60,8 @@ benefits:
 
 top-level:
 - languages (array): Required natural languages (always add English, if input is in English)
-- reqTechnology (array): Required languages, technologies and tools
-- optTechnology (array): Optional/nice-to-have languages, technologies and tools
+- reqTechnology (array): Required programming languages, technologies and tools
+- optTechnology (array): Optional/nice-to-have programming languages, technologies and tools
 - techSkills (array): Required technical skills (without languages, technologies and tools)
 - softSkills (array): Required soft, people, management skills
 

@@ -108,8 +108,10 @@ export const schemaObject = {
   languages: sStringArray(
     'Required natural languages (always add English, if input is in English)',
   ),
-  reqTechnology: sStringArray('Required languages, technologies and tools '),
-  optTechnology: sStringArray('Optional/nice-to-have languages, technologies and tools'),
+  reqTechnology: sStringArray('Required programming languages, technologies and tools '),
+  optTechnology: sStringArray(
+    'Optional/nice-to-have programming languages, technologies and tools',
+  ),
   techSkills: sStringArray('Required technical skills (without languages, technologies and tools)'),
   softSkills: sStringArray('Required soft, people, management skills'),
   techEnv: sNamespace(
