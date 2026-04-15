@@ -169,10 +169,7 @@ export class StageOrchestrator {
     if (!existsSync(jobDir)) return;
     try {
       const meta = JSON.parse(
-        readFileSync(
-          path.join(jobDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META_JSON)),
-          'utf8',
-        ),
+        readFileSync(path.join(jobDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)), 'utf8'),
       );
       const nav = new JsonNavigator(meta);
       const cachePath = nav.getPath('offer.cachePath').toString();
