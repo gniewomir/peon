@@ -53,6 +53,63 @@ export abstract class AbstractStage {
     return artifactFilename(this.outputArtifact()).replaceAll('.', '-');
   }
 
+  /**
+   * Job-dir applicability used by the scan-cycle orchestrator.
+   *
+   * For the first incremental step, we use a strict "output missing" rule to avoid
+   * repeatedly running the same stage in a tight loop when `smartSave` is a no-op.
+   * (mtime-based freshness comes in the next step.)
+   */
+  public async isApplicable(jobDir: string): Promise<boolean> {
+    if (!(await this.pathExists(jobDir))) return false;
+
+    for (const artifact of this.inputArtifacts()) {
+      const inputArtifactPath = path.join(jobDir, artifactFilename(artifact));
+      if (!(await this.pathExists(inputArtifactPath))) return false;
+    }
+
+    const outputPath = path.join(jobDir, artifactFilename(this.outputArtifact()));
+    if (await this.pathExists(outputPath)) return false;
+
+    return true;
+  }
+
+  public async runForJob(jobDir: string): Promise<AbstractGuardDecision> {
+    try {
+      if (!(await this.isApplicable(jobDir))) {
+        statsAddToCounter('stage_precondition_not_met');
+        statsAddToCounter(
+          `stage_precondition_not_met_for_stage_${this.name().replaceAll('-', '_')}`,
+        );
+        return new GuardDecisionAdvance('advance until preconditions met');
+      }
+
+      statsAddToCounter('stage');
+      statsAddToCounter(`stage_${this.name().replaceAll('-', '_')}`);
+
+      const result = await this.transformForJob(jobDir);
+      const saved = await smartSave(
+        path.join(jobDir, artifactFilename(this.outputArtifact())),
+        result,
+        this.logger,
+      );
+      if (saved) {
+        this.logger.log(
+          `Artifact created ${stripRoot(jobDir)}/${artifactFilename(this.outputArtifact())}`,
+        );
+      }
+      for (const guard of this.guards()) {
+        const guardDecision = await guard.guard(result);
+        if (!(guardDecision instanceof GuardDecisionAdvance)) {
+          return guardDecision;
+        }
+      }
+      return new GuardDecisionAdvance('advance because all guards passed');
+    } catch (error) {
+      return new GuardDecisionQuarantine('quarantine because unhandled error', { cause: error });
+    }
+  }
+
   public async run(event: StagingFileEvent): Promise<AbstractGuardDecision> {
     const jobDir = path.resolve(dirname(event.payload));
     try {
@@ -157,16 +214,16 @@ export abstract class AbstractStage {
   }
 
   protected async transform(event: StagingFileEvent): Promise<string> {
-    const stagedJobDir = dirname(event.payload);
-    const source = basename(stagedJobDir).split('-').shift();
+    return this.transformForJob(dirname(event.payload));
+  }
+
+  protected async transformForJob(jobDir: string): Promise<string> {
+    const source = basename(jobDir).split('-').shift();
     assert(source && isStrategySlug(source), 'unrecognized offer source');
 
     const input = new Map<Artifact, string>();
     for (const artifact of this.inputArtifacts()) {
-      input.set(
-        artifact,
-        await readFile(path.join(stagedJobDir, artifactFilename(artifact)), 'utf8'),
-      );
+      input.set(artifact, await readFile(path.join(jobDir, artifactFilename(artifact)), 'utf8'));
     }
     const transformation = this.transformations.get(source);
     if (!transformation && this.transformations.has('all')) {

@@ -16,6 +16,7 @@ import { LRUHashMap } from '../lib/LRUHashMap.js';
 import { readFileSync } from 'fs';
 import { artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
 import { JsonNavigator } from '../lib/JsonNavigator.js';
+import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
@@ -88,17 +89,7 @@ export class StageOrchestrator {
     this.lastActivityTimestamp = new Date().getTime();
 
     const jobDir = dirname(event.payload);
-
-    for (const stage of this.stages.values()) {
-      const queue = this.directoryQueues.get(jobDir) || Promise.resolve();
-
-      this.directoryQueues.set(
-        jobDir,
-        queue
-          .then(this.createPayload(jobDir, event, stage))
-          .catch(this.createErrorHandler(jobDir, event, stage)),
-      );
-    }
+    this.enqueueJobDir(jobDir, event);
   }
 
   public async shutdown(): Promise<void> {
@@ -106,9 +97,39 @@ export class StageOrchestrator {
     await Promise.allSettled(this.directoryQueues.values());
   }
 
-  private createPayload(jobDir: string, event: StagingFileEvent, stage: AbstractStage) {
-    return async () => {
-      const decision = await stage.run(event);
+  public enqueueJobDir(jobDir: string, cause?: StagingFileEvent) {
+    if (!this.listening) return;
+    const queue = this.directoryQueues.get(jobDir) || Promise.resolve();
+    this.directoryQueues.set(
+      jobDir,
+      queue
+        .then(() => this.processToFixpoint(jobDir, cause))
+        .catch(async (error) => {
+          this.logger.error(`Unhandled error during fixpoint processing for ${stripRoot(jobDir)}`, {
+            error,
+            cause,
+            jobDir,
+          });
+          return error;
+        }),
+    );
+  }
+
+  private async processToFixpoint(jobDir: string, cause?: StagingFileEvent) {
+    while (true) {
+      let selected: AbstractStage | undefined;
+      for (const stage of this.stages.values()) {
+        if (await stage.isApplicable(jobDir)) {
+          selected = stage;
+          break;
+        }
+      }
+      if (!selected) return;
+
+      const decision = await selected.runForJob(jobDir);
+      if (decision instanceof GuardDecisionAdvance) {
+        continue;
+      }
 
       if (decision instanceof GuardDecisionRemove) {
         this.inMemoryDirectoryTracker.moved(jobDir);
@@ -122,8 +143,8 @@ export class StageOrchestrator {
         this.saveErrorChain({
           jobErrorPath: path.join(jobDir, `errors.json`),
           error: decision,
-          event,
-          stage: stage.name(),
+          event: cause,
+          stage: selected.name(),
         });
         this.trash(jobDir);
         this.logger.warn(`guard: Trashed ${stripRoot(jobDir)} because of "${decision.message}"`);
@@ -135,8 +156,8 @@ export class StageOrchestrator {
         this.saveErrorChain({
           jobErrorPath: path.join(jobDir, `errors.json`),
           error: decision,
-          event,
-          stage: stage.name(),
+          event: cause,
+          stage: selected.name(),
         });
         this.quarantine(jobDir);
         this.logger.error(
@@ -151,18 +172,10 @@ export class StageOrchestrator {
         this.logger.log(`guard: Loaded ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
       }
-    };
-  }
 
-  private createErrorHandler(jobDir: string, event: StagingFileEvent, stage: AbstractStage) {
-    return async (error: unknown) => {
-      this.logger.error(`Unhandled error during ${stage.name()} for ${stripRoot(jobDir)}`, {
-        error,
-        event,
-        jobDir,
-      });
-      return error;
-    };
+      // Unknown decision type: stop processing this job to avoid tight loops.
+      return;
+    }
   }
 
   private remove(jobDir: string) {
@@ -234,7 +247,7 @@ export class StageOrchestrator {
   }: {
     jobErrorPath: string;
     error: unknown;
-    event: StagingFileEvent;
+    event?: StagingFileEvent;
     stage: string;
   }) {
     const content = JSON.stringify(this.parseError(error, event, stage), null, 2);
@@ -248,7 +261,7 @@ export class StageOrchestrator {
 
   private parseError(
     error: unknown,
-    event: StagingFileEvent,
+    event: StagingFileEvent | undefined,
     stage: string,
   ): Record<string, unknown> | undefined {
     if (error === undefined) {
