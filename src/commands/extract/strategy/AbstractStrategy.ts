@@ -1,5 +1,6 @@
 import * as path from 'node:path';
-import { atomicSave } from '../../../lib/atomicSave.js';
+import { atomicWrite } from '../../../lib/atomicWrite.js';
+import { atomicMoveDir } from '../../../lib/atomicMoveDir.js';
 import fs from 'node:fs/promises';
 import { metaSchema, nullMetaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
 import type { Logger } from '../../../lib/logger.js';
@@ -17,8 +18,8 @@ import { artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js'
 import { access } from 'fs/promises';
 import { constants } from 'node:fs';
 import { statsAddToCounter } from '../../../lib/stats.js';
-import * as os from 'node:os';
 import { dirname } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 export abstract class AbstractStrategy implements Strategy {
   public abstract readonly slug: KnownStrategy;
@@ -53,10 +54,15 @@ export abstract class AbstractStrategy implements Strategy {
   async save({ cachePath, json, url, html }: StrategySaveOptions): Promise<void> {
     const jobId = this.jobToId(json);
     const jobDirName = `${this.slug}-${jobId}`;
-    const jobTmpDir = path.join(os.tmpdir(), jobDirName);
     const jobStagingDir = path.join(this.options.stagingDir, jobDirName);
     const jobQuarantineDir = path.join(this.options.quarantineDir, jobDirName);
     const jobTrashDir = path.join(this.options.trashDir, jobDirName);
+    const jobLoadDir = path.join(this.options.loadDir, jobDirName);
+    const jobStagingParent = dirname(jobStagingDir);
+    const jobTmpDir = path.join(
+      jobStagingParent,
+      `.${jobDirName}.tmp-${process.pid}-${randomUUID()}`,
+    );
 
     // If job is staged, then we still processing it,
     // no point in triggering pipeline again until we decide fate of last payload
@@ -67,7 +73,7 @@ export abstract class AbstractStrategy implements Strategy {
       return;
     }
 
-    // If job is trashed, then we do not want to process it
+    // If job is trashed, then we do not want to process it at all
     if (await this.pathExists(jobTrashDir)) {
       statsAddToCounter('job_already_trashed');
       statsAddToCounter(`job_already_trashed_${this.slug}`);
@@ -75,11 +81,21 @@ export abstract class AbstractStrategy implements Strategy {
       return;
     }
 
-    // If job is quarantined, then we do not want to process it until issue is investigated and resolved
+    // If job is quarantined, then we do not want to stage it again until issue is investigated and resolved
     if (await this.pathExists(jobQuarantineDir)) {
       statsAddToCounter('job_already_quarantined');
       statsAddToCounter(`job_already_quarantined_${this.slug}`);
       this.logger.debug(`job ${jobId} was quarantined`);
+      return;
+    }
+
+    // If job is loaded but not yet removed by consumer do not stage it again yet
+    if (await this.pathExists(jobLoadDir)) {
+      statsAddToCounter('job_already_loaded');
+      statsAddToCounter(`job_already_loaded_${this.slug}`);
+      this.logger.debug(
+        `job ${jobId} was loaded (but not yet removed from load directory, skipping)`,
+      );
       return;
     }
 
@@ -95,29 +111,29 @@ export abstract class AbstractStrategy implements Strategy {
       },
     } satisfies TMetaSchema);
 
-    await fs
+    return fs
       .mkdir(jobTmpDir, { recursive: true })
       .then(() => fs.mkdir(dirname(jobStagingDir), { recursive: true }))
       .then(() =>
         Promise.all([
-          atomicSave(
+          atomicWrite(
             path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)),
             meta,
             this.logger,
           ),
-          atomicSave(
+          atomicWrite(
             path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_JSON)),
             json,
             this.logger,
           ),
-          atomicSave(
+          atomicWrite(
             path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_HTML)),
             html,
             this.logger,
           ),
         ]),
       )
-      .then(() => fs.rename(jobTmpDir, jobStagingDir))
+      .then(() => atomicMoveDir(jobTmpDir, jobStagingDir, this.logger))
       .then(() => {
         statsAddToCounter('job_staged');
         statsAddToCounter(`job_staged_${this.slug}`);

@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import * as crypto from 'node:crypto';
-import { atomicSave } from '../../../lib/atomicSave.js';
+import { atomicWrite } from '../../../lib/atomicWrite.js';
 import type { Logger } from '../../../lib/logger.js';
 import { statsAddToCounter } from '../../../lib/stats.js';
 
@@ -65,7 +65,7 @@ export function createCacheOperations(root: string): CacheOperations {
     },
 
     async writeCache(key: string, content: string, logger: Logger): Promise<boolean> {
-      const saved = await atomicSave(cacheKeyToPath(key, basePath), content, logger);
+      const saved = await atomicWrite(cacheKeyToPath(key, basePath), content, logger);
       statsAddToCounter('cache_write');
       return saved;
     },

@@ -7,7 +7,7 @@ import assert from 'node:assert';
 import { statsAddToCounter } from './stats.js';
 import { stripRoot } from './root.js';
 
-export async function atomicSave(
+export async function atomicWrite(
   filePath: string,
   content: unknown,
   logger: Logger,

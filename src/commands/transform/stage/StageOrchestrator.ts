@@ -5,7 +5,6 @@ import type { Logger } from '../../../lib/logger.js';
 import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
 import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
 import { GuardDecisionTrash } from './guards/decisions/GuardDecisionTrash.js';
-import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { z, ZodError } from 'zod';
 import { stripRoot } from '../../../lib/root.js';
 import assert from 'node:assert';
@@ -17,6 +16,9 @@ import { readFileSync } from 'fs';
 import { artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
 import { JsonNavigator } from '../lib/JsonNavigator.js';
 import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js';
+import { atomicMoveDir } from '../../../lib/atomicMoveDir.js';
+import { atomicRemoveDir } from '../../../lib/atomicRemoveDir.js';
+import { atomicWrite } from '../../../lib/atomicWrite.js';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
@@ -140,33 +142,31 @@ export class StageOrchestrator {
 
       if (decision instanceof GuardDecisionRemove) {
         this.inMemoryDirectoryTracker.moved(jobDir);
-        this.remove(jobDir);
+        await this.remove(jobDir);
         this.logger.log(`guard: Removed ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
       }
 
       if (decision instanceof GuardDecisionTrash) {
         this.inMemoryDirectoryTracker.moved(jobDir);
-        this.saveErrorChain({
-          jobErrorPath: path.join(jobDir, `errors.json`),
-          error: decision,
-          event: cause,
-          stage: selected.name(),
-        });
-        this.trash(jobDir);
+        await atomicWrite(
+          path.join(jobDir, `errors.json`),
+          this.parseError(decision, cause, selected.name()),
+          this.logger,
+        );
+        await this.trash(jobDir);
         this.logger.warn(`guard: Trashed ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
       }
 
       if (decision instanceof GuardDecisionQuarantine) {
         this.inMemoryDirectoryTracker.moved(jobDir);
-        this.saveErrorChain({
-          jobErrorPath: path.join(jobDir, `errors.json`),
-          error: decision,
-          event: cause,
-          stage: selected.name(),
-        });
-        this.quarantine(jobDir);
+        await atomicWrite(
+          path.join(jobDir, `errors.json`),
+          this.parseError(decision, cause, selected.name()),
+          this.logger,
+        );
+        await this.quarantine(jobDir);
         this.logger.error(
           `guard: Quarantined ${stripRoot(jobDir)} because of "${decision.message}"`,
         );
@@ -175,7 +175,7 @@ export class StageOrchestrator {
 
       if (decision instanceof GuardDecisionLoad) {
         this.inMemoryDirectoryTracker.moved(jobDir);
-        this.load(jobDir);
+        await this.load(jobDir);
         this.logger.log(`guard: Loaded ${stripRoot(jobDir)} because of "${decision.message}"`);
         return;
       }
@@ -185,85 +185,41 @@ export class StageOrchestrator {
     }
   }
 
-  private remove(jobDir: string) {
-    if (!existsSync(jobDir)) return;
+  private async remove(jobDir: string) {
     try {
       const meta = JSON.parse(
         readFileSync(path.join(jobDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)), 'utf8'),
       );
       const nav = new JsonNavigator(meta);
       const cachePath = nav.getPath('offer.cachePath').toString();
-      rmSync(cachePath, { recursive: true, force: true });
+      await atomicRemoveDir(cachePath, this.logger, { ignoreMissing: true });
       statsAddToCounter('job_cache_cleared');
       this.logger.log(`Cleared cache for ${stripRoot(jobDir)}`);
     } catch (error) {
       statsAddToCounter('job_cache_clear_failed');
       this.logger.error(`Error when clearing cache for ${stripRoot(jobDir)}`, error);
     } finally {
-      rmSync(jobDir, { recursive: true, force: true });
+      await atomicRemoveDir(jobDir, this.logger, { ignoreMissing: true });
       statsAddToCounter('job_removed');
     }
   }
 
-  private quarantine(jobDir: string) {
-    if (!existsSync(jobDir)) {
-      this.logger.error(`Job dir ${stripRoot(jobDir)} to be quarantined doesnt exist!`);
-    }
+  private async quarantine(jobDir: string) {
     const quarantinedJobDir = path.join(this.quarantineDir, path.basename(jobDir));
-
-    if (existsSync(quarantinedJobDir)) {
-      rmSync(quarantinedJobDir, { recursive: true, force: true });
-    } else {
-      mkdirSync(dirname(quarantinedJobDir), { recursive: true });
-    }
-    renameSync(jobDir, quarantinedJobDir);
+    await atomicMoveDir(jobDir, quarantinedJobDir, this.logger, { overwrite: true });
     statsAddToCounter('job_quarantined');
   }
 
-  private trash(jobDir: string) {
-    if (!existsSync(jobDir)) {
-      this.logger.error(`Job dir ${stripRoot(jobDir)} to be trashed doesnt exist!`);
-    }
+  private async trash(jobDir: string) {
     const trashedJobDir = path.join(this.trashDir, path.basename(jobDir));
-    if (existsSync(trashedJobDir)) {
-      rmSync(trashedJobDir, { recursive: true, force: true });
-    } else {
-      mkdirSync(dirname(trashedJobDir), { recursive: true });
-    }
-    renameSync(jobDir, trashedJobDir);
+    await atomicMoveDir(jobDir, trashedJobDir, this.logger, { overwrite: true });
     statsAddToCounter('job_trashed');
   }
 
-  private load(jobDir: string) {
-    if (!existsSync(jobDir)) return;
+  private async load(jobDir: string) {
     const loadedJobDir = path.join(this.loadDir, path.basename(jobDir));
-    if (existsSync(loadedJobDir)) {
-      rmSync(loadedJobDir, { recursive: true, force: true });
-    } else {
-      mkdirSync(dirname(loadedJobDir), { recursive: true });
-    }
-    renameSync(jobDir, loadedJobDir);
+    await atomicMoveDir(jobDir, loadedJobDir, this.logger, { overwrite: true });
     statsAddToCounter('job_loaded');
-  }
-
-  private saveErrorChain({
-    jobErrorPath,
-    error,
-    event,
-    stage,
-  }: {
-    jobErrorPath: string;
-    error: unknown;
-    event?: StagingFileEvent;
-    stage: string;
-  }) {
-    const content = JSON.stringify(this.parseError(error, event, stage), null, 2);
-    try {
-      writeFileSync(jobErrorPath, content, 'utf8');
-    } catch (saveError) {
-      this.logger.error('Error during saving error file:', saveError);
-      this.logger.warn('Previous error', error);
-    }
   }
 
   private parseError(

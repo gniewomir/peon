@@ -4,7 +4,7 @@ import { constants } from 'node:fs';
 import { stripRoot } from '../../../lib/root.js';
 import type { AbstractGuard } from './guards/AbstractGuard.js';
 import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
-import { atomicSave } from '../../../lib/atomicSave.js';
+import { atomicWrite } from '../../../lib/atomicWrite.js';
 import type { Logger } from '../../../lib/logger.js';
 import type { AbstractGuardDecision } from './guards/decisions/AbstractGuardDecision.js';
 import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js';
@@ -90,7 +90,7 @@ export abstract class AbstractStage {
       statsAddToCounter(`stage_${this.name().replaceAll('-', '_')}`);
 
       const result = await this.transformForJob(jobDir);
-      const saved = await atomicSave(
+      const saved = await atomicWrite(
         path.join(jobDir, artifactFilename(this.outputArtifact())),
         result,
         this.logger,
@@ -130,7 +130,7 @@ export abstract class AbstractStage {
        * NOTE: saving the result before guards, so it is available for debugging
        *       in the quarantined / trashed job directory
        */
-      const saved = await atomicSave(
+      const saved = await atomicWrite(
         path.join(jobDir, artifactFilename(this.outputArtifact())),
         result,
         this.logger,
