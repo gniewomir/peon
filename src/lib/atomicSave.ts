@@ -43,6 +43,8 @@ export async function atomicSave(
     }
 
     // Atomic publish: rename temp file into place.
+    // Note: on POSIX this typically replaces an existing destination atomically;
+    // on Windows renaming over an existing file may fail.
     await fs.rename(tmpPath, filePath);
   } catch (err) {
     // Best-effort cleanup of temp file on any failure.
