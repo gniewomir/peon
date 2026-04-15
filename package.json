@@ -25,6 +25,7 @@
     "transform": "npm run peon -- transform",
     "dist:clear": "node scripts/clear-dist.mjs",
     "stage:clear": "node scripts/clear-stage.mjs",
+    "stage:repopulate": "node scripts/repopulate-staging.mjs",
     "cache:clear": "node scripts/clear-cache.mjs",
     "quarantine:clear": "node scripts/clear-quarantine.mjs",
     "all:clear": "node scripts/clear-all.mjs",
