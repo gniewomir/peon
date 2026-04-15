@@ -65,7 +65,7 @@ export function createCacheOperations(root: string): CacheOperations {
     },
 
     async writeCache(key: string, content: string, logger: Logger): Promise<boolean> {
-      const saved = await smartSave(cacheKeyToPath(key, basePath), content, false, logger);
+      const saved = await smartSave(cacheKeyToPath(key, basePath), content, logger);
       statsAddToCounter('cache_write');
       return saved;
     },

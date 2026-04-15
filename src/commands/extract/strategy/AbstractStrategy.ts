@@ -17,6 +17,7 @@ import { artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js'
 import { access } from 'fs/promises';
 import { constants } from 'node:fs';
 import { statsAddToCounter } from '../../../lib/stats.js';
+import * as os from 'node:os';
 
 export abstract class AbstractStrategy implements Strategy {
   public abstract readonly slug: KnownStrategy;
@@ -50,12 +51,14 @@ export abstract class AbstractStrategy implements Strategy {
 
   async save({ cachePath, json, url, html }: StrategySaveOptions): Promise<void> {
     const jobId = this.jobToId(json);
-    const jobDir = `${this.slug}-${jobId}`;
-    const jobStagingDir = path.join(this.options.stagingDir, jobDir);
-    const jobQuarantineDir = path.join(this.options.quarantineDir, jobDir);
-    const jobTrashDir = path.join(this.options.trashDir, jobDir);
+    const jobDirName = `${this.slug}-${jobId}`;
+    const jobTmpDir = path.join(os.tmpdir(), jobDirName);
+    const jobStagingDir = path.join(this.options.stagingDir, jobDirName);
+    const jobQuarantineDir = path.join(this.options.quarantineDir, jobDirName);
+    const jobTrashDir = path.join(this.options.trashDir, jobDirName);
 
-    // If job is staged, then we still processing it, no point in triggering whole pipeline again until it is loaded
+    // If job is staged, then we still processing it,
+    // no point in triggering pipeline again until we decide fate of last payload
     if (await this.pathExists(jobStagingDir)) {
       statsAddToCounter('job_already_staged');
       statsAddToCounter(`job_already_staged_${this.slug}`);
@@ -78,6 +81,7 @@ export abstract class AbstractStrategy implements Strategy {
       this.logger.debug(`job ${jobId} was quarantined`);
       return;
     }
+
     const meta = metaSchema.parse({
       ...nullMetaSchema(),
       offer: {
@@ -90,27 +94,25 @@ export abstract class AbstractStrategy implements Strategy {
       },
     } satisfies TMetaSchema);
 
-    await fs.mkdir(jobStagingDir, { recursive: true });
+    await fs.mkdir(jobTmpDir, { recursive: true });
     await Promise.all([
       smartSave(
-        path.join(jobStagingDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)),
+        path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)),
         meta,
-        false,
         this.logger,
       ),
       smartSave(
-        path.join(jobStagingDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_JSON)),
+        path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_JSON)),
         json,
-        false,
         this.logger,
       ),
       smartSave(
-        path.join(jobStagingDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_HTML)),
+        path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_HTML)),
         html,
-        false,
         this.logger,
       ),
     ]);
+    await fs.rename(jobTmpDir, jobStagingDir);
 
     statsAddToCounter('job_staged');
     statsAddToCounter(`job_staged_${this.slug}`);

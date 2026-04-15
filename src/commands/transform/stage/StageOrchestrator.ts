@@ -5,7 +5,7 @@ import type { Logger } from '../../../lib/logger.js';
 import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
 import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
 import { GuardDecisionTrash } from './guards/decisions/GuardDecisionTrash.js';
-import { cpSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { z, ZodError } from 'zod';
 import { stripRoot } from '../../../lib/root.js';
 import assert from 'node:assert';
@@ -186,35 +186,32 @@ export class StageOrchestrator {
   }
 
   private quarantine(jobDir: string) {
-    if (!existsSync(jobDir)) return;
+    if (!existsSync(jobDir)) {
+      this.logger.error(`Job dir ${stripRoot(jobDir)} to be quarantined doesnt exist!`);
+    }
     const quarantinedJobDir = path.join(this.quarantineDir, path.basename(jobDir));
+
     if (existsSync(quarantinedJobDir)) {
       rmSync(quarantinedJobDir, { recursive: true, force: true });
+    } else {
+      mkdirSync(dirname(quarantinedJobDir), { recursive: true });
     }
-    mkdirSync(quarantinedJobDir, { recursive: true });
-    try {
-      renameSync(jobDir, quarantinedJobDir);
-      statsAddToCounter('job_quarantined');
-    } catch {
-      cpSync(jobDir, quarantinedJobDir, { recursive: true });
-      rmSync(jobDir, { recursive: true, force: true });
-    }
+    renameSync(jobDir, quarantinedJobDir);
+    statsAddToCounter('job_quarantined');
   }
 
   private trash(jobDir: string) {
-    if (!existsSync(jobDir)) return;
+    if (!existsSync(jobDir)) {
+      this.logger.error(`Job dir ${stripRoot(jobDir)} to be trashed doesnt exist!`);
+    }
     const trashedJobDir = path.join(this.trashDir, path.basename(jobDir));
     if (existsSync(trashedJobDir)) {
       rmSync(trashedJobDir, { recursive: true, force: true });
+    } else {
+      mkdirSync(dirname(trashedJobDir), { recursive: true });
     }
-    mkdirSync(trashedJobDir, { recursive: true });
-    try {
-      renameSync(jobDir, trashedJobDir);
-      statsAddToCounter('job_trashed');
-    } catch {
-      cpSync(jobDir, trashedJobDir, { recursive: true });
-      rmSync(jobDir, { recursive: true, force: true });
-    }
+    renameSync(jobDir, trashedJobDir);
+    statsAddToCounter('job_trashed');
   }
 
   private load(jobDir: string) {
@@ -222,15 +219,11 @@ export class StageOrchestrator {
     const loadedJobDir = path.join(this.loadDir, path.basename(jobDir));
     if (existsSync(loadedJobDir)) {
       rmSync(loadedJobDir, { recursive: true, force: true });
+    } else {
+      mkdirSync(dirname(loadedJobDir), { recursive: true });
     }
-    mkdirSync(loadedJobDir, { recursive: true });
-    try {
-      renameSync(jobDir, loadedJobDir);
-      statsAddToCounter('job_loaded');
-    } catch {
-      cpSync(jobDir, loadedJobDir, { recursive: true });
-      rmSync(jobDir, { recursive: true, force: true });
-    }
+    renameSync(jobDir, loadedJobDir);
+    statsAddToCounter('job_loaded');
   }
 
   private saveErrorChain({

@@ -74,7 +74,6 @@ export abstract class AbstractStage {
       const saved = await smartSave(
         path.join(jobDir, artifactFilename(this.outputArtifact())),
         result,
-        false,
         this.logger,
       );
       if (saved) {
