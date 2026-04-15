@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 
@@ -6,7 +7,7 @@ import assert from 'node:assert';
 import { statsAddToCounter } from './stats.js';
 import { stripRoot } from './root.js';
 
-export async function smartSave(
+export async function atomicSave(
   filePath: string,
   content: unknown,
   logger: Logger,
@@ -26,7 +27,33 @@ export async function smartSave(
   }
 
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, newContent, 'utf8');
+  const dir = path.dirname(filePath);
+  const base = path.basename(filePath);
+  const tmpPath = path.join(dir, `.${base}.tmp-${process.pid}-${randomUUID()}`);
+
+  try {
+    const fh = await fs.open(tmpPath, 'w');
+    try {
+      await fh.writeFile(newContent, 'utf8');
+      // Ensure content hits disk before the atomic rename, so a crash/power loss
+      // won't leave us with a renamed-but-empty/partial artifact.
+      await fh.sync();
+    } finally {
+      await fh.close();
+    }
+
+    // Atomic publish: rename temp file into place.
+    await fs.rename(tmpPath, filePath);
+  } catch (err) {
+    // Best-effort cleanup of temp file on any failure.
+    try {
+      await fs.unlink(tmpPath);
+    } catch {
+      // ignore
+    }
+    throw err;
+  }
+
   statsAddToCounter('file_written');
   logger.debug(` 💾 Saved file ${stripRoot(filePath)}`);
   return true;

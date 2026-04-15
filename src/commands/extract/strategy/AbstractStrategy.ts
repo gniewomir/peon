@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { smartSave } from '../../../lib/smartSave.js';
+import { atomicSave } from '../../../lib/atomicSave.js';
 import fs from 'node:fs/promises';
 import { metaSchema, nullMetaSchema, type TMetaSchema } from '../../../schema/schema.meta.js';
 import type { Logger } from '../../../lib/logger.js';
@@ -100,17 +100,17 @@ export abstract class AbstractStrategy implements Strategy {
       .then(() => fs.mkdir(dirname(jobStagingDir), { recursive: true }))
       .then(() =>
         Promise.all([
-          smartSave(
+          atomicSave(
             path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)),
             meta,
             this.logger,
           ),
-          smartSave(
+          atomicSave(
             path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_JSON)),
             json,
             this.logger,
           ),
-          smartSave(
+          atomicSave(
             path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_HTML)),
             html,
             this.logger,
