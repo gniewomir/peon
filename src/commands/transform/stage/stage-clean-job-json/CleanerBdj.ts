@@ -61,7 +61,7 @@ export class CleanerBdj extends AbstractTransformation {
         reqTechnology: normalizeStringArray(
           nav
             .getOptionalPath('technologyTags')
-            ?.toArray()
+            ?.toOptionalArray()
             .map((t) => t.toString()) || [],
         ),
       } satisfies DeepPartial<TSchema>),

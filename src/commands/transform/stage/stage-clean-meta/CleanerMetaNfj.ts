@@ -15,7 +15,7 @@ export class CleanerMetaNfj extends AbstractTransformation {
   async transform(input: Map<Artifact, string>): Promise<string> {
     const meta = this.objectFromSchema<TMetaSchema>(
       metaSchema,
-      KnownArtifactsEnum.RAW_JOB_META_JSON,
+      KnownArtifactsEnum.RAW_JOB_META,
       input,
     );
     const json = this.objectFromJson(KnownArtifactsEnum.RAW_JOB_JSON, input);

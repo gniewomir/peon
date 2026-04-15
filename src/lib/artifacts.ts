@@ -8,7 +8,7 @@ type ArtifactDescriptor = {
 export enum KnownArtifactsEnum {
   RAW_JOB_JSON = 'RAW_JOB_JSON',
   RAW_JOB_HTML = 'RAW_JOB_HTML',
-  RAW_JOB_META_JSON = 'RAW_JOB_META_JSON',
+  RAW_JOB_META = 'RAW_JOB_META',
   RAW_JOB_HTML_JSON = 'RAW_JOB_HTML_JSON',
   CLEAN_JOB_JSON = 'CLEAN_JOB_JSON',
   CLEAN_JOB_HTML = 'CLEAN_JOB_HTML',
@@ -26,14 +26,14 @@ const artifactsRegistry: Record<KnownArtifactsEnum, ArtifactDescriptor> = {
   [KnownArtifactsEnum.RAW_JOB_HTML]: {
     filename: 'raw.job.html',
   },
-  [KnownArtifactsEnum.RAW_JOB_META_JSON]: {
+  [KnownArtifactsEnum.RAW_JOB_META]: {
     filename: 'raw.meta.json',
   },
   [KnownArtifactsEnum.RAW_JOB_HTML_JSON]: {
     filename: 'raw.html-json.json',
   },
   [KnownArtifactsEnum.CLEAN_JOB_HTML_JSON]: {
-    filename: 'raw.html-json.json',
+    filename: 'clean.html-json.json',
   },
   [KnownArtifactsEnum.CLEAN_JOB_JSON]: {
     filename: 'clean.job.json',
@@ -59,6 +59,11 @@ export type Artifact = keyof typeof artifactsRegistry;
 export function artifactFilename(artifact: KnownArtifactsEnum) {
   return artifactsRegistry[artifact].filename;
 }
+export const artifactFilenames = Object.freeze(
+  Object.values(artifactsRegistry)
+    .map((e) => e.filename)
+    .sort(),
+);
 
 assert(
   Object.values(artifactsRegistry)

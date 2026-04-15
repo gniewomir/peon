@@ -16,7 +16,7 @@ export class CleanMetaStage extends AbstractStage {
 
   protected inputArtifacts() {
     return [
-      KnownArtifactsEnum.RAW_JOB_META_JSON,
+      KnownArtifactsEnum.RAW_JOB_META,
       KnownArtifactsEnum.RAW_JOB_JSON,
       KnownArtifactsEnum.CLEAN_MARKDOWN,
       KnownArtifactsEnum.CLEAN_JOB_HTML,

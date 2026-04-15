@@ -93,7 +93,7 @@ export abstract class AbstractStrategy implements Strategy {
     await fs.mkdir(jobStagingDir, { recursive: true });
     await Promise.all([
       smartSave(
-        path.join(jobStagingDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META_JSON)),
+        path.join(jobStagingDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)),
         meta,
         false,
         this.logger,

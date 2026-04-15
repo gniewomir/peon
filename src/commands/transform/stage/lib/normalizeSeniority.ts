@@ -1,4 +1,4 @@
-export function normalizeSeniority(seniority: string): string {
+export function normalizeSeniority(seniority: string): string | null {
   seniority = seniority.trim().toLowerCase();
   if (seniority === 'trainee') {
     return 'intern';
@@ -10,7 +10,10 @@ export function normalizeSeniority(seniority: string): string {
     return 'regular';
   }
   if (seniority === 'c_level') {
-    return 'management';
+    return 'c-level';
+  }
+  if (seniority === '') {
+    return null;
   }
   return seniority;
 }
