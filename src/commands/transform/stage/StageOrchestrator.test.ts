@@ -23,6 +23,54 @@ function createTestLogger(): Logger {
 }
 
 describe('StageOrchestrator (job-dir fixpoint)', () => {
+  it('treats a stage as applicable when an input is newer than output', async () => {
+    await statsContext('test_').withStats(async () => {
+      const logger = createTestLogger();
+      const root = mkdtempSync(path.join(tmpdir(), 'peon-orch-'));
+      const stagingDir = path.join(root, 'staging');
+      const jobDir = path.join(stagingDir, 'all-test-mtime');
+
+      mkdirSync(jobDir, { recursive: true });
+
+      class StageA extends AbstractStage {
+        protected inputArtifacts() {
+          return [KnownArtifactsEnum.RAW_JOB_JSON];
+        }
+        protected outputArtifact() {
+          return KnownArtifactsEnum.CLEAN_JOB_JSON;
+        }
+        protected guards() {
+          return [];
+        }
+      }
+
+      const inMemoryDirectoryTracker = new InMemoryDirectoryTracker(100);
+      const stageA = new StageA({
+        logger,
+        stagingDir,
+        trashDir: path.join(root, 'trash'),
+        loadDir: path.join(root, 'load'),
+        transformations: [],
+        inMemoryDirectoryTracker,
+      });
+
+      const inputPath = path.join(jobDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_JSON));
+      const outputPath = path.join(jobDir, artifactFilename(KnownArtifactsEnum.CLEAN_JOB_JSON));
+
+      writeFileSync(inputPath, '{}', 'utf8');
+      writeFileSync(outputPath, '{"out":1}', 'utf8');
+
+      // Output written after input => not applicable.
+      await expect(stageA.isApplicable(jobDir)).resolves.toBe(false);
+
+      // Make input newer than output.
+      await new Promise((r) => setTimeout(r, 5));
+      writeFileSync(inputPath, '{"changed":true}', 'utf8');
+
+      await expect(stageA.isApplicable(jobDir)).resolves.toBe(true);
+    });
+  });
+
   it('runs stages to fixpoint in registration order', async () => {
     await statsContext('test_').withStats(async () => {
       const logger = createTestLogger();

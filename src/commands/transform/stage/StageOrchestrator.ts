@@ -21,6 +21,7 @@ import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
   private readonly directoryQueues = new LRUHashMap<Promise<unknown>>(5000);
+  private readonly enqueuedJobs = new Set<string>();
   private listening = true;
   private readonly stagingDir;
   private readonly quarantineDir;
@@ -97,8 +98,10 @@ export class StageOrchestrator {
     await Promise.allSettled(this.directoryQueues.values());
   }
 
-  public enqueueJobDir(jobDir: string, cause?: StagingFileEvent) {
-    if (!this.listening) return;
+  public enqueueJobDir(jobDir: string, cause?: StagingFileEvent): boolean {
+    if (!this.listening) return false;
+    if (this.enqueuedJobs.has(jobDir)) return false;
+    this.enqueuedJobs.add(jobDir);
     const queue = this.directoryQueues.get(jobDir) || Promise.resolve();
     this.directoryQueues.set(
       jobDir,
@@ -111,8 +114,12 @@ export class StageOrchestrator {
             jobDir,
           });
           return error;
+        })
+        .finally(() => {
+          this.enqueuedJobs.delete(jobDir);
         }),
     );
+    return true;
   }
 
   private async processToFixpoint(jobDir: string, cause?: StagingFileEvent) {

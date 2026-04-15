@@ -11,7 +11,7 @@ import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js
 import type { Transformation } from './AbstractTransformation.js';
 import assert from 'node:assert';
 import { type Artifact, artifactFilename } from '../../../lib/artifacts.js';
-import { access, readFile } from 'fs/promises';
+import { access, readFile, stat } from 'fs/promises';
 import { statsAddToCounter } from '../../../lib/stats.js';
 import { isStrategySlug } from '../../../lib/types.js';
 import type { InMemoryDirectoryTracker } from './InMemoryDirectoryTracker.js';
@@ -55,23 +55,25 @@ export abstract class AbstractStage {
 
   /**
    * Job-dir applicability used by the scan-cycle orchestrator.
-   *
-   * For the first incremental step, we use a strict "output missing" rule to avoid
-   * repeatedly running the same stage in a tight loop when `smartSave` is a no-op.
-   * (mtime-based freshness comes in the next step.)
    */
   public async isApplicable(jobDir: string): Promise<boolean> {
     if (!(await this.pathExists(jobDir))) return false;
 
+    const outputPath = path.join(jobDir, artifactFilename(this.outputArtifact()));
+    const hasOutput = await this.pathExists(outputPath);
+    const outputStat = hasOutput ? await stat(outputPath) : undefined;
+
     for (const artifact of this.inputArtifacts()) {
       const inputArtifactPath = path.join(jobDir, artifactFilename(artifact));
       if (!(await this.pathExists(inputArtifactPath))) return false;
+      if (outputStat) {
+        const inputStat = await stat(inputArtifactPath);
+        if (inputStat.mtimeMs > outputStat.mtimeMs) return true;
+      }
     }
 
-    const outputPath = path.join(jobDir, artifactFilename(this.outputArtifact()));
-    if (await this.pathExists(outputPath)) return false;
-
-    return true;
+    // Output missing => applicable. Output present => applicable only if any input newer (checked above).
+    return !hasOutput;
   }
 
   public async runForJob(jobDir: string): Promise<AbstractGuardDecision> {

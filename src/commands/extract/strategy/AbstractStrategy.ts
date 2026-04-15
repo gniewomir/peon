@@ -18,6 +18,7 @@ import { access } from 'fs/promises';
 import { constants } from 'node:fs';
 import { statsAddToCounter } from '../../../lib/stats.js';
 import * as os from 'node:os';
+import { dirname } from 'node:path';
 
 export abstract class AbstractStrategy implements Strategy {
   public abstract readonly slug: KnownStrategy;
@@ -94,28 +95,33 @@ export abstract class AbstractStrategy implements Strategy {
       },
     } satisfies TMetaSchema);
 
-    await fs.mkdir(jobTmpDir, { recursive: true });
-    await Promise.all([
-      smartSave(
-        path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)),
-        meta,
-        this.logger,
-      ),
-      smartSave(
-        path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_JSON)),
-        json,
-        this.logger,
-      ),
-      smartSave(
-        path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_HTML)),
-        html,
-        this.logger,
-      ),
-    ]);
-    await fs.rename(jobTmpDir, jobStagingDir);
-
-    statsAddToCounter('job_staged');
-    statsAddToCounter(`job_staged_${this.slug}`);
+    await fs
+      .mkdir(jobTmpDir, { recursive: true })
+      .then(() => fs.mkdir(dirname(jobStagingDir), { recursive: true }))
+      .then(() =>
+        Promise.all([
+          smartSave(
+            path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_META)),
+            meta,
+            this.logger,
+          ),
+          smartSave(
+            path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_JSON)),
+            json,
+            this.logger,
+          ),
+          smartSave(
+            path.join(jobTmpDir, artifactFilename(KnownArtifactsEnum.RAW_JOB_HTML)),
+            html,
+            this.logger,
+          ),
+        ]),
+      )
+      .then(() => fs.rename(jobTmpDir, jobStagingDir))
+      .then(() => {
+        statsAddToCounter('job_staged');
+        statsAddToCounter(`job_staged_${this.slug}`);
+      });
   }
 
   private async pathExists(filePath: string): Promise<boolean> {

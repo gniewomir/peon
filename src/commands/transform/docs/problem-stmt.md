@@ -4,9 +4,12 @@ We want to process a lot of data, parallelizing processing when we can, with a w
 
 # Problem at hand
 
+- Just like extractor - script needs to be bulletproof, able to run for indefinite amount of time mithout any supervision.
 - We want to be able to pick up processing after a process restart, using the content of the staging directory as our state.
   - This means that there might be up to tens of thousands of directories, each with multiple (~10+) files.
   - This means that any file watcher might run out of file descriptors—if not during normal operations when we keep up with incoming data and remove it from the watched scope, then for sure after longer downtime (which will happen in my use case).
+    - problem shows itself at around 10k directories and 30-50k of files on Mac
+      - it can be managed, but looks like reliability weak point I don't want to deal with
   - As scripts need to work both on a server (costs resources but 50k→1M FDs is an option) and locally (up to 65k+ to be safe), then:
     - a solution watching only directories might work with increased FD limits for the process (it is very unlikely for the dataset to grow above 65k directories)
     - a solution watching all files, while it might be elegant, in the worst-case scenario (65k \* 10+ files = 650k FDs needed) is not safe, realistic, or sane

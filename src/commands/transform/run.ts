@@ -1,6 +1,5 @@
 import 'dotenv/config';
 
-import chokidar from 'chokidar';
 import { type Logger } from '../../lib/logger.js';
 import { stripRoot } from '../../lib/root.js';
 import { StageOrchestrator } from './stage/StageOrchestrator.js';
@@ -9,11 +8,18 @@ import { CleanMetaStage } from './stage/stage-clean-meta/CleanMetaStage.js';
 import { CleanJsonStage } from './stage/stage-clean-job-json/CleanJsonStage.js';
 import { CleanHtmlStage } from './stage/stage-clean-html/CleanHtmlStage.js';
 import { CleanHtmlToMdStage } from './stage/stage-clean-html-to-md/CleanHtmlToMdStage.js';
-import { EnrichLlmStage } from './stage/stage-enrich-llm/EnrichLlmStage.js';
 import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
 import { shutdownContext } from '../../lib/shutdown.js';
 import { InMemoryDirectoryTracker } from './stage/InMemoryDirectoryTracker.js';
 import { CleanHtmlJsonStage } from './stage/stage-clean-html-json/CleanHtmlJsonStage.js';
+import { CleanCombineStage } from './stage/stage-clean-combine/CleanCombineStage.js';
+import { readdir, stat } from 'node:fs/promises';
+import type { Dirent } from 'node:fs';
+import path from 'node:path';
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export async function runTransform({
   stagingDir,
@@ -88,58 +94,80 @@ export async function runTransform({
           transformations: CleanHtmlToMdStage.transformations(),
           inMemoryDirectoryTracker,
         }),
-        new EnrichLlmStage({
+        new CleanCombineStage({
           logger,
           stagingDir,
           trashDir,
           loadDir,
-          transformations: EnrichLlmStage.transformations(),
+          transformations: CleanCombineStage.transformations(),
           inMemoryDirectoryTracker,
         }),
       ],
     });
     shutdownCtx.registerCleanup(() => orchestrator.shutdown());
 
-    const watcher = chokidar.watch(stagingDir, {
-      ignoreInitial: false,
-      persistent: true,
-      ignored: (val) => val.includes('.DS_Store') || val.includes('error.json'),
-    });
-    shutdownCtx.registerCleanup(() => watcher.close());
+    logger.log(` 🔍 Scanning for jobs in: ${stripRoot(stagingDir)}`);
 
-    watcher.on('add', (filePath) => {
-      try {
-        statsAddToCounter('watcher_add_event');
-        logger.debug(`added: ${stripRoot(filePath)}`);
-        orchestrator.handleStagingEvent({ type: 'add', payload: filePath });
-      } catch (error) {
-        logger.error(`unhandled orchestrator error: ${error}`);
-        throw error;
+    const idleMs = 1000 * 60 * 30;
+    let backoffMs = 1000;
+    const backoffMaxMs = 30_000;
+    let lastWritten = stats().counters['transform_file_written'] ?? 0;
+    let lastProgressAt = Date.now();
+
+    while (true) {
+      // Progress detection (global, not per-cycle): relies on smartSave() counter.
+      const curWritten = stats().counters['transform_file_written'] ?? 0;
+      if (curWritten > lastWritten) {
+        lastWritten = curWritten;
+        lastProgressAt = Date.now();
+        backoffMs = 1000;
       }
-    });
 
-    watcher.on('change', (filePath) => {
-      try {
-        statsAddToCounter('watcher_change_event');
-        logger.debug(`changed: ${stripRoot(filePath)}`);
-        orchestrator.handleStagingEvent({ type: 'change', payload: filePath });
-      } catch (error) {
-        logger.error(`unhandled orchestrator error: ${error}`);
-        throw error;
+      if (Date.now() - lastProgressAt > idleMs) {
+        logger.log(` ✅ Transformations completed (idle). Done`);
+        logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
+        await orchestrator.shutdown();
+        return;
       }
-    });
 
-    watcher.on('error', (error) => {
-      statsAddToCounter('watcher_error_event');
-      logger.error(`error: ${error}`);
-      throw error;
-    });
+      // Discover job dirs (snapshot) and enqueue in oldest->newest order by dir mtime.
+      let dirents: Dirent[];
+      try {
+        dirents = await readdir(stagingDir, { withFileTypes: true, encoding: 'utf8' });
+      } catch (error) {
+        logger.error(`Failed to scan staging dir ${stripRoot(stagingDir)}`, error);
+        await sleep(backoffMs);
+        backoffMs = Math.min(backoffMaxMs, backoffMs * 2);
+        continue;
+      }
 
-    logger.log(` 🔍 Watching for changes in: ${stripRoot(stagingDir)}`);
+      const jobDirs: { dir: string; mtimeMs: number }[] = [];
+      for (const de of dirents) {
+        if (!de.isDirectory()) continue;
+        const full = path.join(stagingDir, de.name);
+        try {
+          const st = await stat(full);
+          jobDirs.push({ dir: full, mtimeMs: st.mtimeMs });
+        } catch {
+          // dir may have been moved mid-scan
+        }
+      }
+      jobDirs.sort((a, b) => a.mtimeMs - b.mtimeMs);
 
-    await orchestrator.waitUntilIdle(1000 * 60 * 30).then(() => {
-      logger.log(` ✅ Transformations completed. Done`);
-      logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
-    });
+      let enqueuedCount = 0;
+      for (const j of jobDirs) {
+        statsAddToCounter('scan_enqueued_job');
+        if (orchestrator.enqueueJobDir(j.dir)) enqueuedCount += 1;
+        if (enqueuedCount >= 50) break;
+      }
+      if (enqueuedCount >= 50) {
+        logger.warn(` ⚠️ Too many jobs enqueued (${enqueuedCount})- increasing backoff`);
+        backoffMs = Math.min(backoffMaxMs, Math.round(backoffMs * 1.5));
+      } else {
+        backoffMs = Math.min(backoffMaxMs, Math.max(backoffMs, Math.round(backoffMs * 0.75)));
+      }
+
+      await sleep(backoffMs);
+    }
   });
 }
