@@ -100,7 +100,7 @@ export class StageOrchestrator {
     if (
       currentRss > Math.round(this.limits.maxRssMemoryUsage * this.limits.concurrencyDownRssLimit)
     ) {
-      this.concurrency = Math.max(1, this.concurrency - 2);
+      this.concurrency = Math.max(1, Math.round(this.concurrency * 0.8));
       this.logger.warn(
         `(${Math.round(currentRss / (1024 * 1024))}mb) At or above memory use upper threshold - adjusting concurrent stages limit down (${this.concurrency})`,
       );
@@ -109,7 +109,10 @@ export class StageOrchestrator {
     if (
       currentRss < Math.round(this.limits.maxRssMemoryUsage * this.limits.concurrencyUpRssLimit)
     ) {
-      this.concurrency = Math.min(this.limits.maxConcurrentStages, this.concurrency + 1);
+      this.concurrency = Math.min(
+        this.limits.maxConcurrentStages,
+        Math.round(this.concurrency * 1.1),
+      );
       this.logger.log(
         `(${Math.round(currentRss / (1024 * 1024))}mb) Bellow memory use lower threshold - adjusting concurrent stages limit up (${this.concurrency})`,
       );
