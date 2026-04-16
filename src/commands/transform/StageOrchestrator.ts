@@ -23,11 +23,21 @@ import { atomicWrite } from '../../lib/atomicWrite.js';
 import { readdir, stat } from 'node:fs/promises';
 import { HashMap } from './lib/HashMap.js';
 import { LRUHashMap } from './lib/LRUHashMap.js';
-import { PipelineStage } from './stage/PipelineStage.js';
+import { PipelineStage, type StageConcurrency } from './stage/PipelineStage.js';
 import type { JobDirArtifacts } from './types.js';
+
+function assertValidStageConcurrency(c: StageConcurrency, stageName: string): void {
+  if (c === 'unlimited') return;
+  if (c === 0) return;
+  if (Number.isInteger(c) && c >= 1) return;
+  throw new Error(
+    `Invalid concurrency for stage "${stageName}": expected 'unlimited', 0, or a positive integer, got ${String(c)}`,
+  );
+}
 
 export class StageOrchestrator {
   private readonly stages: Map<string, PipelineStage> = new Map();
+  private readonly stageInFlight = new Map<string, number>();
   private readonly inFlight = new HashMap<Promise<void>>();
   private readonly jobDirArtifactsCache = new LRUHashMap<JobDirArtifacts>(25_000);
   private readonly quarantineDir;
@@ -69,6 +79,10 @@ export class StageOrchestrator {
     });
     assert(this.stages.size === stages.length, 'Duplicated stage names detected!');
 
+    for (const stage of this.stages.values()) {
+      assertValidStageConcurrency(stage.concurrency(), stage.name());
+    }
+
     this.limits = { ...autoScaling };
     this.concurrency = this.limits.minConcurrentStages;
   }
@@ -88,27 +102,58 @@ export class StageOrchestrator {
     if (this.inFlight.has(jobDir)) return null;
     const jobDirArtifactsIndex = await this.readJobDirArtifactsIndex(jobDir);
 
+    if (this.shuttingDown) return 'denied';
+    if (this.inFlight.size() >= this.concurrency) return 'denied';
+
+    let chosen: PipelineStage | undefined;
     for (const stage of this.stages.values()) {
-      if (stage.isApplicable(jobDirArtifactsIndex)) {
-        this.inFlight.set(
-          jobDir,
-          this.executeSingleApplicableStage(stage, jobDir, jobDirArtifactsIndex)
-            .catch(async (error) => {
-              this.logger.error(`Unhandled error processing for ${stripRoot(jobDir)}`, {
-                error,
-                jobDir,
-              });
-              return error;
-            })
-            .finally(() => {
-              this.inFlight.delete(jobDir);
-              this.progressAt = Date.now();
-            }),
-        );
-        this.progressAt = Date.now();
-        return null;
+      if (!stage.inputArtifacts().every((a) => jobDirArtifactsIndex.present.has(a))) continue;
+
+      const limit = stage.concurrency();
+      if (limit === 0) continue;
+
+      if (limit !== 'unlimited') {
+        const name = stage.name();
+        const active = this.stageInFlight.get(name) ?? 0;
+        if (active >= limit) {
+          statsAddToCounter('orchestrator_stage_cap_skip');
+          continue;
+        }
       }
+
+      chosen = stage;
+      break;
     }
+
+    if (chosen === undefined) return null;
+
+    const stageName = chosen.name();
+    const next = (this.stageInFlight.get(stageName) ?? 0) + 1;
+    this.stageInFlight.set(stageName, next);
+
+    this.inFlight.set(
+      jobDir,
+      this.executeSingleApplicableStage(chosen, jobDir, jobDirArtifactsIndex)
+        .catch(async (error) => {
+          this.logger.error(`Unhandled error processing for ${stripRoot(jobDir)}`, {
+            error,
+            jobDir,
+          });
+          return error;
+        })
+        .finally(() => {
+          this.inFlight.delete(jobDir);
+          const prev = this.stageInFlight.get(stageName) ?? 0;
+          const after = Math.max(0, prev - 1);
+          if (after === 0) {
+            this.stageInFlight.delete(stageName);
+          } else {
+            this.stageInFlight.set(stageName, after);
+          }
+          this.progressAt = Date.now();
+        }),
+    );
+    this.progressAt = Date.now();
     return null;
   }
 
@@ -116,14 +161,14 @@ export class StageOrchestrator {
     const currentRss = process.memoryUsage.rss();
     const currentRssMb = Math.round(currentRss / (1024 * 1024));
     const oldConcurrency = this.concurrency;
-    const maxHistoricalUtilisation = statsGetValue('max_rss_memory_utilisation_mb', 0);
     statsSetValue(
       'max_rss_memory_utilisation_mb',
-      Math.max(maxHistoricalUtilisation, currentRssMb),
+      Math.max(statsGetValue('max_rss_memory_utilisation_mb', 0), currentRssMb),
     );
-
-    const maxHistoricalInFlight = statsGetValue('max_in_flight', 0);
-    statsSetValue('max_in_flight', Math.max(maxHistoricalInFlight, this.inFlight.size()));
+    statsSetValue(
+      'max_in_flight',
+      Math.max(statsGetValue('max_in_flight', 0), this.inFlight.size()),
+    );
 
     this.logger.debug(`[${currentRssMb}mb] RSS memory soft cap utilization`);
     if (currentRss >= this.limits.rssMemorySoftCap) {
@@ -143,8 +188,10 @@ export class StageOrchestrator {
       Math.ceil(this.concurrency * 1.2),
     );
 
-    const maxHistoricalConcurency = statsGetValue('max_concurency', 0);
-    statsSetValue('max_concurency', Math.max(maxHistoricalConcurency, this.concurrency));
+    statsSetValue(
+      'max_concurrency',
+      Math.max(statsGetValue('max_concurrency', 0), this.concurrency),
+    );
     const message = `[${currentRssMb}mb] RSS memory soft cap underutilized - adjusting concurrency up (${this.concurrency})`;
 
     if (oldConcurrency !== this.concurrency) {
