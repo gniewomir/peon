@@ -9,7 +9,6 @@ import { createConcurrencyLimiter } from '../../lib/createConcurrencyLimiter.js'
 import { NotEmptyGuard } from '../guards/NotEmptyGuard.js';
 import { stripRoot } from '../../../../lib/root.js';
 import { LlmSchemaQualityGuard } from './LlmSchemaQualityGuard.js';
-import type { InMemoryDirectoryTracker } from '../InMemoryDirectoryTracker.js';
 
 export class EnrichLlmStage extends AbstractStage {
   private readonly concurrencyLimiter;
@@ -26,7 +25,6 @@ export class EnrichLlmStage extends AbstractStage {
     trashDir: string;
     loadDir: string;
     transformations: Transformation[];
-    inMemoryDirectoryTracker: InMemoryDirectoryTracker;
   }) {
     super(args);
     this.concurrencyLimiter = createConcurrencyLimiter(1);
@@ -37,7 +35,7 @@ export class EnrichLlmStage extends AbstractStage {
     return [new StructureUnstructured()];
   }
 
-  protected inputArtifacts() {
+  public inputArtifacts() {
     return [
       KnownArtifactsEnum.CLEAN_MARKDOWN,
       KnownArtifactsEnum.CLEAN_JOB_META_JSON,
@@ -45,7 +43,7 @@ export class EnrichLlmStage extends AbstractStage {
     ];
   }
 
-  protected outputArtifact() {
+  public outputArtifact() {
     return KnownArtifactsEnum.ENRICH_LLM_JSON;
   }
 
@@ -53,12 +51,12 @@ export class EnrichLlmStage extends AbstractStage {
     return [new NotEmptyGuard(), new LlmSchemaQualityGuard(0.5)];
   }
 
-  protected async transformForJob(jobDir: string): Promise<string> {
+  protected async transform(jobDir: string): Promise<string> {
     return this.concurrencyLimiter.run(() =>
       this.minimumExecutionTimeLimiter(async () => {
         const start = Date.now();
         this.logger.log(` 🤖 LLM request start: ${stripRoot(jobDir)}`);
-        const result = await super.transformForJob(jobDir);
+        const result = await super.transform(jobDir);
         const end = Date.now();
         this.logger.log(` 🤖 LLM request end after ${(end - start) / 1000}s: ${stripRoot(jobDir)}`);
         this.logger.warn(` 🤖 LLM requests pending: ${this.concurrencyLimiter.pendingCount()}`);

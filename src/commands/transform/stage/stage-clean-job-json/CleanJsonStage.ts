@@ -14,11 +14,11 @@ export class CleanJsonStage extends AbstractStage {
     return [new CleanerJji(), new CleanerNfj(), new CleanerBdj()];
   }
 
-  protected inputArtifacts() {
+  public inputArtifacts() {
     return [KnownArtifactsEnum.RAW_JOB_JSON];
   }
 
-  protected outputArtifact() {
+  public outputArtifact() {
     return KnownArtifactsEnum.CLEAN_JOB_JSON;
   }
 

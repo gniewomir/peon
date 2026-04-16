@@ -59,6 +59,26 @@ export type Artifact = keyof typeof artifactsRegistry;
 export function artifactFilename(artifact: KnownArtifactsEnum) {
   return artifactsRegistry[artifact].filename;
 }
+
+export function artifactFilenameToEnum(filename: string): KnownArtifactsEnum {
+  const found = Object.entries(artifactsRegistry)
+    .filter(([, value]) => value.filename === filename)
+    .map(([key]) => key)
+    .pop();
+  assert(found, `${filename} is not a artifact filename`);
+
+  return KnownArtifactsEnum[found as Artifact];
+}
+
+export function isArtifactFilename(filename: string) {
+  try {
+    artifactFilenameToEnum(filename);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const artifactFilenames = Object.freeze(
   Object.values(artifactsRegistry)
     .map((e) => e.filename)

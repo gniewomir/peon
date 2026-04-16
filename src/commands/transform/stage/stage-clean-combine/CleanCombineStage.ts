@@ -10,7 +10,7 @@ export class CleanCombineStage extends AbstractStage {
     return [new CombineCleanToCombined()];
   }
 
-  protected inputArtifacts() {
+  public inputArtifacts() {
     return [
       KnownArtifactsEnum.CLEAN_JOB_JSON,
       KnownArtifactsEnum.CLEAN_JOB_META_JSON,
@@ -19,7 +19,7 @@ export class CleanCombineStage extends AbstractStage {
     ];
   }
 
-  protected outputArtifact() {
+  public outputArtifact() {
     return KnownArtifactsEnum.CLEAN_COMBINE_JSON;
   }
 

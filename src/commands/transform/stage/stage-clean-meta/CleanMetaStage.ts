@@ -14,7 +14,7 @@ export class CleanMetaStage extends AbstractStage {
     return [new CleanerMetaBdj(), new CleanerMetaJji(), new CleanerMetaNfj()];
   }
 
-  protected inputArtifacts() {
+  public inputArtifacts() {
     return [
       KnownArtifactsEnum.RAW_JOB_META,
       KnownArtifactsEnum.RAW_JOB_JSON,
@@ -24,7 +24,7 @@ export class CleanMetaStage extends AbstractStage {
     ];
   }
 
-  protected outputArtifact() {
+  public outputArtifact() {
     return KnownArtifactsEnum.CLEAN_JOB_META_JSON;
   }
 

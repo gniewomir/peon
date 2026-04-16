@@ -12,11 +12,11 @@ export class CleanHtmlStage extends AbstractStage {
     return [new HtmlCleanerJji(), new HtmlCleanerNfj(), new HtmlCleanerBdj()];
   }
 
-  protected inputArtifacts() {
+  public inputArtifacts() {
     return [KnownArtifactsEnum.RAW_JOB_HTML];
   }
 
-  protected outputArtifact() {
+  public outputArtifact() {
     return KnownArtifactsEnum.CLEAN_JOB_HTML;
   }
 

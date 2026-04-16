@@ -12,11 +12,11 @@ export class CleanHtmlToMdStage extends AbstractStage {
     return [new HtmlToMdConverterBdj(), new HtmlToMdConverterJji(), new HtmlToMdConverterAll()];
   }
 
-  protected inputArtifacts() {
+  public inputArtifacts() {
     return [KnownArtifactsEnum.CLEAN_JOB_HTML];
   }
 
-  protected outputArtifact() {
+  public outputArtifact() {
     return KnownArtifactsEnum.CLEAN_MARKDOWN;
   }
 

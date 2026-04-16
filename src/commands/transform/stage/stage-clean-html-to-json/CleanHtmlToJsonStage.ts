@@ -9,11 +9,11 @@ export class CleanHtmlToJsonStage extends AbstractStage {
     return [new HtmlToJsonExtractor()];
   }
 
-  protected inputArtifacts() {
+  public inputArtifacts() {
     return [KnownArtifactsEnum.RAW_JOB_HTML];
   }
 
-  protected outputArtifact() {
+  public outputArtifact() {
     return KnownArtifactsEnum.RAW_JOB_HTML_JSON;
   }
 
