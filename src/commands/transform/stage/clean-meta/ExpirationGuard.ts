@@ -1,9 +1,9 @@
 import { AbstractGuard } from '../AbstractGuard.js';
-import type { AbstractGuardDecision } from '../outcomes/AbstractGuardDecision.js';
-import { GuardDecisionAdvance } from '../outcomes/GuardDecisionAdvance.js';
-import { GuardDecisionQuarantine } from '../outcomes/GuardDecisionQuarantine.js';
+import type { AbstractGuardDecision } from '../../outcomes/AbstractGuardDecision.js';
+import { GuardDecisionAdvance } from '../../outcomes/GuardDecisionAdvance.js';
+import { GuardDecisionQuarantine } from '../../outcomes/GuardDecisionQuarantine.js';
 import type { TMetaSchema } from '../../../../schema/schema.meta.js';
-import { GuardDecisionTrash } from '../outcomes/GuardDecisionTrash.js';
+import { GuardDecisionTrash } from '../../outcomes/GuardDecisionTrash.js';
 
 export class ExpirationGuard extends AbstractGuard<TMetaSchema> {
   async guard(meta: TMetaSchema): Promise<AbstractGuardDecision> {

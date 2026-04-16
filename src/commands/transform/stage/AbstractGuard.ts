@@ -1,6 +1,6 @@
-import type { AbstractGuardDecision } from './outcomes/AbstractGuardDecision.js';
-import * as cheerio from 'cheerio';
+import type { AbstractGuardDecision } from '../outcomes/AbstractGuardDecision.js';
 import type { CheerioAPI } from 'cheerio';
+import * as cheerio from 'cheerio';
 
 export abstract class AbstractGuard<T = string> {
   abstract name(): string;

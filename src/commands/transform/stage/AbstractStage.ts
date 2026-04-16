@@ -1,17 +1,17 @@
 import path, { basename } from 'node:path';
 import { stripRoot } from '../../../lib/root.js';
 import type { AbstractGuard } from './AbstractGuard.js';
-import { GuardDecisionQuarantine } from './outcomes/GuardDecisionQuarantine.js';
+import { GuardDecisionQuarantine } from '../outcomes/GuardDecisionQuarantine.js';
 import { atomicWrite } from '../../../lib/atomicWrite.js';
-import type { AbstractGuardDecision } from './outcomes/AbstractGuardDecision.js';
-import { GuardDecisionAdvance } from './outcomes/GuardDecisionAdvance.js';
+import type { AbstractGuardDecision } from '../outcomes/AbstractGuardDecision.js';
+import { GuardDecisionAdvance } from '../outcomes/GuardDecisionAdvance.js';
 import assert from 'node:assert';
 import { type Artifact, artifactFilename } from '../../../lib/artifacts.js';
 import { readFile } from 'fs/promises';
 import { statsAddToCounter } from '../../../lib/stats.js';
 import { isStrategySlug } from '../../../lib/types.js';
 import { PipelineStage } from './PipelineStage.js';
-import type { JobDirArtifacts } from './types.js';
+import type { JobDirArtifacts } from '../types.js';
 
 /**
  * A transform stage whose in-memory value is `T` (defaults to `string` for text pipelines).

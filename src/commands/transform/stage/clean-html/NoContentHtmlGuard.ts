@@ -1,8 +1,8 @@
-import type { AbstractGuardDecision } from '../outcomes/AbstractGuardDecision.js';
-import { GuardDecisionAdvance } from '../outcomes/GuardDecisionAdvance.js';
+import type { AbstractGuardDecision } from '../../outcomes/AbstractGuardDecision.js';
+import { GuardDecisionAdvance } from '../../outcomes/GuardDecisionAdvance.js';
 import { AbstractGuard } from '../AbstractGuard.js';
-import { GuardDecisionRemove } from '../outcomes/GuardDecisionRemove.js';
-import { GuardDecisionQuarantine } from '../outcomes/GuardDecisionQuarantine.js';
+import { GuardDecisionRemove } from '../../outcomes/GuardDecisionRemove.js';
+import { GuardDecisionQuarantine } from '../../outcomes/GuardDecisionQuarantine.js';
 
 export class NoContentHtmlGuard extends AbstractGuard<string> {
   constructor(private readonly minLength: number = 100) {

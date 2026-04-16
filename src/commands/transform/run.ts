@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { type Logger } from '../../lib/logger.js';
 import { stripRoot } from '../../lib/root.js';
-import { StageOrchestrator } from './stage/StageOrchestrator.js';
+import { StageOrchestrator } from './StageOrchestrator.js';
 import { stats, statsContext } from '../../lib/stats.js';
 import { shutdownContext } from '../../lib/shutdown.js';
 import { opendir } from 'node:fs/promises';

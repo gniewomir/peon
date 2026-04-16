@@ -1,4 +1,4 @@
-import { KnownArtifactsEnum } from '../../../lib/artifacts.js';
+import { KnownArtifactsEnum } from '../../lib/artifacts.js';
 
 export type JobDirArtifacts = {
   /**

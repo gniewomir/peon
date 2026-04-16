@@ -1,8 +1,8 @@
 import { AbstractTransformation } from '../AbstractTransformation.js';
 import type { StrategySelector } from '../../../../lib/types.js';
-import { KnownArtifactsEnum, type Artifact } from '../../../../lib/artifacts.js';
+import { type Artifact, KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { nullCombinedSchema, type TCombinedSchema } from '../../../../schema/schema.combined.js';
-import { merge, type DeepPartial } from '../../../../schema/schema.utils.js';
+import { type DeepPartial, merge } from '../../../../schema/schema.utils.js';
 
 export class CombineCleanToCombined extends AbstractTransformation<TCombinedSchema> {
   strategy(): StrategySelector {

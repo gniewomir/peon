@@ -1,10 +1,10 @@
-import { CleanCombineStage } from './stage-clean-combine/CleanCombineStage.js';
-import { CleanHtmlToMdStage } from './stage-clean-html-to-md/CleanHtmlToMdStage.js';
-import { CleanHtmlStage } from './stage-clean-html/CleanHtmlStage.js';
-import { CleanMetaStage } from './stage-clean-meta/CleanMetaStage.js';
-import { CleanHtmlJsonStage } from './stage-clean-html-json/CleanHtmlJsonStage.js';
-import { CleanHtmlToJsonStage } from './stage-clean-html-to-json/CleanHtmlToJsonStage.js';
-import { CleanJsonStage } from './stage-clean-job-json/CleanJsonStage.js';
+import { CleanCombineStage } from './clean-combine/CleanCombineStage.js';
+import { CleanHtmlToMdStage } from './clean-html-to-md/CleanHtmlToMdStage.js';
+import { CleanHtmlStage } from './clean-html/CleanHtmlStage.js';
+import { CleanMetaStage } from './clean-meta/CleanMetaStage.js';
+import { CleanHtmlJsonStage } from './clean-html-json/CleanHtmlJsonStage.js';
+import { CleanHtmlToJsonStage } from './clean-html-to-json/CleanHtmlToJsonStage.js';
+import { CleanJsonStage } from './clean-job-json/CleanJsonStage.js';
 import type { Logger } from '../../../lib/logger.js';
 
 export function createStages({
