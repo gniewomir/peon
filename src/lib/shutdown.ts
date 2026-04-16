@@ -19,20 +19,34 @@ export function shutdownContext(logger: Logger): ShutdownContext {
     if (shuttingDown) return;
     shuttingDown = true;
 
-    const exitCode = signal ? (signal === 'SIGINT' ? 130 : 143) : 0;
+    if (signal) {
+      logger.log(` 🔪 Received signal ${signal}`);
+    }
 
     logger.log(' 🧹 Cleaning up...');
 
     const timeout = setTimeout(() => {
       logger.warn(` 🔪 Cleanup timeout (${SHUTDOWN_TIMEOUT_MS / 1000}s). Forcing exit...`);
-      process.exit(1);
+      const exitCode = 1;
+      logger.warn(` 🔪 Exiting with non-zero exit code ${exitCode}`);
+      process.exit(exitCode);
     }, SHUTDOWN_TIMEOUT_MS);
 
     await Promise.allSettled([...cleanups].map((cb) => cb()));
 
+    logger.log(' 🧹 Cleanup complete.');
+
     clearTimeout(timeout);
-    logger.log(' 🧹 Cleanup complete. Exiting...');
-    process.exit(exitCode);
+    const exitCode = {
+      SIGINT: 130,
+      SIGTERM: 143,
+      NONE: 0,
+    }[signal || 'NONE'];
+
+    if (exitCode !== 0) {
+      logger.warn(` 🔪 Exiting with non-zero exit code ${exitCode}`);
+      process.exit(exitCode);
+    }
   };
 
   process.once('SIGINT', () => shutdown('SIGINT'));
