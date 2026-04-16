@@ -3,7 +3,7 @@ import type { AbstractGuardDecision } from './decisions/AbstractGuardDecision.js
 import { GuardDecisionQuarantine } from './decisions/GuardDecisionQuarantine.js';
 import { GuardDecisionAdvance } from './decisions/GuardDecisionAdvance.js';
 
-export class NotEmptyGuard extends AbstractGuard {
+export class NotEmptyGuard extends AbstractGuard<string> {
   constructor(private readonly minLength: number = 100) {
     super();
   }

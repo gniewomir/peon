@@ -3,75 +3,22 @@ import { stripRoot } from '../../../lib/root.js';
 import type { AbstractGuard } from './guards/AbstractGuard.js';
 import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
 import { atomicWrite } from '../../../lib/atomicWrite.js';
-import type { Logger } from '../../../lib/logger.js';
 import type { AbstractGuardDecision } from './guards/decisions/AbstractGuardDecision.js';
 import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js';
-import type { Transformation } from './AbstractTransformation.js';
 import assert from 'node:assert';
-import { type Artifact, artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
+import { type Artifact, artifactFilename } from '../../../lib/artifacts.js';
 import { readFile } from 'fs/promises';
 import { statsAddToCounter } from '../../../lib/stats.js';
 import { isStrategySlug } from '../../../lib/types.js';
+import { PipelineStage } from './PipelineStage.js';
+import type { JobDirArtifacts } from './types.js';
 
-export type JobDirArtifacts = {
-  /**
-   * File names present in the job directory (e.g. "raw.job.json").
-   */
-  present: Set<KnownArtifactsEnum>;
-  /**
-   * Best-effort mtime (ms) for present files.
-   */
-  mtimeMs: Map<KnownArtifactsEnum, number>;
-};
-
-export abstract class AbstractStage {
-  protected logger;
-  protected stagingDir;
-  protected loadDir;
-  protected trashDir;
-  private readonly transformations = new Map<string, Transformation>();
-
-  constructor({
-    logger,
-    stagingDir,
-    trashDir,
-    loadDir,
-    transformations,
-  }: {
-    logger: Logger;
-    stagingDir: string;
-    trashDir: string;
-    loadDir: string;
-    transformations: Transformation[];
-  }) {
-    for (const transformation of transformations) {
-      this.transformations.set(transformation.strategy(), transformation);
-    }
-    this.logger = logger.withSuffix(this.name());
-    this.stagingDir = stagingDir;
-    this.loadDir = loadDir;
-    this.trashDir = trashDir;
-  }
-
-  public name(): string {
-    return artifactFilename(this.outputArtifact()).replaceAll('.', '-');
-  }
-
-  public isApplicable(artifacts: JobDirArtifacts) {
-    const hasOutput = artifacts.present.has(this.outputArtifact());
-    const outputMtimeMs = hasOutput ? artifacts.mtimeMs.get(this.outputArtifact()) : undefined;
-
-    for (const artifact of this.inputArtifacts()) {
-      if (!artifacts.present.has(artifact)) return false;
-      if (outputMtimeMs !== undefined) {
-        const inputMtimeMs = artifacts.mtimeMs.get(artifact);
-        if (inputMtimeMs !== undefined && inputMtimeMs > outputMtimeMs) return true;
-      }
-    }
-
-    // Output missing => applicable. Output present => applicable only if any input newer (checked above).
-    return !hasOutput;
-  }
+/**
+ * A transform stage whose in-memory value is `T` (defaults to `string` for text pipelines).
+ * Persistence is {@link artifactPayload}; override when `T` is not what should be written as-is.
+ */
+export abstract class AbstractStage<T = string> extends PipelineStage {
+  protected abstract guards(): AbstractGuard<T>[];
 
   public async run(jobDir: string, artifacts: JobDirArtifacts): Promise<AbstractGuardDecision> {
     try {
@@ -84,10 +31,11 @@ export abstract class AbstractStage {
       statsAddToCounter('stage');
       statsAddToCounter(`stage_${this.name().replaceAll('-', '_')}`);
 
-      const result = await this.transform(jobDir);
+      const raw = await this.transformFromInputs(jobDir);
+      const result = this.toStageResult(raw);
       const saved = await atomicWrite(
         path.join(jobDir, artifactFilename(this.outputArtifact())),
-        result,
+        this.artifactPayload(result),
         this.logger,
       );
       if (saved) {
@@ -107,13 +55,10 @@ export abstract class AbstractStage {
     }
   }
 
-  public abstract inputArtifacts(): Artifact[];
-
-  public abstract outputArtifact(): Artifact;
-
-  protected abstract guards(): AbstractGuard[];
-
-  protected async transform(jobDir: string): Promise<string> {
+  /**
+   * Raw string output from strategy-specific {@link Transformation} implementations.
+   */
+  protected async transformFromInputs(jobDir: string): Promise<string> {
     const source = basename(jobDir).split('-').shift();
     assert(source && isStrategySlug(source), 'unrecognized offer source');
 
@@ -130,5 +75,20 @@ export abstract class AbstractStage {
       `no catch-all or source specific transformation for source "${source}" at stage ${this.name()}`,
     );
     return transformation.transform(input);
+  }
+
+  /**
+   * Map cleaner output to the value passed to guards and (by default) to disk via {@link artifactPayload}.
+   * Override when `T` is not `string` (e.g. parse JSON and validate with a schema).
+   */
+  protected toStageResult(raw: string): T {
+    return raw as unknown as T;
+  }
+
+  /**
+   * Value passed to {@link atomicWrite}. Default passes through; override for buffers or custom encoding.
+   */
+  protected artifactPayload(value: T): unknown {
+    return value;
   }
 }

@@ -4,8 +4,10 @@ import type { Transformation } from '../AbstractTransformation.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { CombineCleanToCombined } from './CombineCleanToCombined.js';
 import { CombinedSchemaLoadGuard } from './CombinedSchemaLoadGuard.js';
+import type { TCombinedSchema } from '../../../../schema/schema.combined.js';
+import { combined } from '../../../../schema/schema.combined.js';
 
-export class CleanCombineStage extends AbstractStage {
+export class CleanCombineStage extends AbstractStage<TCombinedSchema> {
   public static transformations(): Transformation[] {
     return [new CombineCleanToCombined()];
   }
@@ -23,7 +25,11 @@ export class CleanCombineStage extends AbstractStage {
     return KnownArtifactsEnum.CLEAN_COMBINE_JSON;
   }
 
-  protected guards(): AbstractGuard[] {
+  protected toStageResult(raw: string): TCombinedSchema {
+    return combined.parse(JSON.parse(raw));
+  }
+
+  protected guards(): AbstractGuard<TCombinedSchema>[] {
     // If the structured (non-meta) part is good enough, we're done: load this job.
     // Otherwise, allow downstream enrichment (LLM) stages to run.
     return [new CombinedSchemaLoadGuard(0.4)];

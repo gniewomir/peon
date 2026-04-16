@@ -3,10 +3,10 @@ import type { AbstractGuardDecision } from '../guards/decisions/AbstractGuardDec
 import { GuardDecisionLoad } from '../guards/decisions/GuardDecisionLoad.js';
 import { GuardDecisionQuarantine } from '../guards/decisions/GuardDecisionQuarantine.js';
 import { deepVisitor } from '../../lib/deepVisitor.js';
-import { combined } from '../../../../schema/schema.combined.js';
+import type { TCombinedSchema } from '../../../../schema/schema.combined.js';
 import { nullSchema } from '../../../../schema/schema.js';
 
-export class CombinedSchemaLoadGuard extends AbstractGuard {
+export class CombinedSchemaLoadGuard extends AbstractGuard<TCombinedSchema> {
   constructor(private readonly threshold: number) {
     super();
   }
@@ -15,10 +15,9 @@ export class CombinedSchemaLoadGuard extends AbstractGuard {
     return 'combined-schema-load-guard';
   }
 
-  async guard(result: string): Promise<AbstractGuardDecision> {
+  async guard(result: TCombinedSchema): Promise<AbstractGuardDecision> {
     try {
-      const parsed = combined.parse(JSON.parse(result));
-      const quality = this.estimateQuality(this.pickSchemaPart(parsed));
+      const quality = this.estimateQuality(this.pickSchemaPart(result));
       if (quality >= this.threshold) {
         return new GuardDecisionLoad(`combined schema quality >= ${this.threshold} (${quality})`);
       }

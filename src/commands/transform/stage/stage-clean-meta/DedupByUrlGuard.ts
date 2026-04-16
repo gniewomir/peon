@@ -1,12 +1,11 @@
 import { AbstractGuard } from '../guards/AbstractGuard.js';
 import type { AbstractGuardDecision } from '../guards/decisions/AbstractGuardDecision.js';
 import { GuardDecisionAdvance } from '../guards/decisions/GuardDecisionAdvance.js';
-import { metaSchema } from '../../../../schema/schema.meta.js';
+import type { TMetaSchema } from '../../../../schema/schema.meta.js';
 import { GuardDecisionTrash } from '../guards/decisions/GuardDecisionTrash.js';
 
-export class DedupByUrlGuard extends AbstractGuard {
-  async guard(result: string): Promise<AbstractGuardDecision> {
-    const meta = metaSchema.parse(JSON.parse(result));
+export class DedupByUrlGuard extends AbstractGuard<TMetaSchema> {
+  async guard(meta: TMetaSchema): Promise<AbstractGuardDecision> {
     if (!meta.offer.canonicalUrl || meta.offer.alternateUrls.length === 0) {
       return new GuardDecisionAdvance('No data to dedup by url');
     }

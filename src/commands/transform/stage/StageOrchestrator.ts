@@ -1,4 +1,3 @@
-import type { AbstractStage, JobDirArtifacts } from './AbstractStage.js';
 import path from 'node:path';
 import type { Logger } from '../../../lib/logger.js';
 import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
@@ -24,9 +23,11 @@ import { atomicWrite } from '../../../lib/atomicWrite.js';
 import { readdir, stat } from 'node:fs/promises';
 import { HashMap } from '../lib/HashMap.js';
 import { LRUHashMap } from '../lib/LRUHashMap.js';
+import { PipelineStage } from './PipelineStage.js';
+import type { JobDirArtifacts } from './types.js';
 
 export class StageOrchestrator {
-  private readonly stages: Map<string, AbstractStage> = new Map();
+  private readonly stages: Map<string, PipelineStage> = new Map();
   private readonly inFlight = new HashMap<Promise<void>>();
   private readonly jobDirArtifactsCache = new LRUHashMap<JobDirArtifacts>(25_000);
   private readonly quarantineDir;
@@ -55,7 +56,7 @@ export class StageOrchestrator {
       minConcurrentStages: number;
       rssMemorySoftCap: number;
     };
-    stages: AbstractStage[];
+    stages: PipelineStage[];
   }) {
     this.logger = logger.withSuffix('orchestrator');
 
@@ -153,7 +154,7 @@ export class StageOrchestrator {
   }
 
   private async executeSingleApplicableStage(
-    stage: AbstractStage,
+    stage: PipelineStage,
     jobDir: string,
     artifactsIndex: JobDirArtifacts,
   ) {

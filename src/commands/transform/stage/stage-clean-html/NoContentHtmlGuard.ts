@@ -4,7 +4,7 @@ import { AbstractGuard } from '../guards/AbstractGuard.js';
 import { GuardDecisionRemove } from '../guards/decisions/GuardDecisionRemove.js';
 import { GuardDecisionQuarantine } from '../guards/decisions/GuardDecisionQuarantine.js';
 
-export class NoContentHtmlGuard extends AbstractGuard {
+export class NoContentHtmlGuard extends AbstractGuard<string> {
   constructor(private readonly minLength: number = 100) {
     super();
   }

@@ -3,17 +3,17 @@ import type { AbstractGuardDecision } from '../guards/decisions/AbstractGuardDec
 import { GuardDecisionQuarantine } from '../guards/decisions/GuardDecisionQuarantine.js';
 import { GuardDecisionAdvance } from '../guards/decisions/GuardDecisionAdvance.js';
 import { deepVisitor } from '../../lib/deepVisitor.js';
-import { llmSchema } from '../../../../schema/schema.llm.js';
+import type { TLlmSchema } from '../../../../schema/schema.llm.js';
 
-export class LlmSchemaQualityGuard extends AbstractGuard {
+export class LlmSchemaQualityGuard extends AbstractGuard<TLlmSchema> {
   constructor(private readonly threshold: number) {
     super();
   }
 
-  async guard(result: string): Promise<AbstractGuardDecision> {
+  async guard(result: TLlmSchema): Promise<AbstractGuardDecision> {
     try {
-      const quality = this.qualityEstimator(llmSchema.parse(JSON.parse(result)).output);
-      if (quality > 0.5) {
+      const quality = this.qualityEstimator(result.output);
+      if (quality >= this.threshold) {
         return new GuardDecisionAdvance(`quality above ${this.threshold}`);
       } else {
         return new GuardDecisionQuarantine(`quality bellow ${this.threshold}, got ${quality}`);

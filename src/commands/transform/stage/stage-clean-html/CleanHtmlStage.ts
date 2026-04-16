@@ -20,7 +20,7 @@ export class CleanHtmlStage extends AbstractStage {
     return KnownArtifactsEnum.CLEAN_JOB_HTML;
   }
 
-  protected guards(): AbstractGuard[] {
+  protected guards(): AbstractGuard<string>[] {
     return [new NoContentHtmlGuard(100)];
   }
 }

@@ -2,13 +2,12 @@ import { AbstractGuard } from '../guards/AbstractGuard.js';
 import type { AbstractGuardDecision } from '../guards/decisions/AbstractGuardDecision.js';
 import { GuardDecisionAdvance } from '../guards/decisions/GuardDecisionAdvance.js';
 import { GuardDecisionQuarantine } from '../guards/decisions/GuardDecisionQuarantine.js';
-import { metaSchema } from '../../../../schema/schema.meta.js';
+import type { TMetaSchema } from '../../../../schema/schema.meta.js';
 import { GuardDecisionTrash } from '../guards/decisions/GuardDecisionTrash.js';
 
-export class ExpirationGuard extends AbstractGuard {
-  async guard(result: string): Promise<AbstractGuardDecision> {
+export class ExpirationGuard extends AbstractGuard<TMetaSchema> {
+  async guard(meta: TMetaSchema): Promise<AbstractGuardDecision> {
     try {
-      const meta = metaSchema.parse(JSON.parse(result));
       const expiration = meta.offer.expiresAt;
       if (expiration === null) {
         return new GuardDecisionQuarantine('no expiration date in clean meta!');
