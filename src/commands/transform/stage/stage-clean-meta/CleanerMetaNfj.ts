@@ -7,12 +7,12 @@ import { JsonNavigator } from '../../lib/JsonNavigator.js';
 import assert from 'node:assert';
 import { normalizeDMYDateWtPeriodSep } from '../lib/normalizeDMYDateWtPeriodSep.js';
 
-export class CleanerMetaNfj extends AbstractTransformation {
+export class CleanerMetaNfj extends AbstractTransformation<TMetaSchema> {
   strategy(): StrategySelector {
     return 'nfj';
   }
 
-  async transform(input: Map<Artifact, string>): Promise<string> {
+  async transform(input: Map<Artifact, string>): Promise<TMetaSchema> {
     const meta = this.objectFromSchema<TMetaSchema>(
       metaSchema,
       KnownArtifactsEnum.RAW_JOB_META,
@@ -21,22 +21,17 @@ export class CleanerMetaNfj extends AbstractTransformation {
     const json = this.objectFromJson(KnownArtifactsEnum.RAW_JOB_JSON, input);
     const nav = new JsonNavigator(json);
 
-    return this.toString(
-      merge(metaSchema.parse(meta), {
-        offer: {
-          publishedAt: nav.getPath('posted').toDateFromTimestamp().toISOString(),
-          expiresAt: this.findExpiration(input.get(KnownArtifactsEnum.CLEAN_MARKDOWN)),
-          updatedAt: nav.getOptionalPath('renewed')?.toDateFromTimestamp().toISOString() ?? null,
-          canonicalUrl:
-            this.slugsToUrls(meta.offer.url || '', [this.establishCanonicalUrlSlug(nav)]).pop() ||
-            null,
-          alternateUrls: this.slugsToUrls(
-            meta.offer.url || '',
-            this.establishAlternateUrlSlugs(nav),
-          ),
-        },
-      } satisfies DeepPartial<TMetaSchema>),
-    );
+    return merge(metaSchema.parse(meta), {
+      offer: {
+        publishedAt: nav.getPath('posted').toDateFromTimestamp().toISOString(),
+        expiresAt: this.findExpiration(input.get(KnownArtifactsEnum.CLEAN_MARKDOWN)),
+        updatedAt: nav.getOptionalPath('renewed')?.toDateFromTimestamp().toISOString() ?? null,
+        canonicalUrl:
+          this.slugsToUrls(meta.offer.url || '', [this.establishCanonicalUrlSlug(nav)]).pop() ||
+          null,
+        alternateUrls: this.slugsToUrls(meta.offer.url || '', this.establishAlternateUrlSlugs(nav)),
+      },
+    } satisfies DeepPartial<TMetaSchema>) as TMetaSchema;
   }
 
   private findExpiration(markdown: string | undefined): string | null {

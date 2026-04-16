@@ -7,12 +7,12 @@ import { AbstractTransformation } from '../AbstractTransformation.js';
 import { type Artifact, KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import type { StrategySelector } from '../../../../lib/types.js';
 
-export class CleanerNfj extends AbstractTransformation {
+export class CleanerNfj extends AbstractTransformation<TSchema> {
   strategy(): StrategySelector {
     return 'nfj';
   }
 
-  async transform(input: Map<Artifact, string>): Promise<string> {
+  async transform(input: Map<Artifact, string>): Promise<TSchema> {
     const nav = new JsonNavigator(this.objectFromJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
 
     const salaryCoE: DeepPartial<TSchema['salaryCoE']> = {};
@@ -35,36 +35,34 @@ export class CleanerNfj extends AbstractTransformation {
       }
     }
 
-    return this.toString(
-      merge(nullSchema(), {
-        employer: {
-          name: nav.getPath('name').toString(),
-          type: null,
-          url: null,
-          logo: nav.getOptionalPath('logo.original')?.isNull()
-            ? null
-            : `https://static.nofluffjobs.com/${nav.getPath('logo.original').toString()}`,
-        },
-        role: {
-          title: nav.getPath('title').toString(),
-          seniority: normalizeSeniority(this.normalizeSeniority(nav)),
-          scope: null,
-          specialization: null,
-        },
-        workplace: {
-          isRemote: this.normalizeIsRemote(nav),
-          isHybrid: null,
-          isOnsite: null,
-          cities: this.normalizeLocations(nav),
-        },
-        contract: {
-          type: contractTypes,
-        },
-        salaryCoE,
-        salaryB2B,
-        reqTechnology: this.normalizeRequiredSkills(nav),
-      } satisfies DeepPartial<TSchema>),
-    );
+    return merge(nullSchema(), {
+      employer: {
+        name: nav.getPath('name').toString(),
+        type: null,
+        url: null,
+        logo: nav.getOptionalPath('logo.original')?.isNull()
+          ? null
+          : `https://static.nofluffjobs.com/${nav.getPath('logo.original').toString()}`,
+      },
+      role: {
+        title: nav.getPath('title').toString(),
+        seniority: normalizeSeniority(this.normalizeSeniority(nav)),
+        scope: null,
+        specialization: null,
+      },
+      workplace: {
+        isRemote: this.normalizeIsRemote(nav),
+        isHybrid: null,
+        isOnsite: null,
+        cities: this.normalizeLocations(nav),
+      },
+      contract: {
+        type: contractTypes,
+      },
+      salaryCoE,
+      salaryB2B,
+      reqTechnology: this.normalizeRequiredSkills(nav),
+    } satisfies DeepPartial<TSchema>) as TSchema;
   }
 
   private normalizeLocations(nav: JsonNavigator): string[] {

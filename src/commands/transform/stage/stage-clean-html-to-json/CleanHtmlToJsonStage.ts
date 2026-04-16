@@ -5,9 +5,10 @@ import type { Transformation } from '../AbstractTransformation.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import type { THtmlJsonSchema } from '../../../../schema/schema.html-json.js';
 import { htmlJsonSchema } from '../../../../schema/schema.html-json.js';
+import { SchemaGuard } from '../guards/SchemaGuard.js';
 
 export class CleanHtmlToJsonStage extends AbstractStage<THtmlJsonSchema> {
-  public static transformations(): Transformation[] {
+  public static transformations(): Transformation<THtmlJsonSchema>[] {
     return [new HtmlToJsonExtractor()];
   }
 
@@ -19,11 +20,7 @@ export class CleanHtmlToJsonStage extends AbstractStage<THtmlJsonSchema> {
     return KnownArtifactsEnum.RAW_JOB_HTML_JSON;
   }
 
-  protected toStageResult(raw: string): THtmlJsonSchema {
-    return htmlJsonSchema.parse(JSON.parse(raw));
-  }
-
   protected guards(): AbstractGuard<THtmlJsonSchema>[] {
-    return [];
+    return [new SchemaGuard(htmlJsonSchema)];
   }
 }

@@ -31,8 +31,7 @@ export abstract class AbstractStage<T = string> extends PipelineStage {
       statsAddToCounter('stage');
       statsAddToCounter(`stage_${this.name().replaceAll('-', '_')}`);
 
-      const raw = await this.transformFromInputs(jobDir);
-      const result = this.toStageResult(raw);
+      const result = await this.transformFromInputs(jobDir);
       const saved = await atomicWrite(
         path.join(jobDir, artifactFilename(this.outputArtifact())),
         this.artifactPayload(result),
@@ -55,10 +54,8 @@ export abstract class AbstractStage<T = string> extends PipelineStage {
     }
   }
 
-  /**
-   * Raw string output from strategy-specific {@link Transformation} implementations.
-   */
-  protected async transformFromInputs(jobDir: string): Promise<string> {
+  /** Resolved strategy transformation output for this job directory. */
+  protected async transformFromInputs(jobDir: string): Promise<T> {
     const source = basename(jobDir).split('-').shift();
     assert(source && isStrategySlug(source), 'unrecognized offer source');
 
@@ -68,21 +65,15 @@ export abstract class AbstractStage<T = string> extends PipelineStage {
     }
     const transformation = this.transformations.get(source);
     if (!transformation && this.transformations.has('all')) {
-      return this.transformations.get('all')?.transform(input) || '';
+      const catchAll = this.transformations.get('all');
+      assert(catchAll, 'catch-all transformation registered');
+      return (await catchAll.transform(input)) as T;
     }
     assert(
       transformation,
       `no catch-all or source specific transformation for source "${source}" at stage ${this.name()}`,
     );
-    return transformation.transform(input);
-  }
-
-  /**
-   * Map cleaner output to the value passed to guards and (by default) to disk via {@link artifactPayload}.
-   * Override when `T` is not `string` (e.g. parse JSON and validate with a schema).
-   */
-  protected toStageResult(raw: string): T {
-    return raw as unknown as T;
+    return (await transformation.transform(input)) as T;
   }
 
   /**

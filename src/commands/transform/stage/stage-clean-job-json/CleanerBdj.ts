@@ -7,12 +7,12 @@ import { AbstractTransformation } from '../AbstractTransformation.js';
 import type { StrategySelector } from '../../../../lib/types.js';
 import { type Artifact, KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 
-export class CleanerBdj extends AbstractTransformation {
+export class CleanerBdj extends AbstractTransformation<TSchema> {
   strategy(): StrategySelector {
     return 'bdj';
   }
 
-  async transform(input: Map<Artifact, string>): Promise<string> {
+  async transform(input: Map<Artifact, string>): Promise<TSchema> {
     const nav = new JsonNavigator(this.objectFromJson(KnownArtifactsEnum.RAW_JOB_JSON, input));
 
     let scope: string | null = nav
@@ -30,42 +30,40 @@ export class CleanerBdj extends AbstractTransformation {
       scope = 'project';
     }
 
-    return this.toString(
-      merge(nullSchema(), {
-        employer: {
-          name: nav.getPath('company.name').toString(),
-          logo: nav.getPath('company.logo.url').toString(),
-        },
-        role: {
-          title: nav.getPath('position').toString(),
-          seniority: normalizeSeniority(nav.getPath('experienceLevel').toString()),
-          scope,
-        },
-        workplace: {
-          isRemote: nav.getPath('remote').toBool(),
-          cities: [nav.getPath('city').toString()].filter(Boolean),
-        },
-        contract: {
-          type: normalizeStringArray([
-            nav.getPath('contractB2b').toOptionalBool() ? 'b2b/contractor' : null,
-            nav.getPath('contractEmployment').toOptionalBool() ? 'employment' : null,
-            nav.getPath('contractOther').toOptionalBool() ? 'other' : null,
-          ]),
-        },
-        salaryCoE: nav.getPath('contractB2b').toOptionalBool()
-          ? this.normalizeSalary(nav)
-          : nullSchema().salaryCoE,
-        salaryB2B: nav.getPath('contractEmployment').toOptionalBool()
-          ? this.normalizeSalary(nav)
-          : nullSchema().salaryB2B,
-        reqTechnology: normalizeStringArray(
-          nav
-            .getOptionalPath('technologyTags')
-            ?.toOptionalArray()
-            .map((t) => t.toString()) || [],
-        ),
-      } satisfies DeepPartial<TSchema>),
-    );
+    return merge(nullSchema(), {
+      employer: {
+        name: nav.getPath('company.name').toString(),
+        logo: nav.getPath('company.logo.url').toString(),
+      },
+      role: {
+        title: nav.getPath('position').toString(),
+        seniority: normalizeSeniority(nav.getPath('experienceLevel').toString()),
+        scope,
+      },
+      workplace: {
+        isRemote: nav.getPath('remote').toBool(),
+        cities: [nav.getPath('city').toString()].filter(Boolean),
+      },
+      contract: {
+        type: normalizeStringArray([
+          nav.getPath('contractB2b').toOptionalBool() ? 'b2b/contractor' : null,
+          nav.getPath('contractEmployment').toOptionalBool() ? 'employment' : null,
+          nav.getPath('contractOther').toOptionalBool() ? 'other' : null,
+        ]),
+      },
+      salaryCoE: nav.getPath('contractB2b').toOptionalBool()
+        ? this.normalizeSalary(nav)
+        : nullSchema().salaryCoE,
+      salaryB2B: nav.getPath('contractEmployment').toOptionalBool()
+        ? this.normalizeSalary(nav)
+        : nullSchema().salaryB2B,
+      reqTechnology: normalizeStringArray(
+        nav
+          .getOptionalPath('technologyTags')
+          ?.toOptionalArray()
+          .map((t) => t.toString()) || [],
+      ),
+    } satisfies DeepPartial<TSchema>) as TSchema;
   }
 
   private normalizeSalary(nav: JsonNavigator): TSchema['salaryCoE'] {

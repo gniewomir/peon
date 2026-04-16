@@ -1,6 +1,7 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { AbstractGuard } from '../guards/AbstractGuard.js';
 import { NotEmptySerializedGuard } from '../guards/NotEmptySerializedGuard.js';
+import { SchemaGuard } from '../guards/SchemaGuard.js';
 import { CleanerMetaBdj } from './CleanerMetaBdj.js';
 import { CleanerMetaJji } from './CleanerMetaJji.js';
 import { CleanerMetaNfj } from './CleanerMetaNfj.js';
@@ -12,7 +13,7 @@ import type { TMetaSchema } from '../../../../schema/schema.meta.js';
 import { metaSchema } from '../../../../schema/schema.meta.js';
 
 export class CleanMetaStage extends AbstractStage<TMetaSchema> {
-  public static transformations(): Transformation[] {
+  public static transformations(): Transformation<TMetaSchema>[] {
     return [new CleanerMetaBdj(), new CleanerMetaJji(), new CleanerMetaNfj()];
   }
 
@@ -30,11 +31,12 @@ export class CleanMetaStage extends AbstractStage<TMetaSchema> {
     return KnownArtifactsEnum.CLEAN_JOB_META_JSON;
   }
 
-  protected toStageResult(raw: string): TMetaSchema {
-    return metaSchema.parse(JSON.parse(raw));
-  }
-
   protected guards(): AbstractGuard<TMetaSchema>[] {
-    return [new NotEmptySerializedGuard(100), new DedupByUrlGuard(), new ExpirationGuard()];
+    return [
+      new NotEmptySerializedGuard(100),
+      new SchemaGuard(metaSchema),
+      new DedupByUrlGuard(),
+      new ExpirationGuard(),
+    ];
   }
 }

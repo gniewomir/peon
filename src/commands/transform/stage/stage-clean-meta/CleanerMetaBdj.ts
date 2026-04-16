@@ -7,12 +7,12 @@ import { normalizeDMYDateWtPeriodSep } from '../lib/normalizeDMYDateWtPeriodSep.
 import { JsonNavigator } from '../../lib/JsonNavigator.js';
 import type { THtmlJsonSchema } from '../../../../schema/schema.html-json.js';
 
-export class CleanerMetaBdj extends AbstractTransformation {
+export class CleanerMetaBdj extends AbstractTransformation<TMetaSchema> {
   strategy(): StrategySelector {
     return 'bdj';
   }
 
-  async transform(input: Map<Artifact, string>): Promise<string> {
+  async transform(input: Map<Artifact, string>): Promise<TMetaSchema> {
     const meta = this.objectFromSchema<TMetaSchema>(
       metaSchema,
       KnownArtifactsEnum.RAW_JOB_META,
@@ -27,23 +27,21 @@ export class CleanerMetaBdj extends AbstractTransformation {
       new Date().getTime() + 1000 * 60 * 60 * 24 * 31,
     ).toISOString();
 
-    return this.toString(
-      merge(meta, {
-        offer: {
-          publishedAt:
-            nav
-              .getOptionalPath('application/json.0.props.pageProps.data.job.publishedAt')
-              ?.toString() || null,
-          expiresAt:
-            this.findExpiration(input) ||
-            nav.getOptionalPath('application/json.0.props.pageProps.data.job.endsAt')?.toString() ||
-            fallbackExpiration,
-          updatedAt: null,
-          canonicalUrl: meta.offer.url,
-          alternateUrls: [],
-        },
-      } satisfies DeepPartial<TMetaSchema>),
-    );
+    return merge(meta, {
+      offer: {
+        publishedAt:
+          nav
+            .getOptionalPath('application/json.0.props.pageProps.data.job.publishedAt')
+            ?.toString() || null,
+        expiresAt:
+          this.findExpiration(input) ||
+          nav.getOptionalPath('application/json.0.props.pageProps.data.job.endsAt')?.toString() ||
+          fallbackExpiration,
+        updatedAt: null,
+        canonicalUrl: meta.offer.url,
+        alternateUrls: [],
+      },
+    } satisfies DeepPartial<TMetaSchema>) as TMetaSchema;
   }
 
   private findExpiration(input: Map<Artifact, string>): string | null {

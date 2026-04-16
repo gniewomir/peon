@@ -5,10 +5,9 @@ import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { CombineCleanToCombined } from './CombineCleanToCombined.js';
 import { CombinedSchemaLoadGuard } from './CombinedSchemaLoadGuard.js';
 import type { TCombinedSchema } from '../../../../schema/schema.combined.js';
-import { combined } from '../../../../schema/schema.combined.js';
 
 export class CleanCombineStage extends AbstractStage<TCombinedSchema> {
-  public static transformations(): Transformation[] {
+  public static transformations(): Transformation<TCombinedSchema>[] {
     return [new CombineCleanToCombined()];
   }
 
@@ -23,10 +22,6 @@ export class CleanCombineStage extends AbstractStage<TCombinedSchema> {
 
   public outputArtifact() {
     return KnownArtifactsEnum.CLEAN_COMBINE_JSON;
-  }
-
-  protected toStageResult(raw: string): TCombinedSchema {
-    return combined.parse(JSON.parse(raw));
   }
 
   protected guards(): AbstractGuard<TCombinedSchema>[] {

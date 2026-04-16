@@ -10,7 +10,7 @@ import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { schema, type TSchema } from '../../../../schema/schema.js';
 
 export class CleanJsonStage extends AbstractStage<TSchema> {
-  public static transformations(): Transformation[] {
+  public static transformations(): Transformation<TSchema>[] {
     return [new CleanerJji(), new CleanerNfj(), new CleanerBdj()];
   }
 
@@ -20,10 +20,6 @@ export class CleanJsonStage extends AbstractStage<TSchema> {
 
   public outputArtifact() {
     return KnownArtifactsEnum.CLEAN_JOB_JSON;
-  }
-
-  protected toStageResult(raw: string): TSchema {
-    return schema.parse(JSON.parse(raw));
   }
 
   protected guards(): AbstractGuard<TSchema>[] {

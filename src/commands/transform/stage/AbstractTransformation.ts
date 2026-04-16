@@ -4,14 +4,14 @@ import * as cheerio from 'cheerio';
 import assert from 'node:assert';
 import type { StrategySelector } from '../../../lib/types.js';
 
-export interface Transformation {
+export interface Transformation<TOut = string> {
   strategy(): StrategySelector;
-  transform(input: Map<Artifact, string>): Promise<string>;
+  transform(input: Map<Artifact, string>): Promise<TOut>;
 }
 
-export abstract class AbstractTransformation implements Transformation {
+export abstract class AbstractTransformation<TOut = string> implements Transformation<TOut> {
   abstract strategy(): StrategySelector;
-  abstract transform(input: Map<Artifact, string>): Promise<string>;
+  abstract transform(input: Map<Artifact, string>): Promise<TOut>;
 
   protected objectFromJson<T = Record<string, unknown>>(
     artifact: Artifact,
@@ -71,9 +71,5 @@ export abstract class AbstractTransformation implements Transformation {
     });
 
     return $;
-  }
-
-  protected toString(input: object) {
-    return JSON.stringify(input, null, 2);
   }
 }

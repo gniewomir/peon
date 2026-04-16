@@ -14,7 +14,7 @@ export abstract class PipelineStage {
   protected stagingDir;
   protected loadDir;
   protected trashDir;
-  protected readonly transformations = new Map<string, Transformation>();
+  protected readonly transformations = new Map<string, Transformation<unknown>>();
 
   constructor({
     logger,
@@ -27,7 +27,7 @@ export abstract class PipelineStage {
     stagingDir: string;
     trashDir: string;
     loadDir: string;
-    transformations: Transformation[];
+    transformations: Transformation<unknown>[];
   }) {
     for (const transformation of transformations) {
       this.transformations.set(transformation.strategy(), transformation);

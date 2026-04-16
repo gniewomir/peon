@@ -11,6 +11,7 @@ import { stripRoot } from '../../../../lib/root.js';
 import { LlmSchemaQualityGuard } from './LlmSchemaQualityGuard.js';
 import type { TLlmSchema } from '../../../../schema/schema.llm.js';
 import { llmSchema } from '../../../../schema/schema.llm.js';
+import { SchemaGuard } from '../guards/SchemaGuard.js';
 
 export class EnrichLlmStage extends AbstractStage<TLlmSchema> {
   private readonly concurrencyLimiter;
@@ -26,14 +27,14 @@ export class EnrichLlmStage extends AbstractStage<TLlmSchema> {
     stagingDir: string;
     trashDir: string;
     loadDir: string;
-    transformations: Transformation[];
+    transformations: Transformation<TLlmSchema>[];
   }) {
     super(args);
     this.concurrencyLimiter = createConcurrencyLimiter(1);
     this.minimumExecutionTimeLimiter = createMinimumExecutionTimeLimiter(1000 * 60);
   }
 
-  public static transformations(): Transformation[] {
+  public static transformations(): Transformation<TLlmSchema>[] {
     return [new StructureUnstructured()];
   }
 
@@ -49,15 +50,15 @@ export class EnrichLlmStage extends AbstractStage<TLlmSchema> {
     return KnownArtifactsEnum.ENRICH_LLM_JSON;
   }
 
-  protected toStageResult(raw: string): TLlmSchema {
-    return llmSchema.parse(JSON.parse(raw));
-  }
-
   protected guards(): AbstractGuard<TLlmSchema>[] {
-    return [new NotEmptySerializedGuard(100), new LlmSchemaQualityGuard(0.5)];
+    return [
+      new NotEmptySerializedGuard(100),
+      new SchemaGuard(llmSchema),
+      new LlmSchemaQualityGuard(0.5),
+    ];
   }
 
-  protected async transformFromInputs(jobDir: string): Promise<string> {
+  protected async transformFromInputs(jobDir: string): Promise<TLlmSchema> {
     return this.concurrencyLimiter.run(() =>
       this.minimumExecutionTimeLimiter(async () => {
         const start = Date.now();
