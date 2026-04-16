@@ -1,4 +1,5 @@
 import type { Logger } from './logger.js';
+import { statsAls } from './stats.js';
 
 export interface ShutdownContext {
   registerCleanup(cb: () => Promise<void>): void;
@@ -13,11 +14,16 @@ const SHUTDOWN_TIMEOUT_MS = 30_000;
 export function shutdownContext(logger: Logger): ShutdownContext {
   const cleanups = new Set<() => Promise<void>>();
   const pids = new Set<number>();
-  let shuttingDown = false;
+  const storeReference = statsAls.getStore();
 
   const shutdown = async (signal?: 'SIGINT' | 'SIGTERM'): Promise<void> => {
-    if (shuttingDown) return;
-    shuttingDown = true;
+    /**
+     * We want the shutdown callbacks to have access to the stats ALS store,
+     * if shutdown context was created inside stats context
+     */
+    if (storeReference) {
+      statsAls.enterWith(storeReference);
+    }
 
     if (signal) {
       logger.log(` 🔪 Received signal ${signal}`);
@@ -32,16 +38,25 @@ export function shutdownContext(logger: Logger): ShutdownContext {
       process.exit(exitCode);
     }, SHUTDOWN_TIMEOUT_MS);
 
-    await Promise.allSettled([...cleanups].map((cb) => cb()));
+    const results = await Promise.allSettled([...cleanups].map((cb) => cb()));
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        logger.log(` 🧹 Cleanup callback #${i} succeded`);
+      }
+      if (r.status === 'rejected') {
+        logger.error(` 🧹 Cleanup callback #${i} failed`, { error: r.reason });
+      }
+    });
+
+    clearTimeout(timeout);
 
     logger.log(' 🧹 Cleanup complete.');
 
-    clearTimeout(timeout);
     const exitCode = {
       SIGINT: 130,
       SIGTERM: 143,
-      NONE: 0,
-    }[signal || 'NONE'];
+      OK: 0,
+    }[signal || 'OK'];
 
     if (exitCode !== 0) {
       logger.warn(` 🔪 Exiting with non-zero exit code ${exitCode}`);

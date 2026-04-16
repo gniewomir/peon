@@ -91,7 +91,7 @@ export abstract class AbstractStage {
         this.logger,
       );
       if (saved) {
-        this.logger.log(
+        this.logger.debug(
           `Artifact created ${stripRoot(jobDir)}/${artifactFilename(this.outputArtifact())}`,
         );
       }

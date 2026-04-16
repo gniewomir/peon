@@ -31,7 +31,7 @@ type StatsStore = {
   counters: Record<string, number>;
 };
 
-const statsAls = new AsyncLocalStorage<StatsStore>();
+export const statsAls = new AsyncLocalStorage<StatsStore>();
 
 function emptyStore(): StatsStore {
   return { timestamp: new Date().toISOString(), prefix: '', values: {}, counters: {} };
@@ -66,13 +66,16 @@ export function stats(): StatsSnapshot {
   return snapshotFromStore(requireStore());
 }
 
-export function statsGetValue(key: string): unknown {
+export function statsGetValue<T = unknown>(key: string, defaultValue?: T): T {
   const store = requireStore();
   const k = scopedKey(key, store);
-  if (!(k in store.values)) {
+  if (!(k in store.values) && defaultValue === undefined) {
     throw new StatsError('MISSING_VALUE', `Missing stats value for key: ${k}`);
   }
-  return store.values[k];
+  if (defaultValue !== undefined) {
+    return (store.values[k] as T) ?? defaultValue;
+  }
+  return store.values[k] as T;
 }
 
 export function statsSetValue(key: string, value: unknown): void {

@@ -3,33 +3,45 @@ import 'dotenv/config';
 import { type Logger } from '../../lib/logger.js';
 import { stripRoot } from '../../lib/root.js';
 import { StageOrchestrator } from './stage/StageOrchestrator.js';
-import { CleanHtmlToJsonStage } from './stage/stage-clean-html-to-json/CleanHtmlToJsonStage.js';
-import { CleanMetaStage } from './stage/stage-clean-meta/CleanMetaStage.js';
-import { CleanJsonStage } from './stage/stage-clean-job-json/CleanJsonStage.js';
-import { CleanHtmlStage } from './stage/stage-clean-html/CleanHtmlStage.js';
-import { CleanHtmlToMdStage } from './stage/stage-clean-html-to-md/CleanHtmlToMdStage.js';
-import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
+import { stats, statsContext } from '../../lib/stats.js';
 import { shutdownContext } from '../../lib/shutdown.js';
-import { CleanHtmlJsonStage } from './stage/stage-clean-html-json/CleanHtmlJsonStage.js';
-import { CleanCombineStage } from './stage/stage-clean-combine/CleanCombineStage.js';
-import { readdir, stat } from 'node:fs/promises';
+import { opendir } from 'node:fs/promises';
 import path from 'node:path';
+import { createStages } from './stage/createStages.js';
 
 const ONE_SECOND_MS = 1_000;
 const ONE_MINUTE_MS = ONE_SECOND_MS * 60;
 
-async function* directoryAsyncIterator(dir: string) {
-  for (const de of await readdir(dir, {
-    withFileTypes: true,
-    encoding: 'utf8',
-  })) {
-    if (!de.isDirectory()) continue;
-    const full = path.join(dir, de.name);
+/**
+ * opendir is lazy, while readdir is eager.
+ * We want to avoid reading the directory into memory all at once, and work incrementally.
+ */
+async function* directoryAsyncIterator(dir: string, logger: Logger) {
+  let handle: Awaited<ReturnType<typeof opendir>> | undefined;
+  try {
+    handle = await opendir(dir, { encoding: 'utf8' });
+    for await (const de of handle) {
+      if (!de.isDirectory()) continue;
+      yield path.join(dir, de.name);
+    }
+  } catch (error) {
+    logger.error(`Error reading directory ${dir}`, { error, dir });
+    return;
+  } finally {
     try {
-      const st = await stat(full);
-      yield { dir: full, mtimeMs: st.mtimeMs };
-    } catch {
-      // dir may have been moved mid-scan
+      await handle?.close();
+    } catch (error) {
+      // ignore ERR_DIR_CLOSED error
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error?.code === 'ERR_DIR_CLOSED'
+      ) {
+        // ignore
+      } else {
+        logger.error(`Unexpected error when closing directory handle for ${dir}`, { error, dir });
+      }
     }
   }
 }
@@ -47,118 +59,61 @@ export async function runTransform({
   loadDir: string;
   logger: Logger;
 }): Promise<void> {
-  await using shutdownCtx = shutdownContext(logger);
   const statsCtx = statsContext('transform_');
   await statsCtx.withStats(async () => {
+    await using shutdownCtx = shutdownContext(logger);
     const orchestrator = new StageOrchestrator({
       logger,
-      stagingDir,
       quarantineDir,
       trashDir,
       loadDir,
       autoScaling: {
-        defaultConcurrentStages: 10,
-        maxConcurrentStages: 50,
-        maxRssMemoryUsage: 512 * 1024 * 1024, // 512mb
-        rssMemoryCheckMs: ONE_SECOND_MS * 5,
-        concurrencyUpRssLimit: 0.7,
-        concurrencyDownRssLimit: 0.9,
+        minConcurrentStages: 1,
+        maxConcurrentStages: 100,
+        rssMemorySoftCap: 512 * 1024 * 1024,
       },
-      stages: [
-        new CleanJsonStage({
-          logger,
-          stagingDir,
-          trashDir,
-          loadDir,
-          transformations: CleanJsonStage.transformations(),
-        }),
-        new CleanHtmlToJsonStage({
-          logger,
-          stagingDir,
-          trashDir,
-          loadDir,
-          transformations: CleanHtmlToJsonStage.transformations(),
-        }),
-        new CleanHtmlJsonStage({
-          logger,
-          stagingDir,
-          trashDir,
-          loadDir,
-          transformations: CleanHtmlJsonStage.transformations(),
-        }),
-        new CleanMetaStage({
-          logger,
-          stagingDir,
-          trashDir,
-          loadDir,
-          transformations: CleanMetaStage.transformations(),
-        }),
-        new CleanHtmlStage({
-          logger,
-          stagingDir,
-          trashDir,
-          loadDir,
-          transformations: CleanHtmlStage.transformations(),
-        }),
-        new CleanHtmlToMdStage({
-          logger,
-          stagingDir,
-          trashDir,
-          loadDir,
-          transformations: CleanHtmlToMdStage.transformations(),
-        }),
-        new CleanCombineStage({
-          logger,
-          stagingDir,
-          trashDir,
-          loadDir,
-          transformations: CleanCombineStage.transformations(),
-        }),
-      ],
+      stages: createStages({
+        logger,
+        stagingDir,
+        trashDir,
+        loadDir,
+      }),
     });
-    shutdownCtx.registerCleanup(() => orchestrator.shutdown());
+    const orchestratorCleanup = async () => {
+      await orchestrator.shutdown();
+      logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
+    };
+    shutdownCtx.registerCleanup(orchestratorCleanup);
 
     logger.log(` 🔍 Scanning for jobs in: ${stripRoot(stagingDir)}`);
 
+    const minDelayMs = ONE_SECOND_MS;
+    const maxDelayMs = ONE_MINUTE_MS * 3;
+
     const idleMs = ONE_MINUTE_MS * 60;
-    const backoffMinMs = ONE_SECOND_MS * 2;
-    const backoffMaxMs = ONE_MINUTE_MS * 10;
-    let backoffMs = ONE_SECOND_MS * 30;
-    let lastProgressAt = Date.now();
 
     while (true) {
-      if (orchestrator.hasWorkInFlight()) {
-        lastProgressAt = Date.now();
-      }
-      if (Date.now() - lastProgressAt > idleMs) {
+      if (Date.now() - orchestrator.lastProgressAt() > idleMs) {
         logger.log(
           ` ✅ Transformations completed (idle for ${Math.round(idleMs / ONE_MINUTE_MS)}m). Done`,
         );
         logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
-        await orchestrator.shutdown();
         return;
       }
 
-      let capacity: Awaited<ReturnType<typeof orchestrator.enqueue>> | null = null;
-      for await (const dir of directoryAsyncIterator(stagingDir)) {
-        statsAddToCounter('scan_enqueued_job');
-        capacity = await orchestrator.enqueue(dir.dir);
-        if (capacity === 'at-capacity') {
-          backoffMs = Math.min(backoffMaxMs, Math.max(backoffMinMs, Math.round(backoffMs * 1.2)));
-          logger.warn(` ⚠️ At capacity - increasing backoff (${backoffMs})`);
+      for await (const dir of directoryAsyncIterator(stagingDir, logger)) {
+        if ((await orchestrator.enqueue(dir)) === 'denied') {
           break;
         }
       }
+      orchestrator.adjustConcurrency();
 
-      if (capacity !== 'at-capacity' && orchestrator.hasWorkInFlight()) {
-        backoffMs = Math.min(backoffMinMs, Math.max(backoffMinMs, Math.round(backoffMs * 0.75)));
-        logger.debug(` ✅ Under capacity - decreasing backoff (${backoffMs})`);
-      } else {
-        backoffMs = Math.min(backoffMaxMs, Math.max(backoffMinMs, Math.round(backoffMs * 1.2)));
-        logger.warn(` ⚠️ No work - increasing backoff (${backoffMs})`);
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+      const delayMs = Math.min(
+        maxDelayMs,
+        Math.max(minDelayMs, Date.now() - orchestrator.lastProgressAt()),
+      );
+      logger.debug(` ⏳ Waiting for ${Math.round(delayMs / ONE_SECOND_MS)}s before next scan...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   });
 }

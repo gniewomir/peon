@@ -7,7 +7,7 @@ import { GuardDecisionTrash } from './guards/decisions/GuardDecisionTrash.js';
 import { z, ZodError } from 'zod';
 import { stripRoot } from '../../../lib/root.js';
 import assert from 'node:assert';
-import { statsAddToCounter } from '../../../lib/stats.js';
+import { statsAddToCounter, statsGetValue, statsSetValue } from '../../../lib/stats.js';
 import { GuardDecisionRemove } from './guards/decisions/GuardDecisionRemove.js';
 import { readFileSync } from 'fs';
 import {
@@ -28,19 +28,18 @@ import { LRUHashMap } from '../lib/LRUHashMap.js';
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
   private readonly inFlight = new HashMap<Promise<void>>();
-  private readonly jobDirArtifactsCache = new LRUHashMap<JobDirArtifacts>(10_000);
-  private readonly stagingDir;
+  private readonly jobDirArtifactsCache = new LRUHashMap<JobDirArtifacts>(25_000);
   private readonly quarantineDir;
   private readonly trashDir;
   private readonly loadDir;
   private readonly logger;
   private readonly limits;
-  private readonly memoryCheckInterval: NodeJS.Timeout;
   private concurrency: number;
+  private progressAt: number = Date.now();
+  private shuttingDown = false;
 
   constructor({
     logger,
-    stagingDir,
     quarantineDir,
     trashDir,
     loadDir,
@@ -48,23 +47,18 @@ export class StageOrchestrator {
     stages,
   }: {
     logger: Logger;
-    stagingDir: string;
     quarantineDir: string;
     trashDir: string;
     loadDir: string;
     autoScaling: {
-      defaultConcurrentStages: number;
       maxConcurrentStages: number;
-      maxRssMemoryUsage: number;
-      rssMemoryCheckMs: number;
-      concurrencyUpRssLimit: number;
-      concurrencyDownRssLimit: number;
+      minConcurrentStages: number;
+      rssMemorySoftCap: number;
     };
     stages: AbstractStage[];
   }) {
     this.logger = logger.withSuffix('orchestrator');
 
-    this.stagingDir = stagingDir;
     this.quarantineDir = quarantineDir;
     this.trashDir = trashDir;
     this.loadDir = loadDir;
@@ -75,68 +69,23 @@ export class StageOrchestrator {
     assert(this.stages.size === stages.length, 'Duplicated stage names detected!');
 
     this.limits = { ...autoScaling };
-    this.concurrency = this.limits.defaultConcurrentStages;
-    assert(
-      Number.isInteger(this.limits.maxConcurrentStages) && this.limits.maxConcurrentStages < 500,
-    );
-    assert(this.limits.concurrencyUpRssLimit >= 0 && this.limits.concurrencyUpRssLimit <= 1);
-    assert(this.limits.concurrencyDownRssLimit >= 0 && this.limits.concurrencyDownRssLimit <= 1);
-    assert(this.limits.concurrencyUpRssLimit < this.limits.concurrencyDownRssLimit);
-    this.memoryCheckInterval = setInterval(
-      () => this.adjustConcurrency(),
-      this.limits.rssMemoryCheckMs,
-    );
+    this.concurrency = this.limits.minConcurrentStages;
   }
 
-  private adjustConcurrency() {
-    const currentRss = process.memoryUsage.rss();
-    if (currentRss >= this.limits.maxRssMemoryUsage) {
-      this.concurrency = Math.max(1, Math.round(this.concurrency * 0.5));
-      this.logger.warn(
-        `(${Math.round(currentRss / (1024 * 1024))}mb) At or above memory use limit - adjusting concurrent stages limit down (${this.concurrency})`,
-      );
-      return;
-    }
-    if (
-      currentRss > Math.round(this.limits.maxRssMemoryUsage * this.limits.concurrencyDownRssLimit)
-    ) {
-      this.concurrency = Math.max(1, Math.round(this.concurrency * 0.8));
-      this.logger.warn(
-        `(${Math.round(currentRss / (1024 * 1024))}mb) At or above memory use upper threshold - adjusting concurrent stages limit down (${this.concurrency})`,
-      );
-      return;
-    }
-    if (
-      currentRss < Math.round(this.limits.maxRssMemoryUsage * this.limits.concurrencyUpRssLimit)
-    ) {
-      this.concurrency = Math.min(
-        this.limits.maxConcurrentStages,
-        Math.round(this.concurrency * 1.1),
-      );
-      this.logger.log(
-        `(${Math.round(currentRss / (1024 * 1024))}mb) Bellow memory use lower threshold - adjusting concurrent stages limit up (${this.concurrency})`,
-      );
-      return;
-    }
+  public lastProgressAt(): number {
+    return this.progressAt;
   }
 
   public async shutdown(): Promise<void> {
-    clearInterval(this.memoryCheckInterval);
+    this.shuttingDown = true;
     await Promise.allSettled(this.inFlight.values());
   }
 
-  public async enqueue(
-    jobDir: string,
-  ): Promise<'under-capacity' | 'at-capacity' | 'not-applicable'> {
-    if (this.inFlight.size() === this.concurrency) return 'at-capacity';
-    if (this.inFlight.has(jobDir)) return 'under-capacity';
-
-    let jobDirArtifactsIndex = this.jobDirArtifactsCache.get(jobDir);
-    if (!jobDirArtifactsIndex) {
-      jobDirArtifactsIndex = await this.readJobDirArtifactsIndex(jobDir);
-      assert(jobDirArtifactsIndex, 'Could not obtain jobDir artifacts index');
-      this.jobDirArtifactsCache.set(jobDir, jobDirArtifactsIndex);
-    }
+  public async enqueue(jobDir: string): Promise<'denied' | null> {
+    if (this.shuttingDown) return 'denied';
+    if (this.inFlight.size() >= this.concurrency) return 'denied';
+    if (this.inFlight.has(jobDir)) return null;
+    const jobDirArtifactsIndex = await this.readJobDirArtifactsIndex(jobDir);
 
     for (const stage of this.stages.values()) {
       if (stage.isApplicable(jobDirArtifactsIndex)) {
@@ -152,16 +101,55 @@ export class StageOrchestrator {
             })
             .finally(() => {
               this.inFlight.delete(jobDir);
+              this.progressAt = Date.now();
             }),
         );
-        return 'under-capacity';
+        this.progressAt = Date.now();
+        return null;
       }
     }
-    return 'not-applicable';
+    return null;
   }
 
-  public hasWorkInFlight(): boolean {
-    return this.inFlight.size() > 0;
+  public adjustConcurrency() {
+    const currentRss = process.memoryUsage.rss();
+    const currentRssMb = Math.round(currentRss / (1024 * 1024));
+    const oldConcurrency = this.concurrency;
+    const maxHistoricalUtilisation = statsGetValue('max_rss_memory_utilisation_mb', 0);
+    statsSetValue(
+      'max_rss_memory_utilisation_mb',
+      Math.max(maxHistoricalUtilisation, currentRssMb),
+    );
+
+    const maxHistoricalInFlight = statsGetValue('max_in_flight', 0);
+    statsSetValue('max_in_flight', Math.max(maxHistoricalInFlight, this.inFlight.size()));
+
+    this.logger.debug(`[${currentRssMb}mb] RSS memory soft cap utilization`);
+    if (currentRss >= this.limits.rssMemorySoftCap) {
+      this.concurrency = Math.max(
+        this.limits.minConcurrentStages,
+        Math.floor(statsGetValue('max_in_flight', 1) * 0.8),
+        Math.floor(this.concurrency * 0.8),
+      );
+      this.logger.warn(
+        `[${currentRssMb}mb] Close to RSS memory soft cap - adjusting concurrency down (${this.concurrency})`,
+      );
+      return;
+    }
+    this.concurrency = Math.min(
+      this.limits.maxConcurrentStages,
+      Math.ceil(statsGetValue('max_in_flight', 1) * 1.2),
+      Math.ceil(this.concurrency * 1.2),
+    );
+
+    const maxHistoricalConcurency = statsGetValue('max_concurency', 0);
+    statsSetValue('max_concurency', Math.max(maxHistoricalConcurency, this.concurrency));
+    const message = `[${currentRssMb}mb] RSS memory soft cap underutilized - adjusting concurrency up (${this.concurrency})`;
+
+    if (oldConcurrency !== this.concurrency) {
+      assert(message.length);
+      this.logger.warn(message);
+    }
   }
 
   private async executeSingleApplicableStage(
@@ -171,30 +159,12 @@ export class StageOrchestrator {
   ) {
     const decision = await stage.run(jobDir, artifactsIndex);
 
-    // Keep in staging,
-    // If so, all the following must be true:
-    //    - stage was executed successfuly and without any errors
-    //    - output artifact of this stage was emited
-    //    - cached artifact index can be updated with emited artifact
-    //    - we do not need to hit the disk, because of prior assertions
+    this.jobDirArtifactsCache.delete(jobDir);
+
     if (decision instanceof GuardDecisionAdvance) {
-      if (this.jobDirArtifactsCache.has(jobDir)) {
-        const cached = this.jobDirArtifactsCache.get(jobDir);
-        assert(cached);
-        this.jobDirArtifactsCache.set(jobDir, {
-          present: new Set([...cached.present, stage.outputArtifact()]),
-          mtimeMs: new Map<KnownArtifactsEnum, number>([
-            ...(Object.entries(cached.mtimeMs) as [KnownArtifactsEnum, number][]),
-            [stage.outputArtifact(), Date.now()],
-          ]),
-        });
-      }
-      this.logger.log(`guard: Advanced ${stripRoot(jobDir)} because of "${decision.message}"`);
+      this.logger.debug(`guard: Advanced ${stripRoot(jobDir)} because of "${decision.message}"`);
       return;
     }
-
-    // Following decisions will remove directory from staging, so it should not be present in next scan
-    this.jobDirArtifactsCache.delete(jobDir);
 
     if (decision instanceof GuardDecisionRemove) {
       await this.remove(jobDir);
@@ -308,6 +278,11 @@ export class StageOrchestrator {
   }
 
   private async readJobDirArtifactsIndex(jobDir: string): Promise<JobDirArtifacts> {
+    if (this.jobDirArtifactsCache.has(jobDir)) {
+      const cached = this.jobDirArtifactsCache.get(jobDir);
+      assert(cached);
+      return cached;
+    }
     const entries = await readdir(jobDir, { withFileTypes: true, encoding: 'utf8' });
     const present = new Set<KnownArtifactsEnum>();
     const mtimeMsByFilename = new Map<KnownArtifactsEnum, number>();
@@ -325,6 +300,7 @@ export class StageOrchestrator {
           }
         }),
     );
+    this.jobDirArtifactsCache.set(jobDir, { present, mtimeMs: mtimeMsByFilename });
     return { present, mtimeMs: mtimeMsByFilename };
   }
 }
