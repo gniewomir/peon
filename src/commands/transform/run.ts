@@ -16,12 +16,14 @@ export async function runTransform({
   quarantineDir,
   trashDir,
   loadDir,
+  loop = false,
   logger,
 }: {
   stagingDir: string;
   quarantineDir: string;
   trashDir: string;
   loadDir: string;
+  loop?: boolean;
   logger: Logger;
 }): Promise<void> {
   const statsCtx = statsContext('transform_');
@@ -58,7 +60,7 @@ export async function runTransform({
     const idleMs = ONE_MINUTE_MS * 60;
 
     while (true) {
-      if (Date.now() - orchestrator.lastProgressAt() > idleMs) {
+      if (!loop && Date.now() - orchestrator.lastProgressAt() > idleMs) {
         logger.log(
           ` ✅ Transformations completed (idle for ${Math.round(idleMs / ONE_MINUTE_MS)}m). Done`,
         );

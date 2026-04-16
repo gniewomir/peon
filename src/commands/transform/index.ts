@@ -16,6 +16,7 @@ export function registerTransformCommand(program: Command): void {
     .command(command)
     .description('Watch staging directory and log file changes')
     .option('-v, --verbose', 'Enable debug logs')
+    .option('-l, --loop', 'Keep working until explicitly terminated')
     .option('--cacheDir <dir>', `Cache directory (default: <repo>/${relCacheDir})`)
     .option('--stagingDir <dir>', `Staging directory (default: <repo>/${relStagingDir})`)
     .option('--quarantineDir <dir>', `Quarantine directory (default: <repo>/${relQuarantineDir})`)
@@ -29,6 +30,7 @@ export function registerTransformCommand(program: Command): void {
         trashDir?: string;
         loadDir?: string;
         verbose?: boolean;
+        loop?: boolean;
       }) => {
         const cx = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
         return cx.withLogger((logger: Logger) =>
@@ -37,6 +39,7 @@ export function registerTransformCommand(program: Command): void {
             quarantineDir: path.resolve(opts.quarantineDir ?? path.join(root, relQuarantineDir)),
             trashDir: path.resolve(opts.trashDir ?? path.join(root, relTrashDir)),
             loadDir: path.resolve(opts.loadDir ?? path.join(root, relLoadDir)),
+            loop: Boolean(opts.loop),
             logger,
           }),
         );
