@@ -1,4 +1,4 @@
-import type { AbstractStage, JobDirArtifactsIndex } from './AbstractStage.js';
+import type { AbstractStage, JobDirArtifacts } from './AbstractStage.js';
 import path from 'node:path';
 import type { Logger } from '../../../lib/logger.js';
 import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
@@ -23,11 +23,12 @@ import { atomicRemoveDir } from '../../../lib/atomicRemoveDir.js';
 import { atomicWrite } from '../../../lib/atomicWrite.js';
 import { readdir, stat } from 'node:fs/promises';
 import { HashMap } from '../lib/HashMap.js';
+import { LRUHashMap } from '../lib/LRUHashMap.js';
 
 export class StageOrchestrator {
   private readonly stages: Map<string, AbstractStage> = new Map();
   private readonly inFlight = new HashMap<Promise<void>>();
-  private readonly jobDirArtifactsCache = new HashMap<JobDirArtifactsIndex>();
+  private readonly jobDirArtifactsCache = new LRUHashMap<JobDirArtifacts>(10_000);
   private readonly stagingDir;
   private readonly quarantineDir;
   private readonly trashDir;
@@ -52,6 +53,7 @@ export class StageOrchestrator {
     trashDir: string;
     loadDir: string;
     autoScaling: {
+      defaultConcurrentStages: number;
       maxConcurrentStages: number;
       maxRssMemoryUsage: number;
       rssMemoryCheckMs: number;
@@ -72,8 +74,8 @@ export class StageOrchestrator {
     });
     assert(this.stages.size === stages.length, 'Duplicated stage names detected!');
 
-    this.concurrency = 10;
     this.limits = { ...autoScaling };
+    this.concurrency = this.limits.defaultConcurrentStages;
     assert(
       Number.isInteger(this.limits.maxConcurrentStages) && this.limits.maxConcurrentStages < 500,
     );
@@ -155,14 +157,14 @@ export class StageOrchestrator {
     return 'not-applicable';
   }
 
-  public hasWorkInProgress(): boolean {
+  public hasWorkInFlight(): boolean {
     return this.inFlight.size() > 0;
   }
 
   private async executeSingleApplicableStage(
     stage: AbstractStage,
     jobDir: string,
-    artifactsIndex: JobDirArtifactsIndex,
+    artifactsIndex: JobDirArtifacts,
   ) {
     const decision = await stage.run(jobDir, artifactsIndex);
 
@@ -302,7 +304,7 @@ export class StageOrchestrator {
     };
   }
 
-  private async readJobDirArtifactsIndex(jobDir: string): Promise<JobDirArtifactsIndex> {
+  private async readJobDirArtifactsIndex(jobDir: string): Promise<JobDirArtifacts> {
     const entries = await readdir(jobDir, { withFileTypes: true, encoding: 'utf8' });
     const present = new Set<KnownArtifactsEnum>();
     const mtimeMsByFilename = new Map<KnownArtifactsEnum, number>();

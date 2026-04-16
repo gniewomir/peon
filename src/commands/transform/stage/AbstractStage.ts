@@ -13,7 +13,7 @@ import { readFile } from 'fs/promises';
 import { statsAddToCounter } from '../../../lib/stats.js';
 import { isStrategySlug } from '../../../lib/types.js';
 
-export type JobDirArtifactsIndex = {
+export type JobDirArtifacts = {
   /**
    * File names present in the job directory (e.g. "raw.job.json").
    */
@@ -57,7 +57,7 @@ export abstract class AbstractStage {
     return artifactFilename(this.outputArtifact()).replaceAll('.', '-');
   }
 
-  public isApplicable(artifacts: JobDirArtifactsIndex) {
+  public isApplicable(artifacts: JobDirArtifacts) {
     const hasOutput = artifacts.present.has(this.outputArtifact());
     const outputMtimeMs = hasOutput ? artifacts.mtimeMs.get(this.outputArtifact()) : undefined;
 
@@ -73,10 +73,7 @@ export abstract class AbstractStage {
     return !hasOutput;
   }
 
-  public async run(
-    jobDir: string,
-    artifacts: JobDirArtifactsIndex,
-  ): Promise<AbstractGuardDecision> {
+  public async run(jobDir: string, artifacts: JobDirArtifacts): Promise<AbstractGuardDecision> {
     try {
       if (!this.isApplicable(artifacts)) {
         statsAddToCounter('stage_not_applicable');

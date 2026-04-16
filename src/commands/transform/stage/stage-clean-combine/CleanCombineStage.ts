@@ -26,6 +26,6 @@ export class CleanCombineStage extends AbstractStage {
   protected guards(): AbstractGuard[] {
     // If the structured (non-meta) part is good enough, we're done: load this job.
     // Otherwise, allow downstream enrichment (LLM) stages to run.
-    return [new CombinedSchemaLoadGuard(0.45)];
+    return [new CombinedSchemaLoadGuard(0.4)];
   }
 }

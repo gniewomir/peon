@@ -15,9 +15,8 @@ import { CleanCombineStage } from './stage/stage-clean-combine/CleanCombineStage
 import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const ONE_SECOND_MS = 1_000;
+const ONE_MINUTE_MS = ONE_SECOND_MS * 60;
 
 async function* directoryAsyncIterator(dir: string) {
   for (const de of await readdir(dir, {
@@ -58,9 +57,10 @@ export async function runTransform({
       trashDir,
       loadDir,
       autoScaling: {
-        maxConcurrentStages: 100,
+        defaultConcurrentStages: 10,
+        maxConcurrentStages: 50,
         maxRssMemoryUsage: 512 * 1024 * 1024, // 512mb
-        rssMemoryCheckMs: 2_000,
+        rssMemoryCheckMs: ONE_SECOND_MS * 5,
         concurrencyUpRssLimit: 0.7,
         concurrencyDownRssLimit: 0.9,
       },
@@ -120,19 +120,19 @@ export async function runTransform({
 
     logger.log(` 🔍 Scanning for jobs in: ${stripRoot(stagingDir)}`);
 
-    const idleMs = 1000 * 60 * 30;
-    let backoffMs = 10_000;
-    const backoffMinMs = 1_000;
-    const backoffMaxMs = 30_000;
+    const idleMs = ONE_MINUTE_MS * 60;
+    const backoffMinMs = ONE_SECOND_MS * 2;
+    const backoffMaxMs = ONE_MINUTE_MS * 10;
+    let backoffMs = ONE_SECOND_MS * 30;
     let lastProgressAt = Date.now();
 
     while (true) {
-      if (orchestrator.hasWorkInProgress()) {
+      if (orchestrator.hasWorkInFlight()) {
         lastProgressAt = Date.now();
       }
       if (Date.now() - lastProgressAt > idleMs) {
         logger.log(
-          ` ✅ Transformations completed (idle for ${Math.round(idleMs / (1000 * 60))}m). Done`,
+          ` ✅ Transformations completed (idle for ${Math.round(idleMs / ONE_MINUTE_MS)}m). Done`,
         );
         logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
         await orchestrator.shutdown();
@@ -144,18 +144,21 @@ export async function runTransform({
         statsAddToCounter('scan_enqueued_job');
         capacity = await orchestrator.enqueue(dir.dir);
         if (capacity === 'at-capacity') {
+          backoffMs = Math.min(backoffMaxMs, Math.max(backoffMinMs, Math.round(backoffMs * 1.2)));
+          logger.warn(` ⚠️ At capacity - increasing backoff (${backoffMs})`);
           break;
         }
       }
-      if (capacity === 'at-capacity') {
-        backoffMs = Math.min(backoffMaxMs, Math.max(backoffMinMs, Math.round(backoffMs * 1.2)));
-        logger.warn(` ⚠️ At capacity - increasing backoff (${backoffMs})`);
-      } else {
+
+      if (capacity !== 'at-capacity' && orchestrator.hasWorkInFlight()) {
         backoffMs = Math.min(backoffMinMs, Math.max(backoffMinMs, Math.round(backoffMs * 0.75)));
         logger.debug(` ✅ Under capacity - decreasing backoff (${backoffMs})`);
+      } else {
+        backoffMs = Math.min(backoffMaxMs, Math.max(backoffMinMs, Math.round(backoffMs * 1.2)));
+        logger.warn(` ⚠️ No work - increasing backoff (${backoffMs})`);
       }
 
-      await sleep(backoffMs);
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
     }
   });
 }
