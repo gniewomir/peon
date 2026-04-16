@@ -1,7 +1,7 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { Transformation } from '../AbstractTransformation.js';
-import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import { SchemaGuard } from '../guards/SchemaGuard.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
+import { SchemaGuard } from '../SchemaGuard.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { HtmlJsonCleanerAll } from './HtmlJsonCleanerAll.js';
 import type { THtmlJsonSchema } from '../../../../schema/schema.html-json.js';

@@ -1,13 +1,13 @@
 import path from 'node:path';
 import type { Logger } from '../../../lib/logger.js';
-import { GuardDecisionLoad } from './guards/decisions/GuardDecisionLoad.js';
-import { GuardDecisionQuarantine } from './guards/decisions/GuardDecisionQuarantine.js';
-import { GuardDecisionTrash } from './guards/decisions/GuardDecisionTrash.js';
+import { GuardDecisionLoad } from './outcomes/GuardDecisionLoad.js';
+import { GuardDecisionQuarantine } from './outcomes/GuardDecisionQuarantine.js';
+import { GuardDecisionTrash } from './outcomes/GuardDecisionTrash.js';
 import { z, ZodError } from 'zod';
 import { stripRoot } from '../../../lib/root.js';
 import assert from 'node:assert';
 import { statsAddToCounter, statsGetValue, statsSetValue } from '../../../lib/stats.js';
-import { GuardDecisionRemove } from './guards/decisions/GuardDecisionRemove.js';
+import { GuardDecisionRemove } from './outcomes/GuardDecisionRemove.js';
 import { readFileSync } from 'fs';
 import {
   artifactFilename,
@@ -16,7 +16,7 @@ import {
   KnownArtifactsEnum,
 } from '../../../lib/artifacts.js';
 import { JsonNavigator } from '../lib/JsonNavigator.js';
-import { GuardDecisionAdvance } from './guards/decisions/GuardDecisionAdvance.js';
+import { GuardDecisionAdvance } from './outcomes/GuardDecisionAdvance.js';
 import { atomicMoveDir } from '../../../lib/atomicMoveDir.js';
 import { atomicRemoveDir } from '../../../lib/atomicRemoveDir.js';
 import { atomicWrite } from '../../../lib/atomicWrite.js';

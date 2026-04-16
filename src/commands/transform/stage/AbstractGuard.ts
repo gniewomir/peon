@@ -1,4 +1,4 @@
-import type { AbstractGuardDecision } from './decisions/AbstractGuardDecision.js';
+import type { AbstractGuardDecision } from './outcomes/AbstractGuardDecision.js';
 import * as cheerio from 'cheerio';
 import type { CheerioAPI } from 'cheerio';
 

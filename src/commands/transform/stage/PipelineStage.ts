@@ -1,7 +1,7 @@
 import type { Transformation } from './AbstractTransformation.js';
 import type { Logger } from '../../../lib/logger.js';
 import { type Artifact, artifactFilename } from '../../../lib/artifacts.js';
-import type { AbstractGuardDecision } from './guards/decisions/AbstractGuardDecision.js';
+import type { AbstractGuardDecision } from './outcomes/AbstractGuardDecision.js';
 
 import type { JobDirArtifacts } from './types.js';
 

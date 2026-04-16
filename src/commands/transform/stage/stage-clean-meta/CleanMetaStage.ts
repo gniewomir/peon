@@ -1,7 +1,6 @@
 import { AbstractStage } from '../AbstractStage.js';
-import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import { NotEmptySerializedGuard } from '../guards/NotEmptySerializedGuard.js';
-import { SchemaGuard } from '../guards/SchemaGuard.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
+import { SchemaGuard } from '../SchemaGuard.js';
 import { CleanerMetaBdj } from './CleanerMetaBdj.js';
 import { CleanerMetaJji } from './CleanerMetaJji.js';
 import { CleanerMetaNfj } from './CleanerMetaNfj.js';
@@ -32,11 +31,6 @@ export class CleanMetaStage extends AbstractStage<TMetaSchema> {
   }
 
   protected guards(): AbstractGuard<TMetaSchema>[] {
-    return [
-      new NotEmptySerializedGuard(100),
-      new SchemaGuard(metaSchema),
-      new DedupByUrlGuard(),
-      new ExpirationGuard(),
-    ];
+    return [new SchemaGuard(metaSchema), new DedupByUrlGuard(), new ExpirationGuard()];
   }
 }

@@ -1,7 +1,7 @@
-import { AbstractGuard } from '../guards/AbstractGuard.js';
-import type { AbstractGuardDecision } from '../guards/decisions/AbstractGuardDecision.js';
-import { GuardDecisionLoad } from '../guards/decisions/GuardDecisionLoad.js';
-import { GuardDecisionQuarantine } from '../guards/decisions/GuardDecisionQuarantine.js';
+import { AbstractGuard } from '../AbstractGuard.js';
+import type { AbstractGuardDecision } from '../outcomes/AbstractGuardDecision.js';
+import { GuardDecisionLoad } from '../outcomes/GuardDecisionLoad.js';
+import { GuardDecisionQuarantine } from '../outcomes/GuardDecisionQuarantine.js';
 import { deepVisitor } from '../../lib/deepVisitor.js';
 import { combined, type TCombinedSchema } from '../../../../schema/schema.combined.js';
 import { nullSchema } from '../../../../schema/schema.js';

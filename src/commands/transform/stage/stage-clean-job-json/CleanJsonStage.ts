@@ -1,7 +1,6 @@
 import { AbstractStage } from '../AbstractStage.js';
-import type { AbstractGuard } from '../guards/AbstractGuard.js';
-import { SchemaGuard } from '../guards/SchemaGuard.js';
-import { NotEmptySerializedGuard } from '../guards/NotEmptySerializedGuard.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
+import { SchemaGuard } from '../SchemaGuard.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { CleanerJji } from './CleanerJji.js';
 import { CleanerNfj } from './CleanerNfj.js';
@@ -23,6 +22,6 @@ export class CleanJsonStage extends AbstractStage<TSchema> {
   }
 
   protected guards(): AbstractGuard<TSchema>[] {
-    return [new NotEmptySerializedGuard(100), new SchemaGuard(schema)];
+    return [new SchemaGuard(schema)];
   }
 }

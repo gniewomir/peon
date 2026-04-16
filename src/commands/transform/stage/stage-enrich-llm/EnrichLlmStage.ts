@@ -1,17 +1,16 @@
 import { AbstractStage } from '../AbstractStage.js';
-import type { AbstractGuard } from '../guards/AbstractGuard.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { StructureUnstructured } from './StructureUnstructured.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import type { Logger } from '../../../../lib/logger.js';
 import { createMinimumExecutionTimeLimiter } from '../../lib/createMinimumExecutionTimeLimiter.js';
 import { createConcurrencyLimiter } from '../../lib/createConcurrencyLimiter.js';
-import { NotEmptySerializedGuard } from '../guards/NotEmptySerializedGuard.js';
 import { stripRoot } from '../../../../lib/root.js';
 import { LlmSchemaQualityGuard } from './LlmSchemaQualityGuard.js';
 import type { TLlmSchema } from '../../../../schema/schema.llm.js';
 import { llmSchema } from '../../../../schema/schema.llm.js';
-import { SchemaGuard } from '../guards/SchemaGuard.js';
+import { SchemaGuard } from '../SchemaGuard.js';
 
 export class EnrichLlmStage extends AbstractStage<TLlmSchema> {
   private readonly concurrencyLimiter;
@@ -51,11 +50,7 @@ export class EnrichLlmStage extends AbstractStage<TLlmSchema> {
   }
 
   protected guards(): AbstractGuard<TLlmSchema>[] {
-    return [
-      new NotEmptySerializedGuard(100),
-      new SchemaGuard(llmSchema),
-      new LlmSchemaQualityGuard(0.5),
-    ];
+    return [new SchemaGuard(llmSchema), new LlmSchemaQualityGuard(0.5)];
   }
 
   protected async transformFromInputs(jobDir: string): Promise<TLlmSchema> {

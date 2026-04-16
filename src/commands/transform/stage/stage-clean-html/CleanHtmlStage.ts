@@ -1,6 +1,6 @@
 import { AbstractStage } from '../AbstractStage.js';
 import type { Transformation } from '../AbstractTransformation.js';
-import type { AbstractGuard } from '../guards/AbstractGuard.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
 import { HtmlCleanerJji } from './HtmlCleanerJji.js';
 import { HtmlCleanerNfj } from './HtmlCleanerNfj.js';
 import { HtmlCleanerBdj } from './HtmlCleanerBdj.js';

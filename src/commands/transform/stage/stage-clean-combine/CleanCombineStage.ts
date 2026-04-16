@@ -1,5 +1,5 @@
 import { AbstractStage } from '../AbstractStage.js';
-import type { AbstractGuard } from '../guards/AbstractGuard.js';
+import type { AbstractGuard } from '../AbstractGuard.js';
 import type { Transformation } from '../AbstractTransformation.js';
 import { KnownArtifactsEnum } from '../../../../lib/artifacts.js';
 import { CombineCleanToCombined } from './CombineCleanToCombined.js';
