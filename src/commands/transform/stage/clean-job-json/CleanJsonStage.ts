@@ -21,6 +21,10 @@ export class CleanJsonStage extends AbstractStage<TSchema> {
     return KnownArtifactsEnum.CLEAN_JOB_JSON;
   }
 
+  public concurrency() {
+    return 'unlimited' as const;
+  }
+
   protected guards(): AbstractGuard<TSchema>[] {
     return [new SchemaGuard(schema)];
   }

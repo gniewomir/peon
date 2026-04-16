@@ -20,6 +20,10 @@ export class CleanHtmlStage extends AbstractStage {
     return KnownArtifactsEnum.CLEAN_JOB_HTML;
   }
 
+  public concurrency() {
+    return 'unlimited' as const;
+  }
+
   protected guards(): AbstractGuard<string>[] {
     return [new NoContentHtmlGuard(100)];
   }

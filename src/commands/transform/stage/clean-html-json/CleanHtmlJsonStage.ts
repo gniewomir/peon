@@ -20,6 +20,10 @@ export class CleanHtmlJsonStage extends AbstractStage<THtmlJsonSchema> {
     return KnownArtifactsEnum.CLEAN_JOB_HTML_JSON;
   }
 
+  public concurrency() {
+    return 'unlimited' as const;
+  }
+
   protected guards(): AbstractGuard<THtmlJsonSchema>[] {
     return [new SchemaGuard(htmlJsonSchema)];
   }

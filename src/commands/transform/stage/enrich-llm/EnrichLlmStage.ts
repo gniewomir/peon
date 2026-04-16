@@ -49,6 +49,10 @@ export class EnrichLlmStage extends AbstractStage<TLlmSchema> {
     return KnownArtifactsEnum.ENRICH_LLM_JSON;
   }
 
+  public concurrency() {
+    return 1 as const;
+  }
+
   protected guards(): AbstractGuard<TLlmSchema>[] {
     return [new SchemaGuard(llmSchema), new LlmSchemaQualityGuard(0.5)];
   }

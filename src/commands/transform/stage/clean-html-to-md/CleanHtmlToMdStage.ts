@@ -20,6 +20,10 @@ export class CleanHtmlToMdStage extends AbstractStage {
     return KnownArtifactsEnum.CLEAN_MARKDOWN;
   }
 
+  public concurrency() {
+    return 'unlimited' as const;
+  }
+
   protected guards(): AbstractGuard<string>[] {
     return [new NotEmptyGuard()];
   }

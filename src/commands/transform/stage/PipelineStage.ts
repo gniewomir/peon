@@ -5,6 +5,8 @@ import type { AbstractGuardDecision } from '../outcomes/AbstractGuardDecision.js
 
 import type { JobDirArtifacts } from '../types.js';
 
+export type StageConcurrency = 'unlimited' | number;
+
 /**
  * Type-erased stage contract used by {@link StageOrchestrator}. Concrete stages extend
  * {@link AbstractStage} with a typed pipeline value.
@@ -63,4 +65,7 @@ export abstract class PipelineStage {
   public abstract inputArtifacts(): Artifact[];
 
   public abstract outputArtifact(): Artifact;
+
+  /** Maximum concurrent runs of this stage; orchestration may enforce this cap. */
+  public abstract concurrency(): StageConcurrency;
 }

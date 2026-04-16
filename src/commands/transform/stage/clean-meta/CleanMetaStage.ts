@@ -30,6 +30,10 @@ export class CleanMetaStage extends AbstractStage<TMetaSchema> {
     return KnownArtifactsEnum.CLEAN_JOB_META_JSON;
   }
 
+  public concurrency() {
+    return 'unlimited' as const;
+  }
+
   protected guards(): AbstractGuard<TMetaSchema>[] {
     return [new SchemaGuard(metaSchema), new DedupByUrlGuard(), new ExpirationGuard()];
   }

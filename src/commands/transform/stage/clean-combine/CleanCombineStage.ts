@@ -24,6 +24,10 @@ export class CleanCombineStage extends AbstractStage<TCombinedSchema> {
     return KnownArtifactsEnum.CLEAN_COMBINE_JSON;
   }
 
+  public concurrency() {
+    return 'unlimited' as const;
+  }
+
   protected guards(): AbstractGuard<TCombinedSchema>[] {
     // If the structured (non-meta) part is good enough, we're done: load this job.
     // Otherwise, allow downstream enrichment (LLM) stages to run.
