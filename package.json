@@ -37,28 +37,28 @@
   "keywords": [],
   "license": "ISC",
   "dependencies": {
-    "@google/genai": "^1.48.0",
+    "@google/genai": "1.48.0",
     "@kreuzberg/html-to-markdown-node": "2.30.0",
-    "cheerio": "^1.1.2",
-    "commander": "^13.1.0",
-    "dotenv": "^17.2.2",
-    "ollama": "^0.6.3",
-    "puppeteer": "^24.17.0",
-    "zod": "^4.3.6"
+    "cheerio": "1.2.0",
+    "commander": "13.1.0",
+    "dotenv": "17.3.1",
+    "ollama": "0.6.3",
+    "puppeteer": "24.40.0",
+    "zod": "4.3.6"
   },
   "optionalDependencies": {
     "@kreuzberg/html-to-markdown-node-darwin-arm64": "2.30.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.34.0",
-    "@types/node": "^22.15.0",
-    "eslint": "^9.34.0",
-    "eslint-config-prettier": "^10.1.8",
-    "globals": "^16.4.0",
-    "prettier": "^3.6.2",
-    "tsx": "^4.20.0",
-    "typescript": "^5.8.0",
-    "typescript-eslint": "^8.41.0",
-    "vitest": "^4.1.0"
+    "@eslint/js": "9.39.4",
+    "@types/node": "22.19.15",
+    "eslint": "9.39.4",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "16.5.0",
+    "prettier": "3.8.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.57.2",
+    "vitest": "4.1.2"
   }
 }
