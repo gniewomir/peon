@@ -86,6 +86,32 @@ export class LinkedList<T> {
     return value;
   }
 
+  pop(): T | undefined {
+    if (!this.head) {
+      return undefined;
+    }
+
+    // Single element
+    if (this.head === this.tail) {
+      const value = this.head.value;
+      this.head = null;
+      this.tail = null;
+      this._size--;
+      return value;
+    }
+
+    let current = this.head;
+    while (current.next && current.next !== this.tail) {
+      current = current.next;
+    }
+
+    const value = this.tail!.value;
+    current.next = null;
+    this.tail = current;
+    this._size--;
+    return value;
+  }
+
   peekHead(): T | undefined {
     return this.head?.value;
   }

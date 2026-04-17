@@ -9,6 +9,16 @@ describe('LinkedList', () => {
     expect(list.size).toBe(0);
   });
 
+  it('appends to an empty list', () => {
+    const list = new LinkedList<number>();
+    list.append(1);
+
+    expect(list.toArray()).toEqual([1]);
+    expect(list.peekHead()).toBe(1);
+    expect(list.peekTail()).toBe(1);
+    expect(list.size).toBe(1);
+  });
+
   it('appends values in order', () => {
     const list = new LinkedList<number>();
     list.append(1);
@@ -38,6 +48,22 @@ describe('LinkedList', () => {
     expect(list.remove(2)).toBe(true);
     expect(list.toArray()).toEqual([1, 2, 3]);
     expect(list.size).toBe(3);
+  });
+
+  it('removes objects by identity (reference), not by value', () => {
+    const list = new LinkedList<{ id: number }>();
+    const a1 = { id: 1 };
+    const a2 = { id: 1 };
+
+    list.append(a1);
+    list.append(a2);
+
+    expect(list.remove({ id: 1 })).toBe(false);
+    expect(list.toArray()).toEqual([a1, a2]);
+
+    expect(list.remove(a1)).toBe(true);
+    expect(list.toArray()).toEqual([a2]);
+    expect(list.size).toBe(1);
   });
 
   it('returns false when removing a missing value', () => {
@@ -82,6 +108,36 @@ describe('LinkedList', () => {
     list.append(1);
 
     expect(list.shift()).toBe(1);
+    expect(list.toArray()).toEqual([]);
+    expect(list.peekHead()).toBeUndefined();
+    expect(list.peekTail()).toBeUndefined();
+    expect(list.size).toBe(0);
+  });
+
+  it('pops last value and removes it from list', () => {
+    const list = new LinkedList<number>();
+    list.append(1);
+    list.append(2);
+    list.append(3);
+
+    expect(list.pop()).toBe(3);
+    expect(list.toArray()).toEqual([1, 2]);
+    expect(list.peekTail()).toBe(2);
+    expect(list.size).toBe(2);
+  });
+
+  it('returns undefined when popping an empty list', () => {
+    const list = new LinkedList<number>();
+
+    expect(list.pop()).toBeUndefined();
+    expect(list.size).toBe(0);
+  });
+
+  it('pops the last remaining element and nulls head/tail', () => {
+    const list = new LinkedList<number>();
+    list.append(1);
+
+    expect(list.pop()).toBe(1);
     expect(list.toArray()).toEqual([]);
     expect(list.peekHead()).toBeUndefined();
     expect(list.peekTail()).toBeUndefined();
