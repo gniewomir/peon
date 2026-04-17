@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import type { JobJson, Listing, ListingParseResult } from '../../types.js';
+import type { ItemJson, Listing, ListingParseResult } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
 import { JsonNavigator } from '../../../transform/lib/JsonNavigator.js';
@@ -15,14 +15,14 @@ interface NFJListing extends Listing {
 }
 
 interface NFJApiResponse {
-  postings: JobJson[];
+  postings: ItemJson[];
   totalPages?: number;
 }
 
 export class NfjStrategy extends AbstractStrategy {
   public readonly slug: KnownStrategy = 'nfj';
 
-  async *jobListingsGenerator(): AsyncGenerator<Listing> {
+  async *listingGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
     for (const listing of listings) {
       assert('meta' in listing, ' ⚠️  No metadata for listing');
@@ -39,7 +39,7 @@ export class NfjStrategy extends AbstractStrategy {
     this.resetSeen();
   }
 
-  async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
+  async *itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson> {
     const nfjListing = listing as NFJListing;
     let currentPage = 1;
     let totalPages: number | null = null;
@@ -129,20 +129,20 @@ export class NfjStrategy extends AbstractStrategy {
           this.logger.warn(`Empty job on listing. Skipping`);
           continue;
         }
-        if (this.hasSeen(this.jobToId(job))) {
-          this.logger.warn(`Job ${this.jobToId(job)} has been already seen. Skipping`);
+        if (this.hasSeen(this.itemToId(job))) {
+          this.logger.warn(`item ${this.itemToId(job)} has been already seen. Skipping`);
           continue;
         }
-        this.addSeen(this.jobToId(job));
+        this.addSeen(this.itemToId(job));
         if ('name' in job && typeof job.name === 'string' && job.name.includes('Żabka Polska')) {
-          statsAddToCounter('job_skipped_extraction_zabka_marketing_nfj');
+          statsAddToCounter('item_skipped_extraction_zabka_marketing_nfj');
           continue;
         }
         if (this.isDuplicate(job)) {
-          statsAddToCounter('job_skipped_extraction_duplicate_nfj');
+          statsAddToCounter('item_skipped_extraction_duplicate_nfj');
           this.logger.debug('Found nfj duplicate, skipping extraction', {
             canonicalUrl: this.slugToUrl(this.establishCanonicalUrlSlug(new JsonNavigator(job))),
-            currentUrl: this.jobToUrl(job).trim().toLowerCase(),
+            currentUrl: this.itemToUrl(job).trim().toLowerCase(),
           });
           continue;
         }
@@ -163,12 +163,12 @@ export class NfjStrategy extends AbstractStrategy {
     }
   }
 
-  jobToUrl(job: JobJson): string {
+  itemToUrl(job: ItemJson): string {
     assert('url' in job && typeof job.url === 'string', ' ⚠️  No url in NFJ job');
     return this.slugToUrl(job.url);
   }
 
-  jobToId(job: JobJson): string {
+  itemToId(job: ItemJson): string {
     assert('id' in job && typeof job.id === 'string', ' ⚠️  No url in NFJ job');
     return transliteratePolishString(job.id).trim().toLowerCase();
   }
@@ -177,10 +177,10 @@ export class NfjStrategy extends AbstractStrategy {
     return `https://nofluffjobs.com/job/${slug}`;
   }
 
-  private isDuplicate(job: JobJson): boolean {
+  private isDuplicate(job: ItemJson): boolean {
     return (
       this.slugToUrl(this.establishCanonicalUrlSlug(new JsonNavigator(job))) !==
-      this.jobToUrl(job).trim().toLowerCase()
+      this.itemToUrl(job).trim().toLowerCase()
     );
   }
 

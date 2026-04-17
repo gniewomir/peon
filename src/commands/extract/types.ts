@@ -1,4 +1,4 @@
-export interface JobJson {
+export interface ItemJson {
   [key: string]: unknown;
 }
 export interface Listing {
@@ -8,7 +8,7 @@ export interface Listing {
 }
 
 export interface ListingParseResult {
-  jobs: JobJson[];
+  jobs: ItemJson[];
   /** JJI: `null` means no further pages */
   nextCursor?: number | null;
   /** NFJ pagination hint when present in the response */

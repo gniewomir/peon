@@ -1,12 +1,12 @@
 import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import type { JobJson, Listing, ListingParseResult } from '../../types.js';
+import type { ItemJson, Listing, ListingParseResult } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
 
 interface JJIApiResponse {
-  data: JobJson[];
+  data: ItemJson[];
   meta?: {
     next?: {
       cursor: number | null;
@@ -17,7 +17,7 @@ interface JJIApiResponse {
 export class JjiStrategy extends AbstractStrategy {
   public readonly slug: KnownStrategy = 'jji';
 
-  async *jobListingsGenerator(): AsyncGenerator<Listing> {
+  async *listingGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
     for (const listing of listings) {
       yield listing;
@@ -25,7 +25,7 @@ export class JjiStrategy extends AbstractStrategy {
     this.resetSeen();
   }
 
-  async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
+  async *itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson> {
     let currentCursor = 0;
 
     while (true) {
@@ -99,11 +99,11 @@ export class JjiStrategy extends AbstractStrategy {
           this.logger.warn(`Empty job on listing. Skipping`);
           continue;
         }
-        if (this.hasSeen(this.jobToId(job))) {
-          this.logger.warn(`Job ${this.jobToId(job)} has been already seen. Skipping`);
+        if (this.hasSeen(this.itemToId(job))) {
+          this.logger.warn(`item ${this.itemToId(job)} has been already seen. Skipping`);
           continue;
         }
-        this.addSeen(this.jobToId(job));
+        this.addSeen(this.itemToId(job));
         yield job;
       }
 
@@ -120,12 +120,12 @@ export class JjiStrategy extends AbstractStrategy {
     }
   }
 
-  jobToUrl(job: JobJson): string {
+  itemToUrl(job: ItemJson): string {
     assert('slug' in job && typeof job.slug === 'string', ' ⚠️  No slug in JJI job');
     return `https://justjoin.it/job-offer/${job.slug}`;
   }
 
-  jobToId(job: JobJson): string {
+  itemToId(job: ItemJson): string {
     assert('guid' in job && typeof job.guid === 'string', ' ⚠️  No guid in JJI job');
     return job.guid;
   }

@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listingParser.js';
-import type { JobJson, Listing } from '../../types.js';
+import type { ItemJson, Listing } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
 
@@ -14,7 +14,7 @@ export class BdjStrategy extends AbstractStrategy {
     return `${baseListingUrl}/page,${page}`;
   }
 
-  async *jobListingsGenerator(): AsyncGenerator<Listing> {
+  async *listingGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
     for (const listing of listings) {
       yield listing;
@@ -22,7 +22,7 @@ export class BdjStrategy extends AbstractStrategy {
     this.resetSeen();
   }
 
-  async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
+  async *itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson> {
     let page = 1;
 
     while (true) {
@@ -79,11 +79,11 @@ export class BdjStrategy extends AbstractStrategy {
       }
 
       for (const job of jobs) {
-        if (this.hasSeen(this.jobToId(job))) {
-          this.logger.warn(`Job ${this.jobToId(job)} has been already seen. Skipping`);
+        if (this.hasSeen(this.itemToId(job))) {
+          this.logger.warn(`item ${this.itemToId(job)} has been already seen. Skipping`);
           continue;
         }
-        this.addSeen(this.jobToId(job));
+        this.addSeen(this.itemToId(job));
         yield job;
       }
 
@@ -91,12 +91,12 @@ export class BdjStrategy extends AbstractStrategy {
     }
   }
 
-  jobToUrl(job: JobJson): string {
+  itemToUrl(job: ItemJson): string {
     assert('url' in job && typeof job.url === 'string');
     return job.url;
   }
 
-  jobToId(job: JobJson): string {
+  itemToId(job: ItemJson): string {
     assert('id' in job && typeof job.id === 'string');
     return job.id;
   }

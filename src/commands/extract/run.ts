@@ -7,7 +7,7 @@ import { getRandomNumber } from './lib/random.js';
 import { cacheContext } from './lib/cache.js';
 import { shutdownContext, type ShutdownContext } from '../../lib/shutdown.js';
 import type { Strategy } from './strategy/types.js';
-import type { JobJson } from './types.js';
+import type { ItemJson } from './types.js';
 import { stats, statsAddToCounter, statsContext } from '../../lib/stats.js';
 
 class HttpException extends Error {}
@@ -28,22 +28,22 @@ async function runStrategy({
 
   await cacheCtx.withCache(async (cache) => {
     try {
-      for await (const listing of strategy.jobListingsGenerator()) {
+      for await (const listing of strategy.listingGenerator()) {
         logger.log(
           ` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`,
         );
-        for await (const job of strategy.jobGenerator(listing, cache)) {
+        for await (const job of strategy.itemGenerator(listing, cache)) {
           await browserCtx.withBrowser(async (browser) => {
             try {
-              const url = strategy.jobToUrl(job as JobJson);
+              const url = strategy.itemToUrl(job as ItemJson);
               const cacheKey = cache.weeklyCacheKey(url);
 
               let html: string;
 
               if (await cache.hasCacheKey(cacheKey, logger)) {
                 html = await cache.readCache(cacheKey, logger);
-                statsAddToCounter('jobs_from_cache');
-                statsAddToCounter(`jobs_from_cache_${strategy.slug}`);
+                statsAddToCounter('item_from_cache');
+                statsAddToCounter(`item_from_cache_${strategy.slug}`);
               } else {
                 logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
                 await using pageCtx = await pageContext(browser);
@@ -66,8 +66,8 @@ async function runStrategy({
                   throw new HttpException(` ⚠️  No <body> for ${url};`);
                 }
 
-                statsAddToCounter('job_from_browser');
-                statsAddToCounter(`job_from_browser_${strategy.slug}`);
+                statsAddToCounter('item_from_browser');
+                statsAddToCounter(`item_from_browser_${strategy.slug}`);
 
                 await cache.writeCache(cacheKey, html, logger);
 
@@ -78,21 +78,21 @@ async function runStrategy({
 
               await strategy.save({
                 cachePath: cache.cacheFilePath(cacheKey),
-                json: job as JobJson,
+                json: job as ItemJson,
                 url,
                 html,
               });
-              statsAddToCounter('job');
-              statsAddToCounter(`job_${strategy.slug}`);
+              statsAddToCounter('item');
+              statsAddToCounter(`item_${strategy.slug}`);
             } catch (error) {
               if (error instanceof HttpException) {
-                statsAddToCounter('job_handled_errors');
-                statsAddToCounter(`job_handled_errors_${strategy.slug}`);
+                statsAddToCounter('item_handled_errors');
+                statsAddToCounter(`item_handled_errors_${strategy.slug}`);
                 logger.error(` ⚠️  Skipping because of error ${error.message}`);
                 return;
               }
-              statsAddToCounter('job_unhandled_errors');
-              statsAddToCounter(`job_unhandled_errors_${strategy.slug}`);
+              statsAddToCounter('item_unhandled_errors');
+              statsAddToCounter(`item_unhandled_errors_${strategy.slug}`);
 
               throw error;
             }

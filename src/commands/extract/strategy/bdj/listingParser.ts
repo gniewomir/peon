@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import type { JobJson, ListingParseResult } from '../../types.js';
+import type { ItemJson, ListingParseResult } from '../../types.js';
 
 /** Next.js listing SSR payload (`<script id="__NEXT_DATA__">`). */
 interface BdjListingNextData {
@@ -54,7 +54,7 @@ export function parseListingResponse(html: string): ListingParseResult {
   }
 
   const seen = new Set<string>();
-  const jobs: JobJson[] = [];
+  const jobs: ItemJson[] = [];
 
   for (const row of rows) {
     const slug = row.id;

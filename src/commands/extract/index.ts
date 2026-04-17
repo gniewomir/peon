@@ -21,7 +21,7 @@ function parseCacheScope(val: unknown): CacheScope {
 const strategy_factories = [
   (logger: Logger, options: Omit<StrategyOptions, 'requestsTimeout' | 'pageOpenOptions'>) =>
     new BdjStrategy({
-      logger,
+      logger: logger.withSuffix('bdj'),
       options: {
         ...options,
         requestsTimeout: 30_000,
@@ -33,7 +33,7 @@ const strategy_factories = [
     }),
   (logger: Logger, options: Omit<StrategyOptions, 'requestsTimeout' | 'pageOpenOptions'>) =>
     new JjiStrategy({
-      logger,
+      logger: logger.withSuffix('jji'),
       options: {
         ...options,
         requestsTimeout: 30_000,
@@ -45,7 +45,7 @@ const strategy_factories = [
     }),
   (logger: Logger, options: Omit<StrategyOptions, 'requestsTimeout' | 'pageOpenOptions'>) =>
     new NfjStrategy({
-      logger,
+      logger: logger.withSuffix('nfj'),
       options: {
         ...options,
         requestsTimeout: 30_000,
