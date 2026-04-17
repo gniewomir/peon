@@ -14,18 +14,18 @@ const BDJ_ORIGIN = 'https://bulldogjob.pl';
 
 function normalizeBdjJobHref(href: string): string | null {
   try {
-    const u = new URL(href, BDJ_ORIGIN);
-    if (!u.pathname.startsWith('/companies/jobs/')) {
+    const url = new URL(href, BDJ_ORIGIN);
+    if (!url.pathname.startsWith('/companies/jobs/')) {
       return null;
     }
-    const segment = u.pathname.replace(/^\/companies\/jobs\//, '');
+    const segment = url.pathname.replace(/^\/companies\/jobs\//, '');
     if (segment.startsWith('s/') || !/^\d+-/.test(segment)) {
       return null;
     }
-    u.hash = '';
-    u.search = '';
-    let out = u.toString();
-    if (u.hostname === 'bulldogjob.com') {
+    url.hash = '';
+    url.search = '';
+    let out = url.toString();
+    if (url.hostname === 'bulldogjob.com') {
       out = out.replace('https://bulldogjob.com', BDJ_ORIGIN);
     }
     return out;
@@ -65,11 +65,11 @@ export function parseListingResponse(html: string): ListingParseResult {
     if (!url) {
       continue;
     }
-    const m = url.match(/\/companies\/jobs\/(\d+)-/);
-    if (!m) {
+    const match = url.match(/\/companies\/jobs\/(\d+)-/);
+    if (!match) {
       continue;
     }
-    const id = m[1];
+    const id = match[1];
     if (seen.has(id)) {
       continue;
     }

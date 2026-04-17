@@ -19,6 +19,7 @@ export class BdjStrategy extends AbstractStrategy {
     for (const listing of listings) {
       yield listing;
     }
+    this.resetSeen();
   }
 
   async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
@@ -27,12 +28,17 @@ export class BdjStrategy extends AbstractStrategy {
     while (true) {
       const url = this.listingPageUrl(listing.url, page);
       this.logger.log(` 📖 Fetching Bulldog job listing page ${page}: ${url}`);
-
       const cacheKey = cache.dailyCacheKey(url);
-      let listingHtml: string;
-      if (this.options.cache !== 'jobs' && (await cache.hasCacheKey(cacheKey, this.logger))) {
+      let listingHtml: string = '';
+
+      if (
+        ['all', 'listings'].includes(this.options.cache) &&
+        (await cache.hasCacheKey(cacheKey, this.logger))
+      ) {
         listingHtml = await cache.readCache(cacheKey, this.logger);
-      } else {
+      }
+
+      if (!listingHtml) {
         const response = await fetch(url, {
           signal: AbortSignal.timeout(this.options.requestsTimeout),
           headers: {
@@ -40,11 +46,26 @@ export class BdjStrategy extends AbstractStrategy {
             'accept-language': 'pl,en;q=0.9',
           },
         });
+
         if (!response.ok) {
-          throw new Error(` ⚠️  HTTP ${response.status}: ${response.statusText} for ${url}`);
+          this.logger.error(` ⚠️  Listing response with status ${response.status}`, {
+            status: response.status,
+            statusText: response.statusText,
+            url,
+          });
+          break;
         }
-        listingHtml = await response.text();
-        await cache.writeCache(cacheKey, listingHtml, this.logger);
+
+        try {
+          listingHtml = await response.text();
+          await cache.writeCache(cacheKey, listingHtml, this.logger);
+        } catch (error) {
+          this.logger.error(' ⚠️  Error while parsing listing response', {
+            url,
+            error,
+          });
+          break;
+        }
       }
       const { jobs } = parseListingResponse(listingHtml);
       this.logger.log(`${jobs.length} on listing page ${page}: ${url}`);
@@ -55,8 +76,12 @@ export class BdjStrategy extends AbstractStrategy {
       }
 
       for (const job of jobs) {
-        assert('id' in job && typeof job.id === 'string');
-        yield Promise.resolve(job);
+        if (this.hasSeen(this.jobToId(job))) {
+          this.logger.warn(`Job ${this.jobToId(job)} has been already seen. Skipping`);
+          continue;
+        }
+        this.addSeen(this.jobToId(job));
+        yield job;
       }
 
       page += 1;

@@ -22,6 +22,7 @@ export class JjiStrategy extends AbstractStrategy {
     for (const listing of listings) {
       yield listing;
     }
+    this.resetSeen();
   }
 
   async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
@@ -36,7 +37,10 @@ export class JjiStrategy extends AbstractStrategy {
       const cacheKey = cache.dailyCacheKey(url);
       let parsed: ListingParseResult | null = null;
 
-      if (this.options.cache !== 'jobs' && (await cache.hasCacheKey(cacheKey, this.logger))) {
+      if (
+        ['all', 'listings'].includes(this.options.cache) &&
+        (await cache.hasCacheKey(cacheKey, this.logger))
+      ) {
         try {
           parsed = this.parseListingResponse(
             JSON.parse(await cache.readCache(cacheKey, this.logger)),
@@ -77,7 +81,7 @@ export class JjiStrategy extends AbstractStrategy {
           await cache.writeCache(cacheKey, json, this.logger);
           parsed = this.parseListingResponse(json);
         } catch (error) {
-          this.logger.error(' ⚠️  Error listing response', {
+          this.logger.error(' ⚠️  Error while parsing listing response', {
             url,
             error,
           });
@@ -86,6 +90,7 @@ export class JjiStrategy extends AbstractStrategy {
       }
 
       const { jobs, nextCursor } = parsed;
+      this.logger.log(`${jobs.length} on listing page: ${url}`);
       while (jobs.length > 0) {
         const job = jobs.pop();
         if (!job) {
@@ -111,8 +116,6 @@ export class JjiStrategy extends AbstractStrategy {
       }
       currentCursor = nextCursor;
     }
-
-    this.resetSeen();
   }
 
   jobToUrl(job: JobJson): string {
