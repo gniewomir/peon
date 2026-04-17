@@ -80,7 +80,7 @@ export class BdjStrategy extends AbstractStrategy {
 
       for (const job of jobs) {
         if (this.hasSeen(this.itemToId(job))) {
-          this.logger.warn(`item ${this.itemToId(job)} has been already seen. Skipping`);
+          this.logger.warn(`item ${this.itemToUrl(job)} has been already seen. Skipping`);
           continue;
         }
         this.addSeen(this.itemToId(job));

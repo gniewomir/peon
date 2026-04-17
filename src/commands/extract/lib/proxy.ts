@@ -1,4 +1,3 @@
-import { getRandomNumber } from './random.js';
 import { findProxies } from './proxy-scraper.js';
 import type { Logger } from '../../../lib/logger.js';
 
@@ -19,7 +18,7 @@ async function* proxyGenerator(logger: Logger): AsyncGenerator<string> {
 }
 
 export async function proxyContext(logger: Logger): Promise<ProxyContext> {
-  const maxConsecutiveFailures = 20;
+  const maxConsecutiveFailures = 30;
   let consecutiveFailures = 0;
   let proxyGen = proxyGenerator(logger);
   let currentProxy = (await proxyGen.next()).value;
@@ -51,10 +50,6 @@ export async function proxyContext(logger: Logger): Promise<ProxyContext> {
           } else {
             logger.log(` ⚠️  Switched to proxy: ${currentProxy}`);
           }
-
-          const wait = getRandomNumber(10000, 20000);
-          logger.log(` 🕒 Waiting for ${Math.round(wait / 1000)}s`);
-          await new Promise((resolve) => setTimeout(resolve, wait));
         }
       }
     },

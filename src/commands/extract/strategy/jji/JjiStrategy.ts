@@ -92,6 +92,7 @@ export class JjiStrategy extends AbstractStrategy {
       assert(parsed, 'Parsed listing is set');
 
       const { jobs, nextCursor } = parsed;
+      const jobsCount = jobs.length;
       this.logger.log(`${jobs.length} on listing page: ${url}`);
       while (jobs.length > 0) {
         const job = jobs.pop();
@@ -100,7 +101,7 @@ export class JjiStrategy extends AbstractStrategy {
           continue;
         }
         if (this.hasSeen(this.itemToId(job))) {
-          this.logger.warn(`item ${this.itemToId(job)} has been already seen. Skipping`);
+          this.logger.warn(`item ${this.itemToUrl(job)} has been already seen. Skipping`);
           continue;
         }
         this.addSeen(this.itemToId(job));
@@ -111,9 +112,14 @@ export class JjiStrategy extends AbstractStrategy {
         nextCursor === null ||
         nextCursor === undefined ||
         nextCursor === currentCursor ||
-        jobs.length === 0
+        nextCursor === 10_000 ||
+        jobsCount === 0
       ) {
-        this.logger.log(' 👌 Reached last page. JJI API scraping complete.');
+        this.logger.log(' 👌 Reached last page. JJI API scraping complete.', {
+          nextCursor,
+          currentCursor,
+          items: jobs.length,
+        });
         break;
       }
       currentCursor = nextCursor;
