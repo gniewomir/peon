@@ -20,12 +20,14 @@ import { constants } from 'node:fs';
 import { statsAddToCounter } from '../../../lib/stats.js';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { LRUHashMap } from '../../transform/lib/LRUHashMap.js';
 
 export abstract class AbstractStrategy implements Strategy {
   public abstract readonly slug: KnownStrategy;
   protected readonly logger: Logger;
   protected readonly options: StrategyOptions;
   protected ids: Set<string>;
+  protected seen: LRUHashMap<string> = new LRUHashMap<string>(50_000);
 
   public constructor({ logger, options }: StrategyParameters) {
     this.logger = logger;
@@ -43,6 +45,20 @@ export abstract class AbstractStrategy implements Strategy {
     return this.options.cache;
   }
 
+  protected addSeen(id: string): void {
+    this.seen.set(id, id);
+  }
+
+  protected hasSeen(id: string): boolean {
+    return this.seen.has(id);
+  }
+
+  protected resetSeen(): void {
+    for (const key in this.seen) {
+      this.seen.delete(key);
+    }
+  }
+
   abstract jobListingsGenerator(): AsyncGenerator<Listing>;
 
   abstract jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson>;
@@ -58,9 +74,10 @@ export abstract class AbstractStrategy implements Strategy {
     const jobQuarantineDir = path.join(this.options.quarantineDir, jobDirName);
     const jobTrashDir = path.join(this.options.trashDir, jobDirName);
     const jobLoadDir = path.join(this.options.loadDir, jobDirName);
-    const jobStagingParent = dirname(jobStagingDir);
+    const dataDirectory = dirname(dirname(jobStagingDir));
     const jobTmpDir = path.join(
-      jobStagingParent,
+      dataDirectory,
+      'tmp',
       `.${jobDirName}.tmp-${process.pid}-${randomUUID()}`,
     );
 

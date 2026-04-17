@@ -64,7 +64,7 @@ export function createCacheOperations(root: string): CacheOperations {
       }
     },
 
-    async writeCache(key: string, content: string, logger: Logger): Promise<boolean> {
+    async writeCache(key: string, content: unknown, logger: Logger): Promise<boolean> {
       const saved = await atomicWrite(cacheKeyToPath(key, basePath), content, logger);
       statsAddToCounter('cache_write');
       return saved;
@@ -95,7 +95,7 @@ export interface CacheOperations {
   cacheFilePath(key: string): string;
   hasCacheKey(key: string, logger: Logger): Promise<boolean>;
   readCache(key: string, logger: Logger): Promise<string>;
-  writeCache(key: string, content: string, logger: Logger): Promise<boolean>;
+  writeCache(key: string, content: unknown, logger: Logger): Promise<boolean>;
   dailyCacheKey(str: string): string;
   weeklyCacheKey(str: string): string;
 }

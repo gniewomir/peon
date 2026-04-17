@@ -1,10 +1,18 @@
 import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import { parseListingResponse } from './listingParser.js';
-import type { JobJson, Listing } from '../../types.js';
+import type { JobJson, Listing, ListingParseResult } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
+
+interface JJIApiResponse {
+  data: JobJson[];
+  meta?: {
+    next?: {
+      cursor: number | null;
+    };
+  };
+}
 
 export class JjiStrategy extends AbstractStrategy {
   public readonly slug: KnownStrategy = 'jji';
@@ -18,21 +26,32 @@ export class JjiStrategy extends AbstractStrategy {
 
   async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
     let currentCursor = 0;
-    let pageNumber = 1;
 
     while (true) {
-      this.logger.log(` 📖 Fetching page ${pageNumber} (from=${currentCursor})...`);
+      this.logger.log(` 📖 Fetching listing page (cursor=${currentCursor})...`);
 
       const urlObj = new URL(listing.url);
       urlObj.searchParams.set('from', currentCursor.toString());
       const url = urlObj.toString();
-
       const cacheKey = cache.dailyCacheKey(url);
+      let parsed: ListingParseResult | null = null;
 
-      let jsonText: string;
       if (this.options.cache !== 'jobs' && (await cache.hasCacheKey(cacheKey, this.logger))) {
-        jsonText = await cache.readCache(cacheKey, this.logger);
-      } else {
+        try {
+          parsed = this.parseListingResponse(
+            JSON.parse(await cache.readCache(cacheKey, this.logger)),
+          );
+        } catch (error) {
+          this.logger.error(' ⚠️  Cannot parse listing from cache', {
+            url,
+            error,
+            cacheKey,
+          });
+          continue;
+        }
+      }
+
+      if (!parsed) {
         const response = await fetch(url, {
           signal: AbortSignal.timeout(this.options.requestsTimeout),
           headers: {
@@ -47,56 +66,53 @@ export class JjiStrategy extends AbstractStrategy {
         });
 
         if (!response.ok) {
-          this.logger.error(' ⚠️  Error response', await response.json());
-          throw new Error(` ⚠️  HTTP ${response.status}: ${response.statusText}`);
+          this.logger.error(` ⚠️  Listing response with status ${response.status}`, {
+            url,
+          });
+          break;
         }
 
-        const content = await response.json();
-        jsonText = JSON.stringify(content);
-        await cache.writeCache(cacheKey, jsonText, this.logger);
-      }
-
-      const parsed = parseListingResponse(jsonText);
-      if (parsed === null) {
-        let keys: string[] = [];
         try {
-          const o: unknown = JSON.parse(jsonText);
-          if (o && typeof o === 'object') {
-            keys = Object.keys(o as object);
-          }
-        } catch {
-          /* ignore */
+          const json = await response.json();
+          await cache.writeCache(cacheKey, json, this.logger);
+          parsed = this.parseListingResponse(json);
+        } catch (error) {
+          this.logger.error(' ⚠️  Error listing response', {
+            url,
+            error,
+          });
+          break;
         }
-        this.logger.log(' ⚠️  Invalid content structure or no data found', keys);
-        break;
       }
 
       const { jobs, nextCursor } = parsed;
-      const stack = [...jobs];
-      while (stack.length > 0) {
-        const job = stack.pop();
-        if (job) {
-          assert('guid' in job && typeof job.guid === 'string', ' ⚠️  No guid in JJI job');
-          if (this.ids.has(job.guid)) {
-            continue;
-          }
-          this.ids.add(job.guid);
-          yield job;
+      while (jobs.length > 0) {
+        const job = jobs.pop();
+        if (!job) {
+          this.logger.warn(`Empty job on listing. Skipping`);
+          continue;
         }
+        if (this.hasSeen(this.jobToId(job))) {
+          this.logger.warn(`Job ${this.jobToId(job)} has been already seen. Skipping`);
+          continue;
+        }
+        this.addSeen(this.jobToId(job));
+        yield job;
       }
 
       if (
         nextCursor === null ||
         nextCursor === undefined ||
         nextCursor === currentCursor ||
-        parsed.jobs.length === 0
+        jobs.length === 0
       ) {
         this.logger.log(' 👌 Reached last page. JJI API scraping complete.');
         break;
       }
       currentCursor = nextCursor;
-      pageNumber++;
     }
+
+    this.resetSeen();
   }
 
   jobToUrl(job: JobJson): string {
@@ -107,5 +123,22 @@ export class JjiStrategy extends AbstractStrategy {
   jobToId(job: JobJson): string {
     assert('guid' in job && typeof job.guid === 'string', ' ⚠️  No guid in JJI job');
     return job.guid;
+  }
+
+  private parseListingResponse(response: unknown): ListingParseResult {
+    if (!response || typeof response !== 'object' || !('data' in response)) {
+      throw new Error('Invalid JSON (missing data)');
+    }
+
+    const content = response as JJIApiResponse;
+    if (!Array.isArray(content.data)) {
+      throw new Error('Invalid JSON (not an array)');
+    }
+
+    const nextCursor = content.meta?.next?.cursor;
+    return {
+      jobs: [...content.data],
+      nextCursor,
+    };
   }
 }
