@@ -11,12 +11,4 @@ export function getRandomElement<T>(array: T[]): T {
   return array[randomIndex] as T;
 }
 
-export function getRandomElementAndRemove<T>(array: T[]): T {
-  assert(Array.isArray(array) && array.length > 0, 'Array must have at least one element');
-  const randomIndex = Math.floor(Math.random() * array.length);
-  const element = array[randomIndex];
-  array.splice(randomIndex, 1);
-  return element as T;
-}
-
 export const getRandomElementOfArray = getRandomElement;

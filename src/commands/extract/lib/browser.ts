@@ -1,5 +1,5 @@
 import puppeteer, { type Browser, type Page } from 'puppeteer';
-import { proxyContext } from './proxy.js';
+import { proxyContext } from './proxy/proxy.js';
 import { getRandomUserAgent } from './user-agent.js';
 import type { Logger } from '../../../lib/logger.js';
 import type { ShutdownContext } from '../../../lib/shutdown.js';
@@ -119,9 +119,9 @@ export async function pageContext(browser: Browser): Promise<PageContext> {
 
 export async function browserContext(
   logger: Logger,
-  registry?: ShutdownContext,
+  shutdownCtx?: ShutdownContext,
 ): Promise<BrowserContext> {
-  const proxyCtx = await proxyContext(logger);
+  const proxyCtx = await proxyContext(logger, shutdownCtx);
 
   const proxiedBrowsers: Record<string, Browser> = {};
 
@@ -135,12 +135,12 @@ export async function browserContext(
         setTimeout(resolve, BROWSER_CLOSE_SETTLE_MS);
       });
       await proxiedBrowser.close();
-      if (pid) registry?.deregisterPid(pid);
+      if (pid) shutdownCtx?.deregisterPid(pid);
       delete proxiedBrowsers[proxyUrl];
     }
   };
 
-  registry?.registerCleanup(cleanup);
+  shutdownCtx?.registerCleanup(cleanup);
 
   return {
     withBrowser: async <T>(payload: (browser: Browser) => Promise<T>): Promise<T> => {
@@ -155,7 +155,7 @@ export async function browserContext(
               args: launchArgs,
             });
             const pid = proxiedBrowsers[proxy].process()?.pid;
-            if (pid) registry?.registerPid(pid);
+            if (pid) shutdownCtx?.registerPid(pid);
           }
           return await payload(proxiedBrowsers[proxy]);
         } catch (error) {
@@ -167,7 +167,7 @@ export async function browserContext(
     },
     async [Symbol.asyncDispose](): Promise<void> {
       await cleanup();
-      registry?.deregisterCleanup(cleanup);
+      shutdownCtx?.deregisterCleanup(cleanup);
     },
   };
 }

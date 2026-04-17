@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import type { Logger } from '../../../lib/logger.js';
+import type { Logger } from '../../../../lib/logger.js';
 
 interface ProxyData {
   ip_address: string;
