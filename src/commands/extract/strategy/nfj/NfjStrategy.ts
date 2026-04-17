@@ -1,8 +1,7 @@
 import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
-import { parseListingResponse } from './listingParser.js';
-import type { JobJson, Listing } from '../../types.js';
+import type { JobJson, Listing, ListingParseResult } from '../../types.js';
 import type { CacheOperations } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
 import { JsonNavigator } from '../../../transform/lib/JsonNavigator.js';
@@ -15,14 +14,29 @@ interface NFJListing extends Listing {
   };
 }
 
+interface NFJApiResponse {
+  postings: JobJson[];
+  totalPages?: number;
+}
+
 export class NfjStrategy extends AbstractStrategy {
   public readonly slug: KnownStrategy = 'nfj';
 
   async *jobListingsGenerator(): AsyncGenerator<Listing> {
     const listings = listingsJson as Listing[];
     for (const listing of listings) {
+      assert('meta' in listing, ' ⚠️  No metadata for listing');
+      assert(
+        typeof listing.meta === 'object' &&
+          listing.meta !== null &&
+          'rawBody' in listing.meta &&
+          typeof listing.meta.rawBody === 'string' &&
+          listing.meta.rawBody.length > 0,
+        ' ⚠️  No request body in metadata',
+      );
       yield listing;
     }
+    this.resetSeen();
   }
 
   async *jobGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<JobJson> {
@@ -30,29 +44,36 @@ export class NfjStrategy extends AbstractStrategy {
     let currentPage = 1;
     let totalPages: number | null = null;
 
-    assert('meta' in nfjListing, ' ⚠️  No metadata for listing');
-    assert(
-      'rawBody' in nfjListing.meta &&
-        typeof nfjListing.meta.rawBody === 'string' &&
-        nfjListing.meta.rawBody.length > 0,
-      ' ⚠️  No request body in metadata',
-    );
-
     while (true) {
       this.logger.log(
         ` 📖 Fetching NFJ page ${currentPage}${totalPages ? `/${totalPages}` : ''}...`,
       );
-
       const urlObj = new URL(nfjListing.url);
+      urlObj.searchParams.set('pageFrom', (currentPage - 1).toString());
       urlObj.searchParams.set('pageTo', currentPage.toString());
       const url = urlObj.toString();
-
       const cacheKey = cache.dailyCacheKey(url);
+      let parsed: ListingParseResult | null = null;
 
-      let jsonText: string;
-      if (this.options.cache !== 'jobs' && (await cache.hasCacheKey(cacheKey, this.logger))) {
-        jsonText = await cache.readCache(cacheKey, this.logger);
-      } else {
+      if (
+        ['all', 'listings'].includes(this.options.cache) &&
+        (await cache.hasCacheKey(cacheKey, this.logger))
+      ) {
+        try {
+          parsed = this.parseListingResponse(
+            JSON.parse(await cache.readCache(cacheKey, this.logger)),
+          );
+        } catch (error) {
+          this.logger.error(' ⚠️  Cannot parse listing from cache', {
+            url,
+            error,
+            cacheKey,
+          });
+          continue;
+        }
+      }
+
+      if (!parsed) {
         const response = await fetch(url, {
           method: 'POST',
           signal: AbortSignal.timeout(this.options.requestsTimeout),
@@ -69,29 +90,26 @@ export class NfjStrategy extends AbstractStrategy {
         });
 
         if (!response.ok) {
-          this.logger.error(' ⚠️  Error response', await response.json());
-          throw new Error(` ⚠️  HTTP ${response.status}: ${response.statusText}`);
+          this.logger.error(` ⚠️  Listing response with status ${response.status}`, {
+            url,
+          });
+          break;
         }
 
-        const content = await response.json();
-        jsonText = JSON.stringify(content);
-        await cache.writeCache(cacheKey, jsonText, this.logger);
-      }
-
-      const parsed = parseListingResponse(jsonText);
-      if (parsed === null) {
-        let keys: string[] = [];
         try {
-          const o: unknown = JSON.parse(jsonText);
-          if (o && typeof o === 'object') {
-            keys = Object.keys(o as object);
-          }
-        } catch {
-          /* ignore */
+          const json = await response.json();
+          await cache.writeCache(cacheKey, json, this.logger);
+          parsed = this.parseListingResponse(json);
+        } catch (error) {
+          this.logger.error(' ⚠️  Error while parsing listing response', {
+            url,
+            error,
+          });
+          break;
         }
-        this.logger.log(' ⚠️  Invalid content structure or no data found', keys);
-        break;
       }
+
+      assert(parsed, 'Parsed listing is set');
 
       const { jobs, totalPages: responseTotalPages } = parsed;
 
@@ -104,25 +122,31 @@ export class NfjStrategy extends AbstractStrategy {
         break;
       }
 
-      const stack = [...jobs];
-      while (stack.length > 0) {
-        const job = stack.pop();
-        if (job) {
-          assert('id' in job && typeof job.id === 'string', ' ⚠️  No id in NFJ job');
-          if ('name' in job && typeof job.name === 'string' && job.name.includes('Żabka Polska')) {
-            statsAddToCounter('job_skipped_extraction_zabka_marketing_nfj');
-            continue;
-          }
-          if (this.isDuplicate(job)) {
-            statsAddToCounter('job_skipped_extraction_duplicate_nfj');
-            this.logger.debug('Found nfj duplicate, skipping extraction', {
-              canonicalUrl: this.slugToUrl(this.establishCanonicalUrlSlug(new JsonNavigator(job))),
-              currentUrl: this.jobToUrl(job).trim().toLowerCase(),
-            });
-            continue;
-          }
-          yield job;
+      this.logger.log(`${jobs.length} on listing page: ${url}`);
+      while (jobs.length > 0) {
+        const job = jobs.pop();
+        if (!job) {
+          this.logger.warn(`Empty job on listing. Skipping`);
+          continue;
         }
+        if (this.hasSeen(this.jobToId(job))) {
+          this.logger.warn(`Job ${this.jobToId(job)} has been already seen. Skipping`);
+          continue;
+        }
+        this.addSeen(this.jobToId(job));
+        if ('name' in job && typeof job.name === 'string' && job.name.includes('Żabka Polska')) {
+          statsAddToCounter('job_skipped_extraction_zabka_marketing_nfj');
+          continue;
+        }
+        if (this.isDuplicate(job)) {
+          statsAddToCounter('job_skipped_extraction_duplicate_nfj');
+          this.logger.debug('Found nfj duplicate, skipping extraction', {
+            canonicalUrl: this.slugToUrl(this.establishCanonicalUrlSlug(new JsonNavigator(job))),
+            currentUrl: this.jobToUrl(job).trim().toLowerCase(),
+          });
+          continue;
+        }
+        yield job;
       }
 
       if (totalPages === 0) {
@@ -172,5 +196,21 @@ export class NfjStrategy extends AbstractStrategy {
     }
     assert(urls[0], 'Url cannot be undefined');
     return urls[0];
+  }
+
+  private parseListingResponse(json: unknown): ListingParseResult {
+    if (!json || typeof json !== 'object' || !('postings' in json)) {
+      throw new Error('Invalid JSON (missing postings)');
+    }
+
+    const content = json as NFJApiResponse;
+    if (!Array.isArray(content.postings)) {
+      throw new Error('Invalid JSON (not an array)');
+    }
+
+    return {
+      jobs: [...content.postings],
+      totalPages: content.totalPages,
+    };
   }
 }

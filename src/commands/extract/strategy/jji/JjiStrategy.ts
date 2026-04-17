@@ -89,6 +89,8 @@ export class JjiStrategy extends AbstractStrategy {
         }
       }
 
+      assert(parsed, 'Parsed listing is set');
+
       const { jobs, nextCursor } = parsed;
       this.logger.log(`${jobs.length} on listing page: ${url}`);
       while (jobs.length > 0) {

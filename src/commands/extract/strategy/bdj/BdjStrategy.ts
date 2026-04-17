@@ -29,16 +29,16 @@ export class BdjStrategy extends AbstractStrategy {
       const url = this.listingPageUrl(listing.url, page);
       this.logger.log(` 📖 Fetching Bulldog job listing page ${page}: ${url}`);
       const cacheKey = cache.dailyCacheKey(url);
-      let listingHtml: string = '';
+      let parsed: string = '';
 
       if (
         ['all', 'listings'].includes(this.options.cache) &&
         (await cache.hasCacheKey(cacheKey, this.logger))
       ) {
-        listingHtml = await cache.readCache(cacheKey, this.logger);
+        parsed = await cache.readCache(cacheKey, this.logger);
       }
 
-      if (!listingHtml) {
+      if (!parsed) {
         const response = await fetch(url, {
           signal: AbortSignal.timeout(this.options.requestsTimeout),
           headers: {
@@ -57,8 +57,8 @@ export class BdjStrategy extends AbstractStrategy {
         }
 
         try {
-          listingHtml = await response.text();
-          await cache.writeCache(cacheKey, listingHtml, this.logger);
+          parsed = await response.text();
+          await cache.writeCache(cacheKey, parsed, this.logger);
         } catch (error) {
           this.logger.error(' ⚠️  Error while parsing listing response', {
             url,
@@ -67,7 +67,10 @@ export class BdjStrategy extends AbstractStrategy {
           break;
         }
       }
-      const { jobs } = parseListingResponse(listingHtml);
+
+      assert(parsed, 'Parsed listing is set');
+
+      const { jobs } = parseListingResponse(parsed);
       this.logger.log(`${jobs.length} on listing page ${page}: ${url}`);
 
       if (jobs.length === 0) {

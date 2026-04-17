@@ -39,7 +39,7 @@ const strategy_factories = [
         requestsTimeout: 30_000,
         pageOpenOptions: {
           waitUntil: 'networkidle0',
-          timeout: 60000,
+          timeout: 30_000,
         },
       },
     }),

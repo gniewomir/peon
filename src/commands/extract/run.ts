@@ -119,8 +119,11 @@ export async function runExtract({
   logger: Logger;
 }): Promise<void> {
   const statsCtx = statsContext('extract_');
-  const shutdownCtx = shutdownContext(logger);
   return statsCtx.withStats(async () => {
+    const shutdownCtx = shutdownContext(logger);
+    shutdownCtx.registerCleanup(async () => {
+      logger.log(` 📊 Stats: ${JSON.stringify(stats())}`);
+    });
     try {
       await Promise.all(
         strategies.map(async (strategy) =>
