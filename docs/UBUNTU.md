@@ -1,6 +1,5 @@
 https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
 
-
 Option 3, the safest way
 If you have installed Google Chrome, the setuid sandbox helper (the old version of the sandbox) is available at /opt/google/chrome/chrome-sandbox. You can tell developer builds to use it by putting the following in your ~/.bashrc:
 
