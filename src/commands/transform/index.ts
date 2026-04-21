@@ -6,43 +6,25 @@ import { type Logger, loggerContext } from '../../lib/logger.js';
 
 export function registerTransformCommand(program: Command): void {
   const root = rootPath();
-  const relCacheDir = 'data/cache';
-  const relStagingDir = 'data/staging';
-  const relQuarantineDir = 'data/quarantine';
-  const relTrashDir = 'data/trash';
-  const relLoadDir = 'data/load';
+  const relDataDir = 'data';
   const command = 'transform';
   program
     .command(command)
     .description('Watch staging directory and log file changes')
     .option('-v, --verbose', 'Enable debug logs')
     .option('-l, --loop', 'Keep working until explicitly terminated')
-    .option('--cacheDir <dir>', `Cache directory (default: <repo>/${relCacheDir})`)
-    .option('--stagingDir <dir>', `Staging directory (default: <repo>/${relStagingDir})`)
-    .option('--quarantineDir <dir>', `Quarantine directory (default: <repo>/${relQuarantineDir})`)
-    .option('--trashDir <dir>', `Trashed directory (default: <repo>/${relTrashDir})`)
-    .option('--loadDir <dir>', `Load directory (default: <repo>/${relLoadDir})`)
-    .action(
-      async (opts: {
-        cacheDir?: string;
-        stagingDir?: string;
-        quarantineDir?: string;
-        trashDir?: string;
-        loadDir?: string;
-        verbose?: boolean;
-        loop?: boolean;
-      }) => {
-        const cx = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
-        return cx.withLogger((logger: Logger) =>
-          runTransform({
-            stagingDir: path.resolve(opts.stagingDir ?? path.join(root, relStagingDir)),
-            quarantineDir: path.resolve(opts.quarantineDir ?? path.join(root, relQuarantineDir)),
-            trashDir: path.resolve(opts.trashDir ?? path.join(root, relTrashDir)),
-            loadDir: path.resolve(opts.loadDir ?? path.join(root, relLoadDir)),
-            loop: Boolean(opts.loop),
-            logger,
-          }),
-        );
-      },
-    );
+    .option('--dataDir <dir>', `Cache directory (default: <repo>/${relDataDir})`)
+    .action(async (opts: { dataDir?: string; verbose?: boolean; loop?: boolean }) => {
+      const cx = loggerContext({ prefix: command, verbose: Boolean(opts.verbose) });
+      return cx.withLogger((logger: Logger) =>
+        runTransform({
+          stagingDir: path.resolve(root, opts.dataDir ?? 'data', 'staging'),
+          quarantineDir: path.resolve(root, opts.dataDir ?? 'data', 'quarantine'),
+          trashDir: path.resolve(root, opts.dataDir ?? 'data', 'trash'),
+          loadDir: path.resolve(root, opts.dataDir ?? 'data', 'load'),
+          loop: Boolean(opts.loop),
+          logger,
+        }),
+      );
+    });
 }

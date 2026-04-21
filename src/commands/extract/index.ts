@@ -104,31 +104,19 @@ function selectStrategies({
 
 export function registerExtractCommand(program: Command): void {
   const root = rootPath();
-  const relCacheDir = 'data/cache';
-  const relStagingDir = 'data/staging';
-  const relQuarantineDir = 'data/quarantine';
-  const relTrashDir = 'data/trash';
-  const relLoadDir = 'data/load';
+  const relDataDir = 'data';
   const command = 'extract';
   program
     .command(command)
     .description('Scrape job boards')
     .option('-v, --verbose', 'Enable debug logs')
-    .option('--cacheDir <dir>', `Cache directory (default: <repo>/${relCacheDir})`)
-    .option('--stagingDir <dir>', `Staging directory (default: <repo>/${relStagingDir})`)
-    .option('--quarantineDir <dir>', `Quarantine directory (default: <repo>/${relQuarantineDir})`)
-    .option('--trashDir <dir>', `Trashed directory (default: <repo>/${relTrashDir})`)
-    .option('--loadDir <dir>', `Load directory (default: <repo>/${relLoadDir})`)
+    .option('--dataDir <dir>', `Cache directory (default: <repo>/${relDataDir})`)
     .option('--cache <scope>', `Cache read scope: listings|jobs|all`, 'all')
     .option('--only <slugs>', `Comma-separated strategies to run`, 'all')
     .option('--limit <number>', `Limit the number of jobs to scrape for each strategy`)
     .action(
       async (opts: {
-        cacheDir?: string;
-        stagingDir?: string;
-        quarantineDir?: string;
-        trashDir?: string;
-        loadDir?: string;
+        dataDir?: string;
         cache?: CacheScope;
         only?: string;
         verbose?: boolean;
@@ -139,18 +127,16 @@ export function registerExtractCommand(program: Command): void {
         return loggerCtx.withLogger((logger) =>
           runExtract({
             logger,
-            cacheDir: path.resolve(opts.cacheDir ?? path.join(root, relCacheDir)),
+            cacheDir: path.resolve(root, opts.dataDir ?? 'data', 'cache'),
             strategies: selectStrategies({
               only: opts.only,
               logger,
               options: {
                 limit: opts.limit,
-                stagingDir: path.resolve(opts.stagingDir ?? path.join(root, relStagingDir)),
-                quarantineDir: path.resolve(
-                  opts.quarantineDir ?? path.join(root, relQuarantineDir),
-                ),
-                trashDir: path.resolve(opts.trashDir ?? path.join(root, relTrashDir)),
-                loadDir: path.resolve(opts.loadDir ?? path.join(root, relLoadDir)),
+                stagingDir: path.resolve(root, opts.dataDir ?? 'data', 'staging'),
+                quarantineDir: path.resolve(root, opts.dataDir ?? 'data', 'quarantine'),
+                trashDir: path.resolve(root, opts.dataDir ?? 'data', 'trash'),
+                loadDir: path.resolve(root, opts.dataDir ?? 'data', 'load'),
                 cache: cacheScope,
               },
             }),
