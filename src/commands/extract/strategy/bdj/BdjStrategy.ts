@@ -3,7 +3,7 @@ import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import { parseListingResponse } from './listingParser.js';
 import type { ItemJson, Listing } from '../../types.js';
-import type { CacheOperations } from '../../lib/cache.js';
+import type { CacheContext } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
 
 export class BdjStrategy extends AbstractStrategy {
@@ -22,7 +22,7 @@ export class BdjStrategy extends AbstractStrategy {
     this.forgetSeen();
   }
 
-  async *itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson> {
+  async *itemGenerator(listing: Listing, cache: CacheContext): AsyncGenerator<ItemJson> {
     let page = 1;
 
     while (true) {

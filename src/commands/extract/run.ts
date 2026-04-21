@@ -26,87 +26,83 @@ async function runStrategy({
   await using browserCtx = await browserContext(logger, shutdownCtx);
   const cacheCtx = cacheContext(path.join(cacheDir, strategy.slug));
 
-  await cacheCtx.withCache(async (cache) => {
-    try {
-      for await (const listing of strategy.listingGenerator()) {
-        logger.log(
-          ` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`,
-        );
-        for await (const job of strategy.itemGenerator(listing, cache)) {
-          await browserCtx.withBrowser(async (browser) => {
-            try {
-              const url = strategy.itemToUrl(job as ItemJson);
-              const cacheKey = cache.weeklyCacheKey(url);
+  try {
+    for await (const listing of strategy.listingGenerator()) {
+      logger.log(` 🏁‍ Processing listing "${listing.description}" for strategy ${strategy.slug}`);
+      for await (const job of strategy.itemGenerator(listing, cacheCtx)) {
+        await browserCtx.withBrowser(async (browser) => {
+          try {
+            const url = strategy.itemToUrl(job as ItemJson);
+            const cacheKey = cacheCtx.weeklyCacheKey(url);
 
-              let html: string;
+            let html: string;
 
-              if (await cache.hasCacheKey(cacheKey, logger)) {
-                html = await cache.readCache(cacheKey, logger);
-                statsAddToCounter('item_from_cache');
-                statsAddToCounter(`item_from_cache_${strategy.slug}`);
+            if (await cacheCtx.hasCacheKey(cacheKey, logger)) {
+              html = await cacheCtx.readCache(cacheKey, logger);
+              statsAddToCounter('item_from_cache');
+              statsAddToCounter(`item_from_cache_${strategy.slug}`);
+            } else {
+              logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
+              await using pageCtx = await pageContext(browser);
+              const res = await pageCtx.page.goto(url, strategy.pageOpenOptions());
+
+              if (res && (res.status() >= 300 || res.status() < 200)) {
+                throw new HttpException(` ⚠️  Response status: ${res.status()} for ${url}`);
+              } else if (res) {
+                logger.log(`✅ Response status ${res.status()} for ${url}.`);
               } else {
-                logger.log(` 🔗 Opening ${strategy.slug} url: ${url}`);
-                await using pageCtx = await pageContext(browser);
-                const res = await pageCtx.page.goto(url, strategy.pageOpenOptions());
-
-                if (res && (res.status() >= 300 || res.status() < 200)) {
-                  throw new HttpException(` ⚠️  Response status: ${res.status()} for ${url}`);
-                } else if (res) {
-                  logger.log(`✅ Response status ${res.status()} for ${url}.`);
-                } else {
-                  throw new HttpException(' ⚠️  No response received from puppeteer.');
-                }
-
-                const bodyHandle = await pageCtx.page.$('body');
-
-                if (bodyHandle) {
-                  html = await pageCtx.page.evaluate((body) => body.innerHTML, bodyHandle);
-                  await bodyHandle.dispose();
-                } else {
-                  throw new HttpException(` ⚠️  No <body> for ${url};`);
-                }
-
-                statsAddToCounter('item_from_browser');
-                statsAddToCounter(`item_from_browser_${strategy.slug}`);
-
-                await cache.writeCache(cacheKey, html, logger);
-
-                const wait = getRandomNumber(1000, 5000);
-                logger.log(` 🕒 Waiting for ${Math.round(wait / 1000)}s`);
-                await new Promise((resolve) => setTimeout(resolve, wait));
+                throw new HttpException(' ⚠️  No response received from puppeteer.');
               }
 
-              await strategy.save({
-                cachePath: cache.cacheFilePath(cacheKey),
-                json: job as ItemJson,
-                url,
-                html,
-              });
-              statsAddToCounter('item');
-              statsAddToCounter(`item_${strategy.slug}`);
-            } catch (error) {
-              if (error instanceof HttpException) {
-                statsAddToCounter('item_handled_errors');
-                statsAddToCounter(`item_handled_errors_${strategy.slug}`);
-                logger.error(` ⚠️  Skipping because of error ${error.message}`);
-                return;
-              }
-              statsAddToCounter('item_unhandled_errors');
-              statsAddToCounter(`item_unhandled_errors_${strategy.slug}`);
+              const bodyHandle = await pageCtx.page.$('body');
 
-              throw error;
+              if (bodyHandle) {
+                html = await pageCtx.page.evaluate((body) => body.innerHTML, bodyHandle);
+                await bodyHandle.dispose();
+              } else {
+                throw new HttpException(` ⚠️  No <body> for ${url};`);
+              }
+
+              statsAddToCounter('item_from_browser');
+              statsAddToCounter(`item_from_browser_${strategy.slug}`);
+
+              await cacheCtx.writeCache(cacheKey, html, logger);
+
+              const wait = getRandomNumber(1000, 5000);
+              logger.log(` 🕒 Waiting for ${Math.round(wait / 1000)}s`);
+              await new Promise((resolve) => setTimeout(resolve, wait));
             }
-          });
-        }
+
+            await strategy.save({
+              cachePath: cacheCtx.cacheFilePath(cacheKey),
+              json: job as ItemJson,
+              url,
+              html,
+            });
+            statsAddToCounter('item');
+            statsAddToCounter(`item_${strategy.slug}`);
+          } catch (error) {
+            if (error instanceof HttpException) {
+              statsAddToCounter('item_handled_errors');
+              statsAddToCounter(`item_handled_errors_${strategy.slug}`);
+              logger.error(` ⚠️  Skipping because of error ${error.message}`);
+              return;
+            }
+            statsAddToCounter('item_unhandled_errors');
+            statsAddToCounter(`item_unhandled_errors_${strategy.slug}`);
+
+            throw error;
+          }
+        });
       }
-      logger.log(` ✅ Strategy ${strategy.slug} completed successfully. Done`);
-    } catch (error) {
-      statsAddToCounter('strategy_unhandled_errors');
-      statsAddToCounter(`strategy_unhandled_errors_${strategy.slug}`);
-      logger.error(` ⚠️  Strategy ${strategy.slug} error:`, error);
-      throw error;
     }
-  });
+    logger.log(` ✅ Strategy ${strategy.slug} completed successfully. Done`);
+  } catch (error) {
+    statsAddToCounter('strategy_unhandled_errors');
+    statsAddToCounter(`strategy_unhandled_errors_${strategy.slug}`);
+    logger.error(` ⚠️  Strategy ${strategy.slug} error:`, error);
+    throw error;
+  }
 }
 
 export async function runExtract({

@@ -1,5 +1,5 @@
 import type { Logger } from '../../../lib/logger.js';
-import type { CacheOperations } from '../lib/cache.js';
+import type { CacheContext } from '../lib/cache.js';
 import type { ItemJson, Listing } from '../types.js';
 import type { KnownStrategy } from '../../../lib/types.js';
 import type { GoToOptions } from 'puppeteer-core';
@@ -34,7 +34,7 @@ export interface Strategy {
   cacheScope(): CacheScope;
   pageOpenOptions(): GoToOptions;
   listingGenerator(): AsyncGenerator<Listing>;
-  itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson>;
+  itemGenerator(listing: Listing, cache: CacheContext): AsyncGenerator<ItemJson>;
   itemToUrl(job: ItemJson): string;
   itemToId(job: ItemJson): string;
   save(options: StrategySaveOptions): Promise<void>;

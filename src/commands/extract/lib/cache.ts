@@ -36,7 +36,7 @@ function relativeCachePath(cachePath: string, basePath: string): string {
   return path.relative(basePath, cachePath);
 }
 
-export function createCacheOperations(root: string): CacheOperations {
+export function createCacheOperations(root: string): CacheContext {
   const basePath = path.resolve(root);
 
   return {
@@ -83,14 +83,9 @@ export function createCacheOperations(root: string): CacheOperations {
   };
 }
 export function cacheContext(root: string): CacheContext {
-  return {
-    withCache: async <T>(payload: (cache: CacheOperations) => Promise<T>): Promise<T> => {
-      const cache = createCacheOperations(path.resolve(root));
-      return await payload(cache);
-    },
-  };
+  return createCacheOperations(path.resolve(root));
 }
-export interface CacheOperations {
+export interface CacheContext {
   /** Absolute filesystem path for the cache file for this key. */
   cacheFilePath(key: string): string;
   hasCacheKey(key: string, logger: Logger): Promise<boolean>;
@@ -98,8 +93,4 @@ export interface CacheOperations {
   writeCache(key: string, content: unknown, logger: Logger): Promise<boolean>;
   dailyCacheKey(str: string): string;
   weeklyCacheKey(str: string): string;
-}
-
-export interface CacheContext {
-  withCache<T>(payload: (cache: CacheOperations) => Promise<T>): Promise<T>;
 }

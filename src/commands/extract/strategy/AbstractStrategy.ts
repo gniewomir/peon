@@ -11,7 +11,7 @@ import type {
   StrategySaveOptions,
 } from './types.js';
 import type { ItemJson, Listing } from '../types.js';
-import type { CacheOperations } from '../lib/cache.js';
+import type { CacheContext } from '../lib/cache.js';
 import type { KnownStrategy } from '../../../lib/types.js';
 import type { GoToOptions } from 'puppeteer-core';
 import { artifactFilename, KnownArtifactsEnum } from '../../../lib/artifacts.js';
@@ -61,7 +61,7 @@ export abstract class AbstractStrategy implements Strategy {
 
   abstract listingGenerator(): AsyncGenerator<Listing>;
 
-  abstract itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson>;
+  abstract itemGenerator(listing: Listing, cache: CacheContext): AsyncGenerator<ItemJson>;
 
   abstract itemToUrl(job: ItemJson): string;
 

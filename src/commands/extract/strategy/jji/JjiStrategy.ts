@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import listingsJson from './listings.json' with { type: 'json' };
 import { AbstractStrategy } from '../AbstractStrategy.js';
 import type { ItemJson, Listing, ListingParseResult } from '../../types.js';
-import type { CacheOperations } from '../../lib/cache.js';
+import type { CacheContext } from '../../lib/cache.js';
 import type { KnownStrategy } from '../../../../lib/types.js';
 
 interface JJIApiResponse {
@@ -25,7 +25,7 @@ export class JjiStrategy extends AbstractStrategy {
     this.forgetSeen();
   }
 
-  async *itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson> {
+  async *itemGenerator(listing: Listing, cache: CacheContext): AsyncGenerator<ItemJson> {
     let currentCursor = 0;
 
     while (true) {
