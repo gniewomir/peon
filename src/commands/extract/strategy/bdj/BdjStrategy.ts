@@ -19,7 +19,7 @@ export class BdjStrategy extends AbstractStrategy {
     for (const listing of listings) {
       yield listing;
     }
-    this.resetSeen();
+    this.forgetSeen();
   }
 
   async *itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson> {

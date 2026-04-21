@@ -1,6 +1,6 @@
 import { type Browser, type Page } from 'puppeteer';
 import puppeteer, { type PuppeteerExtraPlugin } from '@zorilla/puppeteer-extra';
-import { proxyContext } from './proxy/proxy.js';
+import { proxyContext } from './proxy/index.js';
 import { getRandomUserAgent } from './user-agent.js';
 import type { Logger } from '../../../lib/logger.js';
 import type { ShutdownContext } from '../../../lib/shutdown.js';

@@ -53,7 +53,7 @@ export abstract class AbstractStrategy implements Strategy {
     return this.seen.has(id);
   }
 
-  protected resetSeen(): void {
+  protected forgetSeen(): void {
     for (const key in this.seen) {
       this.seen.delete(key);
     }
@@ -90,7 +90,7 @@ export abstract class AbstractStrategy implements Strategy {
       return;
     }
 
-    // If job is trashed, then we do not want to process it at all
+    // If item is trashed, then we do not want to process it at all
     if (await this.pathExists(itemTrashDir)) {
       statsAddToCounter('item_already_trashed');
       statsAddToCounter(`item_already_trashed_${this.slug}`);
@@ -98,7 +98,7 @@ export abstract class AbstractStrategy implements Strategy {
       return;
     }
 
-    // If job is quarantined, then we do not want to stage it again until issue is investigated and resolved
+    // If item is quarantined, then we do not want to stage it again until issue is investigated and resolved
     if (await this.pathExists(itemQuarantineDir)) {
       statsAddToCounter('item_already_quarantined');
       statsAddToCounter(`item_already_quarantined_${this.slug}`);
@@ -106,7 +106,7 @@ export abstract class AbstractStrategy implements Strategy {
       return;
     }
 
-    // If job is loaded but not yet removed by consumer do not stage it again yet
+    // If item is loaded but not yet removed by consumer do not stage it again yet
     if (await this.pathExists(itemLoadDir)) {
       statsAddToCounter('item_already_loaded');
       statsAddToCounter(`item_already_loaded_${this.slug}`);

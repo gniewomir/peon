@@ -36,7 +36,7 @@ export class NfjStrategy extends AbstractStrategy {
       );
       yield listing;
     }
-    this.resetSeen();
+    this.forgetSeen();
   }
 
   async *itemGenerator(listing: Listing, cache: CacheOperations): AsyncGenerator<ItemJson> {

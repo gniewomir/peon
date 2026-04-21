@@ -2,6 +2,7 @@ const strategyRegister = {
   jji: {},
   nfj: {},
   bdj: {},
+  ptc: {},
 } as const;
 export type KnownStrategy = keyof typeof strategyRegister;
 export type StrategySelector = KnownStrategy | 'all';
