@@ -1,8 +1,17 @@
-import puppeteer, { type Browser, type Page } from 'puppeteer';
+import { type Browser, type Page } from 'puppeteer';
+import puppeteer, { type PuppeteerExtraPlugin } from '@zorilla/puppeteer-extra';
 import { proxyContext } from './proxy/proxy.js';
 import { getRandomUserAgent } from './user-agent.js';
 import type { Logger } from '../../../lib/logger.js';
 import type { ShutdownContext } from '../../../lib/shutdown.js';
+
+import StealthPlugin from '@zorilla/puppeteer-extra-plugin-stealth';
+import AdblockerPlugin from '@zorilla/puppeteer-extra-plugin-adblocker';
+
+// Work around typing issue in @zorilla libs
+puppeteer.use(StealthPlugin() as unknown as PuppeteerExtraPlugin);
+// Work around typing issue in @zorilla libs
+puppeteer.use(AdblockerPlugin({ blockTrackers: true }) as unknown as PuppeteerExtraPlugin);
 
 const baseLaunchArgs = [
   '--disable-dev-shm-usage',
