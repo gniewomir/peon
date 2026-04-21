@@ -39,6 +39,9 @@
   "dependencies": {
     "@google/genai": "1.48.0",
     "@kreuzberg/html-to-markdown-node": "2.30.0",
+    "@zorilla/puppeteer-extra": "1.0.2",
+    "@zorilla/puppeteer-extra-plugin-adblocker": "1.0.2",
+    "@zorilla/puppeteer-extra-plugin-stealth": "1.0.2",
     "cheerio": "1.2.0",
     "commander": "13.1.0",
     "dotenv": "17.3.1",
